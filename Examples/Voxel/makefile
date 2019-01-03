@@ -22,3 +22,8 @@ plotfield: plotfield.C
 	$(CXX) -o plotfield plotfield.o $(LDFLAGS)
 	rm plotfield.o
 
+savefield: savefield.C 
+	$(CXX) $(CFLAGS) savefield.C
+	$(CXX) -o savefield savefield.o $(LDFLAGS)
+	rm savefield.o
+
