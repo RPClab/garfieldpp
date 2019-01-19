@@ -28,9 +28,11 @@ class HeedParticle : public eparticle {
   /// Destructor
   virtual ~HeedParticle() {}
 
-  virtual void physics(std::vector<gparticle*>& secondaries);
-  virtual HeedParticle* copy() const { return new HeedParticle(*this); }
-  virtual void print(std::ostream& file, int l) const;
+  HeedParticle* copy() const override { return new HeedParticle(*this); }
+  void print(std::ostream& file, int l) const override;
+
+ protected:
+  void physics(std::vector<gparticle*>& secondaries) override;
 
  private:
   bool s_print_listing;

@@ -26,9 +26,13 @@ class HeedParticle_BGM : public eparticle {
   /// Destructor
   virtual ~HeedParticle_BGM() {}
 
-  virtual void physics(std::vector<gparticle*>& secondaries);
-  virtual void print(std::ostream& file, int l) const;
-  virtual HeedParticle_BGM* copy() const { return new HeedParticle_BGM(*this); }
+  void print(std::ostream& file, int l) const override;
+  HeedParticle_BGM* copy() const override { 
+    return new HeedParticle_BGM(*this); 
+  }
+
+ protected:
+  void physics(std::vector<gparticle*>& secondaries) override;
 
  private:
   bool s_print_listing;

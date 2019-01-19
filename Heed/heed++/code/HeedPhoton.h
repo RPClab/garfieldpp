@@ -18,7 +18,7 @@ extern long last_particle_number;
 class HeedPhoton : public gparticle {
  public:
   /// Default constructor.
-  HeedPhoton() : gparticle(), m_fieldMap(NULL) {}
+  HeedPhoton() : gparticle() {}
   /// Constructor.
   HeedPhoton(manip_absvol* primvol, const point& pt, const vec& vel,
              vfloat time, long fparent_particle_number, double fenergy,
@@ -26,10 +26,8 @@ class HeedPhoton : public gparticle {
   /// Destructor
   virtual ~HeedPhoton() {}
 
-  virtual void physics_after_new_speed(std::vector<gparticle*>& secondaries);
-  virtual void physics(std::vector<gparticle*>& secondaries);
-  virtual void print(std::ostream& file, int l) const;
-  virtual HeedPhoton* copy() const { return new HeedPhoton(*this); }
+  void print(std::ostream& file, int l) const override;
+  HeedPhoton* copy() const override { return new HeedPhoton(*this); }
 
   long particle_number;
   long parent_particle_number;
@@ -48,6 +46,10 @@ class HeedPhoton : public gparticle {
 #endif
   /// Flag that delta-electrons are already generated (or cannot be created).
   bool s_delta_generated;
+
+ protected:
+  void physics_after_new_speed(std::vector<gparticle*>& secondaries) override;
+  void physics(std::vector<gparticle*>& secondaries) override;
 
  private:
   /// Flag to print internal algorithms of a selected event

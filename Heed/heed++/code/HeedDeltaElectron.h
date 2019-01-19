@@ -23,17 +23,19 @@ class HeedDeltaElectron : public eparticle {
   /// Destructor
   virtual ~HeedDeltaElectron() {}
 
+  HeedDeltaElectron* copy() const override {
+    return new HeedDeltaElectron(*this);
+  }
+  void print(std::ostream& file, int l) const override;
+
   std::vector<HeedCondElectron> conduction_electrons;
   std::vector<HeedCondElectron> conduction_ions;
 
   long parent_particle_number;
 
-  virtual void physics_mrange(double& fmrange);
-  virtual void physics_after_new_speed(std::vector<gparticle*>& secondaries);
-  virtual HeedDeltaElectron* copy() const {
-    return new HeedDeltaElectron(*this);
-  }
-  virtual void print(std::ostream& file, int l) const;
+ protected:
+  void physics_mrange(double& fmrange) override;
+  void physics_after_new_speed(std::vector<gparticle*>& secondaries) override;
 
  private:
   long particle_number;

@@ -22,6 +22,17 @@ namespace Heed {
 
 class mparticle : public gparticle {
  public:
+  /// Default constructor.
+  mparticle() = default;
+  /// Constructor, \f$\gamma - 1\f$ calculated from the from velocity vector.
+  mparticle(manip_absvol* primvol, const point& pt, const vec& vel, vfloat time,
+            double fmass);
+  /// Destructor.
+  virtual ~mparticle() {}
+
+  void print(std::ostream& file, int l) const override;
+  mparticle* copy() const override { return new mparticle(*this); }
+
   /// Mass (not mass * speed_of_light^2)
   double mass = 0.;
 
@@ -32,9 +43,7 @@ class mparticle : public gparticle {
   double curr_kin_energy;
   double curr_gamma_1;  // gamma-1
 
-  /// Check consistency of kin_energy, gamma_1, speed, speed_of_light and mass.
-  void check_consistency() const;
-
+ protected:
   void step(std::vector<gparticle*>& secondaries) override;
 
   /// Set curvature. Calls force().
@@ -62,19 +71,12 @@ class mparticle : public gparticle {
   /// The dimension of f_perp is [weight] / [time];
   virtual int force(const point& pt, vec& f, vec& f_perp, vfloat& mrange);
 
+ private:
+  /// Check consistency of kin_energy, gamma_1, speed, speed_of_light and mass.
+  void check_consistency() const;
   /// Set new speed, direction and time for currpos.
   void new_speed();
 
-  /// Default constructor.
-  mparticle() = default;
-  /// Constructor, \f$\gamma - 1\f$ calculated from the from velocity vector.
-  mparticle(manip_absvol* primvol, const point& pt, const vec& vel, vfloat time,
-            double fmass);
-  /// Destructor.
-  virtual ~mparticle() {}
-
-  void print(std::ostream& file, int l) const override;
-  mparticle* copy() const override { return new mparticle(*this); }
 };
 
 std::ostream& operator<<(std::ostream& file, const mparticle& f);

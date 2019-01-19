@@ -22,15 +22,15 @@ absref_transmit trajestep::get_components() {
   return absref_transmit(4, aref);
 }
 
-trajestep::trajestep(vfloat fmax_range, vfloat frad_for_straight,
-                     vfloat fmax_straight_arange, vfloat fmax_circumf_arange, 
-                     const point& fcurrpos,
+trajestep::trajestep(const vfloat fmax_range, const vfloat frad_for_straight,
+                     const vfloat fmax_straight_arange, 
+                     const vfloat fmax_circ_arange, const point& fcurrpos,
                      const vec& fdir, int fs_cf, const vec& frelcen,
                      vfloat fmrange, vfloat prec)
     : max_range(fmax_range),
       rad_for_straight(frad_for_straight),
       max_straight_arange(fmax_straight_arange),
-      max_circumf_arange(fmax_circumf_arange),
+      max_circ_arange(fmax_circ_arange),
       currpos(fcurrpos),
       dir(),
       s_cf(fs_cf),
@@ -63,7 +63,7 @@ trajestep::trajestep(const trajestep& fts, vfloat fmrange) {
   vfloat prec = 0.1;  // not important here
   *this =
       trajestep(fts.max_range, fts.rad_for_straight,
-                fts.max_straight_arange, fts.max_circumf_arange,
+                fts.max_straight_arange, fts.max_circ_arange,
                 fpos, fdir, fts.s_cf, frelcen, fmrange, prec);
 }
 
@@ -76,12 +76,10 @@ void trajestep::Gnextpoint(vfloat frange, point& fpos, vec& fdir) const {
     if (s_cf == 0) {
       // no curvature
       fdir = dir;
-      return;
     } else {
       vfloat ang = frange / relcen.length();
       fdir = dir;
       fdir.turn(dir || relcen, ang);
-      return;
     }
   } else {
     vfloat ang = frange / relcen.length();  // angle to turn
@@ -90,7 +88,6 @@ void trajestep::Gnextpoint(vfloat frange, point& fpos, vec& fdir) const {
     vec frelcen = relcen;
     frelcen.turn(dir || relcen, ang);
     fpos = currpos + relcen - frelcen;
-    return;
   }
 }
 
@@ -107,14 +104,12 @@ void trajestep::Gnextpoint1(vfloat frange, point& fpos, vec& fdir,
       // no curvature
       fdir = dir;
       frelcen = relcen;  // whatever it is
-      return;
     } else {
       vfloat ang = frange / relcen.length();
       fdir = dir;
       fdir.turn(dir || relcen, ang);
       frelcen = relcen;
       frelcen.turn(dir || relcen, ang);
-      return;
     }
   } else {
     vfloat ang = frange / relcen.length();  // angle to turn
@@ -123,7 +118,6 @@ void trajestep::Gnextpoint1(vfloat frange, point& fpos, vec& fdir,
     frelcen = relcen;
     frelcen.turn(dir || relcen, ang);
     fpos = currpos + relcen - frelcen;
-    return;
   }
 }
 
@@ -136,7 +130,7 @@ void trajestep::get_range(const int fs_cf0, const vfloat rad, int& fs_cf1,
     fs_cf1 = 0;
     fmrange = std::min(mrange, rad * max_straight_arange);
   } else {
-    fmrange = std::min(mrange, rad * max_circumf_arange);
+    fmrange = std::min(mrange, rad * max_circ_arange);
   }
 }
 
