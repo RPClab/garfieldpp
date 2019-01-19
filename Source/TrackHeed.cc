@@ -178,6 +178,11 @@ bool TrackHeed::NewTrack(const double x0, const double y0, const double z0,
 
   Heed::HeedParticle particle(m_chamber.get(), p0, velocity, t0,
                               particleType, &m_fieldMap);
+  // Set the step limits.
+  particle.set_step_limits(m_maxStep * Heed::CLHEP::cm,
+                           m_radStraight * Heed::CLHEP::cm,
+                           m_stepAngleStraight * Heed::CLHEP::rad,
+                           m_stepAngleCurved * Heed::CLHEP::rad);
   // Transport the particle.
   particle.fly(m_particleBank);
   m_bankIterator = m_particleBank.begin();
@@ -694,15 +699,15 @@ void TrackHeed::SetEnergyMesh(const double e0, const double e1,
                               const int nsteps) {
 
   if (fabs(e1 - e0) < Small) {
-    std::cerr << m_className << "::SetEnergyMesh:\n";
-    std::cerr << "    Invalid energy range:\n";
-    std::cerr << "    " << e0 << " < E [eV] < " << e1 << "\n";
+    std::cerr << m_className << "::SetEnergyMesh:\n"
+              << "    Invalid energy range:\n"
+              << "    " << e0 << " < E [eV] < " << e1 << "\n";
     return;
   }
 
   if (nsteps <= 0) {
-    std::cerr << m_className << "::SetEnergyMesh:\n";
-    std::cerr << "    Number of intervals must be > 0.\n";
+    std::cerr << m_className << "::SetEnergyMesh:\n"
+              << "    Number of intervals must be > 0.\n";
     return;
   }
 
