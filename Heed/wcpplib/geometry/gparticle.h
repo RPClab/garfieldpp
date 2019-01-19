@@ -134,8 +134,6 @@ class stvpoint {
   void print(std::ostream& file, int l) const;
 };
 
-extern trajestep_limit gtrajlim;
-
 /// "Geometric particle" (particle which does not interact with materials).
 /// It moves along a polyline line or circle from one volume to another.
 /// The flying is represented by changing of class members representing
@@ -190,7 +188,7 @@ class gparticle {
   // prec is used to find out if the force is parallel or antiparallel to dir
   // In the latter case the range is restricted by the stop point.
   // Thus this prec does not depend on order of geometry sizes.
-  // In calc_step_to_bord() it is set to gtrajlim.max_straight_arange.
+  // In calc_step_to_bord() it is set to max_straight_arange.
   // vec& frelcen: position of the center of circumf. relatively currpos
 
   virtual void physics_after_new_speed(std::vector<gparticle*>& /*secondaries*/) {}

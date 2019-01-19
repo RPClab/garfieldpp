@@ -121,7 +121,11 @@ stvpoint gparticle::calc_step_to_bord() {
   int s_cf;
   vec relcen;
   vfloat mrange;
-  curvature(s_cf, relcen, mrange, gtrajlim.max_straight_arange);
+  const vfloat max_range = 100. * CLHEP::cm;
+  const vfloat rad_for_straight = 1000. * CLHEP::cm;
+  const vfloat max_straight_arange = 0.1 * CLHEP::rad;
+  const vfloat max_circumf_arange = 0.2 * CLHEP::rad;
+  curvature(s_cf, relcen, mrange, max_straight_arange);
   curr_relcen = relcen;
   if (mrange <= 0) {
     // preserves currpos for modification by physics
@@ -131,7 +135,8 @@ stvpoint gparticle::calc_step_to_bord() {
   }
   currpos.tid.up_absref(&relcen);  // changing to local system
   physics_mrange(mrange);
-  trajestep ts(&gtrajlim, currpos.ptloc, currpos.dirloc, s_cf, relcen, mrange,
+  trajestep ts(max_range, rad_for_straight, max_straight_arange, max_circumf_arange, 
+               currpos.ptloc, currpos.dirloc, s_cf, relcen, mrange,
                currpos.tid.eid.back()->Gavol()->prec);
   if (ts.mrange <= 0) {
     stvpoint temp(currpos);

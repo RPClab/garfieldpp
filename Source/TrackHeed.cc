@@ -44,12 +44,6 @@ long last_particle_number;
 
 }
 
-extern Heed::trajestep_limit Heed::gtrajlim;
-Heed::trajestep_limit Heed::gtrajlim( 100. * Heed::CLHEP::cm, 
-                                     1000. * Heed::CLHEP::cm, 
-                                     0.1 * Heed::CLHEP::rad,
-                                     0.2 * Heed::CLHEP::rad);
-
 // Actual class implementation
 
 namespace Garfield {

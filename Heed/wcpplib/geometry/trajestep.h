@@ -1,6 +1,7 @@
 #ifndef TRAJESTEP_H
 #define TRAJESTEP_H
 #include "wcpplib/geometry/vec.h"
+#include "wcpplib/clhep_units/WPhysicalConstants.h"
 
 /*
 Copyright (c) 2000 Igor B. Smirnov
@@ -16,38 +17,6 @@ The file is provided "as is" without express or implied warranty.
 
 namespace Heed {
 
-class trajestep_limit {
- public:
-  /// Constructor.
-  trajestep_limit(vfloat fmax_range, vfloat frad_for_straight,
-                  vfloat fmax_straight_arange, vfloat fmax_circumf_arange)
-      : max_range(fmax_range),
-        rad_for_straight(frad_for_straight),
-        max_straight_arange(fmax_straight_arange),
-        max_circumf_arange(fmax_circumf_arange) {}
-
-   vfloat max_range;  
-
-  // The three following parameters regulate the precision for s_cf == 1.
-  /// Radius beyond which to prefer straight lines to reduce calculation time.
-  vfloat rad_for_straight;
-  /// Angle of range if it goes along straight line, but s_cf == 1.
-  // But the angle is calculated taking way as circle anyway.
-  vfloat max_straight_arange;
-  /// Angle of range if it goes along circle.
-  vfloat max_circumf_arange;
-
-  // Chooses straight or circle line and calculates maximal range.
-  // vfloat& mrange gives first maximal range and filled by finishing
-  // maximal range which should be less by value.
-  // fs_cf0 : 0 - if the track must be straight.
-  //          1 - if the real track is curved. It can or can not be
-  //              approximated by straight line.
-  // fs_cf1 : 0 - the track is simulated by straight line.
-  //          1 - the track is simulated by curved line.
-  void range(int fs_cf0, vfloat rad, int& fs_cf1, vfloat& mrange) const;
-};
-
 /// Trajectory step of any object (particle, photon, ...).
 /// Here we interested in geometrical parameters only.
 /// The time, speed, acceleration, mass, and forces are not interesting here.
@@ -62,7 +31,17 @@ class trajestep_limit {
 
 class trajestep : public absref {
  public:
-  trajestep_limit* m_tl = nullptr;
+
+  vfloat max_range = 100. * CLHEP::cm;
+  // The three following parameters regulate the precision for s_cf == 1.
+  /// Radius beyond which to prefer straight lines to reduce calculation time.
+  vfloat rad_for_straight = 1000. * CLHEP::cm;
+  /// Angle of range if it goes along straight line, but s_cf == 1.
+  // But the angle is calculated taking way as circle anyway.
+  vfloat max_straight_arange = 0.1 * CLHEP::rad;
+  /// Angle of range if it goes along circle.
+  vfloat max_circumf_arange = 0.2 * CLHEP::rad;
+
   point currpos;
   /// Unit vector.
   vec dir;     
@@ -93,14 +72,15 @@ class trajestep : public absref {
   point mpoint;    
 
   void Gnextpoint(vfloat frange, point& fpos, vec& fdir) const;
-  void Gnextpoint1(vfloat frange, point& fpos, vec& fdir, vec& frelcen) const;
 
   /// Constructor.
   /// Here prec is used to check if frelcen is perp. to dir.
   /// If it is not perpendicular with this precision,
   /// the function terminates the program.
   /// To reduce range fmrange may be used.
-  trajestep(trajestep_limit* ftl, const point& fcurrpos, const vec& fdir,
+  trajestep(vfloat fmax_range, vfloat frad_for_straight,
+            vfloat fmax_straight_arange, vfloat fmax_circumf_arange, 
+            const point& fcurrpos, const vec& fdir,
             int fs_cf, const vec& frelcen, vfloat fmrange, vfloat prec);
   /** Constructor to continue propagation from the end point of another step.
     * \param fts old step to continue
@@ -115,6 +95,18 @@ class trajestep : public absref {
  protected:
   virtual absref_transmit get_components() override;
   static absref(absref::*aref[4]);
+ private:
+  // Chooses straight or circle line and calculates maximal range.
+  // vfloat& mrange gives first maximal range and filled by finishing
+  // maximal range which should be less by value.
+  // fs_cf0 : 0 - if the track must be straight.
+  //          1 - if the real track is curved. It can or can not be
+  //              approximated by straight line.
+  // fs_cf1 : 0 - the track is simulated by straight line.
+  //          1 - the track is simulated by curved line.
+  void get_range(int fs_cf0, vfloat rad, int& fs_cf1, vfloat& fmrange) const;
+
+  void Gnextpoint1(vfloat frange, point& fpos, vec& fdir, vec& frelcen) const;
 };
 std::ostream& operator<<(std::ostream& file, const trajestep& f);
 }

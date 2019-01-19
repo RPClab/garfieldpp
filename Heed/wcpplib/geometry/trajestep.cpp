@@ -13,19 +13,6 @@ The file is provided "as is" without express or implied warranty.
 
 namespace Heed {
 
-void trajestep_limit::range(const int fs_cf0, const vfloat rad, int& fs_cf1,
-                            vfloat& mrange) const {
-  if (mrange < 0 || mrange > max_range) mrange = max_range;
-  fs_cf1 = fs_cf0;
-  if (fs_cf1 != 1) return;
-  if (rad >= rad_for_straight) {
-    fs_cf1 = 0;
-    mrange = std::min(mrange, rad * max_straight_arange);
-  } else {
-    mrange = std::min(mrange, rad * max_circumf_arange);
-  }
-}
-
 absref absref::*(trajestep::aref[4]) = {(absref absref::*)&trajestep::currpos,
                                         (absref absref::*)&trajestep::dir,
                                         (absref absref::*)&trajestep::relcen,
@@ -35,10 +22,15 @@ absref_transmit trajestep::get_components() {
   return absref_transmit(4, aref);
 }
 
-trajestep::trajestep(trajestep_limit* ftl, const point& fcurrpos,
+trajestep::trajestep(vfloat fmax_range, vfloat frad_for_straight,
+                     vfloat fmax_straight_arange, vfloat fmax_circumf_arange, 
+                     const point& fcurrpos,
                      const vec& fdir, int fs_cf, const vec& frelcen,
                      vfloat fmrange, vfloat prec)
-    : m_tl(ftl),
+    : max_range(fmax_range),
+      rad_for_straight(frad_for_straight),
+      max_straight_arange(fmax_straight_arange),
+      max_circumf_arange(fmax_circumf_arange),
       currpos(fcurrpos),
       dir(),
       s_cf(fs_cf),
@@ -57,7 +49,7 @@ trajestep::trajestep(trajestep_limit* ftl, const point& fcurrpos,
                             << "fcurrpos=" << fcurrpos << "fdir=" << fdir,
                      mcerr);
     }
-    m_tl->range(s_cf, relcen.length(), s_range_cf, mrange);
+    get_range(s_cf, relcen.length(), s_range_cf, mrange);
   }
 }
 
@@ -70,7 +62,9 @@ trajestep::trajestep(const trajestep& fts, vfloat fmrange) {
   fts.Gnextpoint1(fts.mrange, fpos, fdir, frelcen);
   vfloat prec = 0.1;  // not important here
   *this =
-      trajestep(fts.m_tl, fpos, fdir, fts.s_cf, frelcen, fmrange, prec);
+      trajestep(fts.max_range, fts.rad_for_straight,
+                fts.max_straight_arange, fts.max_circumf_arange,
+                fpos, fdir, fts.s_cf, frelcen, fmrange, prec);
 }
 
 void trajestep::Gnextpoint(vfloat frange, point& fpos, vec& fdir) const {
@@ -130,6 +124,19 @@ void trajestep::Gnextpoint1(vfloat frange, point& fpos, vec& fdir,
     frelcen.turn(dir || relcen, ang);
     fpos = currpos + relcen - frelcen;
     return;
+  }
+}
+
+void trajestep::get_range(const int fs_cf0, const vfloat rad, int& fs_cf1,
+                          vfloat& fmrange) const {
+  if (fmrange < 0 || fmrange > max_range) fmrange = max_range;
+  fs_cf1 = fs_cf0;
+  if (fs_cf1 != 1) return;
+  if (rad >= rad_for_straight) {
+    fs_cf1 = 0;
+    fmrange = std::min(mrange, rad * max_straight_arange);
+  } else {
+    fmrange = std::min(mrange, rad * max_circumf_arange);
   }
 }
 
