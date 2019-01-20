@@ -38,15 +38,15 @@ class trajestep : public absref {
     * \param fmax_circ_arange angular step for curved steps.
     * \param fcurrpos initial coordinates.
     * \param fdir initial direction.
-    * \param fs_cf flag whether the trajectory is curved or straight.
+    * \param fcurved flag whether the trajectory is curved or straight.
     * \param frelcen centre of rotation (only used for curved lines).
     * \param fmrange can be used for reducing/limiting the step length.
     * \param prec tolerance for checking if frelcen is perpendicular to dir.
     */
   trajestep(const vfloat fmax_range, const vfloat frad_for_straight,
             const vfloat fmax_straight_arange, const vfloat fmax_circ_arange,
-            const point& fcurrpos, const vec& fdir,
-            int fs_cf, const vec& frelcen, vfloat fmrange, vfloat prec);
+            const point& fcurrpos, const vec& fdir, const bool fcurved, 
+            const vec& frelcen, vfloat fmrange, vfloat prec);
   /** Constructor to continue propagation from the end point of another step.
     * \param fts old step to continue
     * \param fmrange new range to travel
@@ -74,15 +74,12 @@ class trajestep : public absref {
   point currpos;
   /// Unit vector.
   vec dir;     
-  /// Type of trajectory.
-  ///  0 - the track is straight,
-  ///  1 - curved track (but the range may anyway be calculated 
-  /// as straight line, depending on s_range_cf)
-  int s_cf = 0; 
+  /// Type of trajectory (curved or straight).
+  bool curved = false; 
 
-  // Position of the center of circ. relatively currpos
-  // Used only if s_cf=1; otherwise ignored.
-  // If used, should be perpendicular to dir.
+  /// Centre of rotation relative to currpos.
+  /// Used only for curved trajectories. 
+  /// If used, should be perpendicular to dir.
   vec relcen;  
 
   // 0 - range have been calculated via straight line
@@ -105,16 +102,6 @@ class trajestep : public absref {
   static absref(absref::*aref[4]);
 
  private:
-  // Chooses straight or circle line and calculates maximal range.
-  // vfloat& mrange gives first maximal range and filled by finishing
-  // maximal range which should be less by value.
-  // fs_cf0 : 0 - if the track must be straight.
-  //          1 - if the real track is curved. It can or can not be
-  //              approximated by straight line.
-  // fs_cf1 : 0 - the track is simulated by straight line.
-  //          1 - the track is simulated by curved line.
-  void get_range(int fs_cf0, vfloat rad, int& fs_cf1, vfloat& fmrange) const;
-
   void Gnextpoint1(vfloat frange, point& fpos, vec& fdir, vec& frelcen) const;
 };
 std::ostream& operator<<(std::ostream& file, const trajestep& f);

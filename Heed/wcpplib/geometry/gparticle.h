@@ -37,7 +37,7 @@ class stvpoint {
   /// 2 - on the border of an embraced volume
   int sb = 0; 
   /// "Entering flag".
-  /// 1 - entering new volume, 0 otherwise. i
+  /// 1 - entering new volume, 0 otherwise. 
   /// Embraced volume is also considered new.
   int s_ent = 0;  
 
@@ -151,7 +151,7 @@ class gparticle {
   /// Transport the particle.
   virtual void fly(std::vector<gparticle*>& secondaries) {
     mfunname("virtual void gparticle::fly()");
-    while (s_life) {
+    while (m_alive) {
       step(secondaries);
       physics(secondaries);
     }
@@ -162,31 +162,19 @@ class gparticle {
                        const vfloat frad_for_straight,
                        const vfloat fmax_straight_arange,
                        const vfloat fmax_circ_arange) {
-    max_range = fmax_range;
-    rad_for_straight = frad_for_straight;
-    max_straight_arange = fmax_straight_arange;
-    max_circ_arange = fmax_circ_arange;
+    m_max_range = fmax_range;
+    m_rad_for_straight = frad_for_straight;
+    m_max_straight_arange = fmax_straight_arange;
+    m_max_circ_arange = fmax_circ_arange;
   }
 
+  const vec& position() const { return m_currpos.pt.v; }
+  vfloat time() const { return m_currpos.time; }
+  const vec& direction() const { return m_currpos.dir; }
+
   virtual void print(std::ostream& file, int l) const;
+  /// Clone the particle.
   virtual gparticle* copy() const { return new gparticle(*this); }
-
-  bool s_life = false;
-  /// Step number.
-  long nstep = 0;
-  /// Range from origin to currpos.
-  double total_range_from_origin = 0.; 
-  /// Number of previous steps with zero range (including this step).
-  long n_zero_step = 0; 
-
-  static constexpr long max_q_zero_step = 100;
-  stvpoint origin;
-  stvpoint prevpos;
-  stvpoint currpos;
-  stvpoint nextpos;
-  // current relcen computed
-  // at the last call of calc_step_to_bord(), only for debug print
-  vec curr_relcen;  
 
  protected:
   /// Assign prevpos = currpos and currpos = nextpos,
@@ -200,7 +188,7 @@ class gparticle {
   virtual void step(std::vector<gparticle*>& secondaries);
 
   /// Move from one volume to another.
-  virtual void change_vol() { currpos.tid.G_lavol()->income(this); }
+  virtual void change_vol() { m_currpos.tid.G_lavol()->income(this); }
 
   /** Set curvature. Can also change the direction at the current position.
     * \param frelcen
@@ -210,7 +198,7 @@ class gparticle {
     *        dir. In the latter case, the range is restricted by the end point.
     *        In calc_step_to_bord() it is set to max_straight_arange.
     */
-  virtual void curvature(int& fs_cf, vec& frelcen, vfloat& fmrange,
+  virtual void curvature(bool& curved, vec& frelcen, vfloat& fmrange,
                          vfloat prec);
 
   /// Apply any other processes (turn the trajectory, kill the particle, ...).
@@ -225,20 +213,43 @@ class gparticle {
   /// Therefore mrange may be reduced after this.
   virtual void physics_mrange(double& fmrange);
 
-  /// Determine nextpos.
+  /// Determine next position.
   virtual stvpoint calc_step_to_bord();
 
+  /// Generate next position in new volume.
   stvpoint switch_new_vol();
+
+  /// Status flag whether the particle is active.
+  bool m_alive = false;
+
+  /// Step number.
+  long m_nstep = 0;
+  /// Max. number of zero-steps allowed.
+  static constexpr long m_max_qzero_step = 100;
+  /// Number of previous steps with zero range (including this step).
+  long m_nzero_step = 0; 
+
+  /// Original point.
+  stvpoint m_origin;
+  /// Range from origin to current position.
+  double m_total_range_from_origin = 0.; 
+
+  /// Previous point.
+  stvpoint m_prevpos;
+  /// Current point.
+  stvpoint m_currpos;
+  /// Next point.
+  stvpoint m_nextpos;
 
  private:
   /// Max. length of trajectory steps.
-  vfloat max_range = 100. * CLHEP::cm;
+  vfloat m_max_range = 100. * CLHEP::cm;
   /// Bending radius beyond which to use straight-line steps.
-  vfloat rad_for_straight = 1000. * CLHEP::cm;
+  vfloat m_rad_for_straight = 1000. * CLHEP::cm;
   /// Angular step limit when using straight-line approximation.
-  vfloat max_straight_arange = 0.1 * CLHEP::rad;
+  vfloat m_max_straight_arange = 0.1 * CLHEP::rad;
   /// Angular step limit for curved lines.
-  vfloat max_circ_arange = 0.2 * CLHEP::rad;
+  vfloat m_max_circ_arange = 0.2 * CLHEP::rad;
 };
 }
 

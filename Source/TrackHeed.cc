@@ -279,15 +279,15 @@ bool TrackHeed::GetCluster(double& xcls, double& ycls, double& zcls,
 
     // Get the location of the interaction (convert from mm to cm
     // and shift with respect to bounding box center).
-    xcls = virtualPhoton->currpos.pt.v.x * 0.1 + m_cX;
-    ycls = virtualPhoton->currpos.pt.v.y * 0.1 + m_cY;
-    zcls = virtualPhoton->currpos.pt.v.z * 0.1 + m_cZ;
-    tcls = virtualPhoton->currpos.time;
+    xcls = virtualPhoton->position().x * 0.1 + m_cX;
+    ycls = virtualPhoton->position().y * 0.1 + m_cY;
+    zcls = virtualPhoton->position().z * 0.1 + m_cZ;
+    tcls = virtualPhoton->time();
     // Skip clusters outside the drift area or outside the active medium.
     if (!IsInside(xcls, ycls, zcls)) continue;
     // Add the first ion (at the position of the cluster).
     m_conductionIons.emplace_back(
-        Heed::HeedCondElectron(virtualPhoton->currpos.pt, tcls));
+        Heed::HeedCondElectron(xcls, ycls, zcls, tcls));
     ++m_bankIterator;
     break;
   }
@@ -301,7 +301,7 @@ bool TrackHeed::GetCluster(double& xcls, double& ycls, double& zcls,
   // Transport the virtual photon.
   virtualPhoton->fly(secondaries);
   // Get the transferred energy (convert from MeV to eV).
-  e = virtualPhoton->energy * 1.e6;
+  e = virtualPhoton->m_energy * 1.e6;
 
   while (!secondaries.empty()) {
     std::vector<Heed::gparticle*> newSecondaries;
@@ -310,10 +310,10 @@ bool TrackHeed::GetCluster(double& xcls, double& ycls, double& zcls,
       // Check if it is a delta electron.
       auto delta = dynamic_cast<Heed::HeedDeltaElectron*>(secondary);
       if (delta) {
-        extra += delta->curr_kin_energy * 1.e6;
-        const double x = delta->currpos.pt.v.x * 0.1 + m_cX;
-        const double y = delta->currpos.pt.v.y * 0.1 + m_cY;
-        const double z = delta->currpos.pt.v.z * 0.1 + m_cZ;
+        extra += delta->kinetic_energy() * 1.e6;
+        const double x = delta->position().x * 0.1 + m_cX;
+        const double y = delta->position().y * 0.1 + m_cY;
+        const double z = delta->position().z * 0.1 + m_cZ;
         if (!IsInside(x, y, z)) continue;
         if (m_doDeltaTransport) {
           // Transport the delta electron.
@@ -328,14 +328,14 @@ bool TrackHeed::GetCluster(double& xcls, double& ycls, double& zcls,
         } else {
           // Add the delta electron to the list, for later use.
           deltaElectron newDeltaElectron;
-          newDeltaElectron.x = delta->currpos.pt.v.x * 0.1 + m_cX;
-          newDeltaElectron.y = delta->currpos.pt.v.y * 0.1 + m_cY;
-          newDeltaElectron.z = delta->currpos.pt.v.z * 0.1 + m_cZ;
-          newDeltaElectron.t = delta->currpos.time;
-          newDeltaElectron.e = delta->curr_kin_energy * 1.e6;
-          newDeltaElectron.dx = delta->currpos.dir.x;
-          newDeltaElectron.dy = delta->currpos.dir.y;
-          newDeltaElectron.dz = delta->currpos.dir.z;
+          newDeltaElectron.x = delta->position().x * 0.1 + m_cX;
+          newDeltaElectron.y = delta->position().y * 0.1 + m_cY;
+          newDeltaElectron.z = delta->position().z * 0.1 + m_cZ;
+          newDeltaElectron.t = delta->time();
+          newDeltaElectron.e = delta->kinetic_energy() * 1.e6;
+          newDeltaElectron.dx = delta->direction().x;
+          newDeltaElectron.dy = delta->direction().y;
+          newDeltaElectron.dz = delta->direction().z;
           m_deltaElectrons.push_back(std::move(newDeltaElectron));
         }
         continue;
@@ -346,10 +346,10 @@ bool TrackHeed::GetCluster(double& xcls, double& ycls, double& zcls,
         std::cerr << m_className << "::GetCluster:\n"
                   << "    Particle is neither an electron nor a photon.\n";
       }
-      extra += photon->energy * 1.e6;
-      const double x = photon->currpos.pt.v.x * 0.1 + m_cX;
-      const double y = photon->currpos.pt.v.y * 0.1 + m_cY;
-      const double z = photon->currpos.pt.v.z * 0.1 + m_cZ;
+      extra += photon->m_energy * 1.e6;
+      const double x = photon->position().x * 0.1 + m_cX;
+      const double y = photon->position().y * 0.1 + m_cY;
+      const double z = photon->position().z * 0.1 + m_cZ;
       if (!IsInside(x, y, z)) continue;
       // Transport the photon.
       if (m_usePhotonReabsorption) photon->fly(newSecondaries);
@@ -382,9 +382,9 @@ bool TrackHeed::GetElectron(const unsigned int i,
       return false;
     }
 
-    x = m_conductionElectrons[i].ptloc.v.x * 0.1 + m_cX;
-    y = m_conductionElectrons[i].ptloc.v.y * 0.1 + m_cY;
-    z = m_conductionElectrons[i].ptloc.v.z * 0.1 + m_cZ;
+    x = m_conductionElectrons[i].x * 0.1 + m_cX;
+    y = m_conductionElectrons[i].y * 0.1 + m_cY;
+    z = m_conductionElectrons[i].z * 0.1 + m_cZ;
     t = m_conductionElectrons[i].time;
     e = 0.;
     dx = dy = dz = 0.;
@@ -418,9 +418,9 @@ bool TrackHeed::GetIon(const unsigned int i,
     return false;
   }
 
-  x = m_conductionIons[i].ptloc.v.x * 0.1 + m_cX;
-  y = m_conductionIons[i].ptloc.v.y * 0.1 + m_cY;
-  z = m_conductionIons[i].ptloc.v.z * 0.1 + m_cZ;
+  x = m_conductionIons[i].x * 0.1 + m_cX;
+  y = m_conductionIons[i].y * 0.1 + m_cY;
+  z = m_conductionIons[i].z * 0.1 + m_cZ;
   t = m_conductionIons[i].time;
   return true;
 }
@@ -657,14 +657,14 @@ void TrackHeed::TransportPhoton(const double x0, const double y0,
         } else {
           // Add the delta electron to the list, for later use.
           deltaElectron newDeltaElectron;
-          newDeltaElectron.x = delta->currpos.pt.v.x * 0.1 + m_cX;
-          newDeltaElectron.y = delta->currpos.pt.v.y * 0.1 + m_cY;
-          newDeltaElectron.z = delta->currpos.pt.v.z * 0.1 + m_cZ;
-          newDeltaElectron.t = delta->currpos.time;
-          newDeltaElectron.e = delta->curr_kin_energy * 1.e6;
-          newDeltaElectron.dx = delta->currpos.dir.x;
-          newDeltaElectron.dy = delta->currpos.dir.y;
-          newDeltaElectron.dz = delta->currpos.dir.z;
+          newDeltaElectron.x = delta->position().x * 0.1 + m_cX;
+          newDeltaElectron.y = delta->position().y * 0.1 + m_cY;
+          newDeltaElectron.z = delta->position().z * 0.1 + m_cZ;
+          newDeltaElectron.t = delta->time();
+          newDeltaElectron.e = delta->kinetic_energy() * 1.e6;
+          newDeltaElectron.dx = delta->direction().x;
+          newDeltaElectron.dy = delta->direction().y;
+          newDeltaElectron.dz = delta->direction().z;
           m_deltaElectrons.push_back(std::move(newDeltaElectron));
         }
         continue;

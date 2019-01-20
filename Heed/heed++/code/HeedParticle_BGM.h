@@ -35,13 +35,13 @@ class HeedParticle_BGM : public eparticle {
   void physics(std::vector<gparticle*>& secondaries) override;
 
  private:
-  bool s_print_listing;
-  long particle_number;
+  bool m_print_listing;
+  long m_particle_number;
 
-  bool s_loss_only;
-  std::vector<double> etransf;
-  std::vector<long> natom;
-  std::vector<long> nshell;
+  bool m_loss_only;
+  std::vector<double> m_etransf;
+  std::vector<long> m_natom;
+  std::vector<long> m_nshell;
 
   std::vector<HeedCluster> m_clusterBank;
 };

@@ -25,7 +25,7 @@ absref_transmit trajestep::get_components() {
 trajestep::trajestep(const vfloat fmax_range, const vfloat frad_for_straight,
                      const vfloat fmax_straight_arange, 
                      const vfloat fmax_circ_arange, const point& fcurrpos,
-                     const vec& fdir, int fs_cf, const vec& frelcen,
+                     const vec& fdir, const bool fcurved, const vec& frelcen,
                      vfloat fmrange, vfloat prec)
     : max_range(fmax_range),
       rad_for_straight(frad_for_straight),
@@ -33,7 +33,7 @@ trajestep::trajestep(const vfloat fmax_range, const vfloat frad_for_straight,
       max_circ_arange(fmax_circ_arange),
       currpos(fcurrpos),
       dir(),
-      s_cf(fs_cf),
+      curved(fcurved),
       relcen(frelcen),
       s_prec(1),
       mrange(fmrange) {
@@ -43,13 +43,23 @@ trajestep::trajestep(const vfloat fmax_range, const vfloat frad_for_straight,
     mrange = 0;
   } else {
     dir = unit_vec(fdir);
-    if (s_cf == 1) {
+    if (curved) {
       check_econd11a(check_perp(dir, relcen, prec), != 1,
                      "dir=" << dir << "relcen=" << relcen
                             << "fcurrpos=" << fcurrpos << "fdir=" << fdir,
                      mcerr);
     }
-    get_range(s_cf, relcen.length(), s_range_cf, mrange);
+    if (mrange < 0 || mrange > max_range) mrange = max_range;
+    s_range_cf = curved;
+    if (s_range_cf == 1) {
+      const vfloat r = relcen.length();
+      if (r >= rad_for_straight) {
+        s_range_cf = 0;
+        mrange = std::min(mrange, r * max_straight_arange);
+      } else {
+        mrange = std::min(mrange, r * max_circ_arange);
+      }
+    }
   }
 }
 
@@ -64,7 +74,7 @@ trajestep::trajestep(const trajestep& fts, vfloat fmrange) {
   *this =
       trajestep(fts.max_range, fts.rad_for_straight,
                 fts.max_straight_arange, fts.max_circ_arange,
-                fpos, fdir, fts.s_cf, frelcen, fmrange, prec);
+                fpos, fdir, fts.curved, frelcen, fmrange, prec);
 }
 
 void trajestep::Gnextpoint(vfloat frange, point& fpos, vec& fdir) const {
@@ -73,7 +83,7 @@ void trajestep::Gnextpoint(vfloat frange, point& fpos, vec& fdir) const {
   if (s_range_cf == 0) {
     // interpolation by straight line
     fpos = currpos + frange * dir;
-    if (s_cf == 0) {
+    if (!curved) {
       // no curvature
       fdir = dir;
     } else {
@@ -100,7 +110,7 @@ void trajestep::Gnextpoint1(vfloat frange, point& fpos, vec& fdir,
   if (s_range_cf == 0) {
     // interpolation by straight line
     fpos = currpos + frange * dir;
-    if (s_cf == 0) {
+    if (!curved) {
       // no curvature
       fdir = dir;
       frelcen = relcen;  // whatever it is
@@ -121,21 +131,8 @@ void trajestep::Gnextpoint1(vfloat frange, point& fpos, vec& fdir,
   }
 }
 
-void trajestep::get_range(const int fs_cf0, const vfloat rad, int& fs_cf1,
-                          vfloat& fmrange) const {
-  if (fmrange < 0 || fmrange > max_range) fmrange = max_range;
-  fs_cf1 = fs_cf0;
-  if (fs_cf1 != 1) return;
-  if (rad >= rad_for_straight) {
-    fs_cf1 = 0;
-    fmrange = std::min(mrange, rad * max_straight_arange);
-  } else {
-    fmrange = std::min(mrange, rad * max_circ_arange);
-  }
-}
-
 std::ostream& operator<<(std::ostream& file, const trajestep& f) {
-  Ifile << "trajestep: s_cf=" << f.s_cf << "\n";
+  Ifile << "trajestep: curved=" << f.curved << "\n";
   indn.n += 2;
   Ifile << "currpos:" << f.currpos << indn << "dir=" << f.dir << indn
         << "relcen=" << f.relcen << indn << "s_range_cf=" << f.s_range_cf
