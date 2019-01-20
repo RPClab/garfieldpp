@@ -30,13 +30,12 @@ class mparticle : public gparticle {
   /// Destructor.
   virtual ~mparticle() {}
 
+  /// Get the current kinetic energy.
   double kinetic_energy() const { return m_curr_ekin; }
 
   void print(std::ostream& file, int l) const override;
   mparticle* copy() const override { return new mparticle(*this); }
 
-  /// Current \f$\gamma - 1\f$
-  double m_curr_gamma_1 = 0.;
 
  protected:
   void step(std::vector<gparticle*>& secondaries) override;
@@ -77,16 +76,19 @@ class mparticle : public gparticle {
   /// Previous kinetic energy
   double m_prev_ekin = 0.;
 
+  /// Current \f$\gamma - 1\f$
+  double m_curr_gamma_1 = 0.;
+  /// Original \f$\gamma - 1\f$
+  double m_orig_gamma_1 = 0.;
+  /// Previous \f$\gamma - 1\f$
+  double m_prev_gamma_1 = 0.;
+
  private:
   /// Check consistency of kinetic energy, \f$\gamma - 1\f$, speed, and mass.
   void check_consistency() const;
   /// Set new speed, direction and time for the current position.
   void new_speed();
 
-  /// Original \f$\gamma - 1\f$
-  double m_orig_gamma_1 = 0.;
-  /// Previous \f$\gamma - 1\f$
-  double m_prev_gamma_1 = 0.;
 };
 
 std::ostream& operator<<(std::ostream& file, const mparticle& f);

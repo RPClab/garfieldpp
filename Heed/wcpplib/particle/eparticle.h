@@ -30,6 +30,7 @@ class eparticle : public mparticle, public particle_type {
   int force(const point& pt, vec& f, vec& f_perp, vfloat& mrange) override;
   // mrange - distance at which the force should not change much
 
+  /// Pointer to field map.
   HeedFieldMap* m_fieldMap = nullptr;
 };
 }

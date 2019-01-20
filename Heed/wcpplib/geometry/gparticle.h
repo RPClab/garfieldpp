@@ -168,10 +168,14 @@ class gparticle {
     m_max_circ_arange = fmax_circ_arange;
   }
 
+  /// Get the current position of the particle.
   const vec& position() const { return m_currpos.pt.v; }
+  /// Get the current time of the particle.
   vfloat time() const { return m_currpos.time; }
+  /// Get the current direction of the particle.
   const vec& direction() const { return m_currpos.dir; }
 
+  /// Print-out.
   virtual void print(std::ostream& file, int l) const;
   /// Clone the particle.
   virtual gparticle* copy() const { return new gparticle(*this); }
@@ -191,12 +195,16 @@ class gparticle {
   virtual void change_vol() { m_currpos.tid.G_lavol()->income(this); }
 
   /** Set curvature. Can also change the direction at the current position.
+    * \param curved 
+    *        flag whether the trajectory is curved
     * \param frelcen
     *        position of the centre of rotation relative to currpos.
+    * \param fmrange
+    *        step range
     * \param prec 
     *        tolerance for checking if the force is parallel or antiparallel to
     *        dir. In the latter case, the range is restricted by the end point.
-    *        In calc_step_to_bord() it is set to max_straight_arange.
+    *        In calc_step_to_bord() it is set to m_max_straight_arange.
     */
   virtual void curvature(bool& curved, vec& frelcen, vfloat& fmrange,
                          vfloat prec);

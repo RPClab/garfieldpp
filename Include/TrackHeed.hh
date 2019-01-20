@@ -86,7 +86,7 @@ class TrackHeed : public Track {
   void TransportDeltaElectron(const double x0, const double y0, const double z0,
                               const double t0, const double e0,
                               const double dx0, const double dy0,
-                              const double dz0, int& nel, int& ni);
+                              const double dz0, int& ne, int& ni);
   /** Simulate a delta electron.
     * \param x0,y0,z0 initial position of the delta electron
     * \param t0 initial time
@@ -97,7 +97,7 @@ class TrackHeed : public Track {
   void TransportDeltaElectron(const double x0, const double y0, const double z0,
                               const double t0, const double e0,
                               const double dx0, const double dy0,
-                              const double dz0, int& nel);
+                              const double dz0, int& ne);
 
   /** Simulate a photon.
     * \param x0,y0,z0 initial position of the photon
@@ -108,7 +108,7 @@ class TrackHeed : public Track {
     **/
   void TransportPhoton(const double x0, const double y0, const double z0,
                        const double t0, const double e0, const double dx0,
-                       const double dy0, const double dz0, int& nel, int& ni);
+                       const double dy0, const double dz0, int& ne, int& ni);
   /** Simulate a photon.
     * \param x0,y0,z0 initial position of the photon
     * \param t0 initial time
@@ -118,7 +118,7 @@ class TrackHeed : public Track {
     **/
   void TransportPhoton(const double x0, const double y0, const double z0,
                        const double t0, const double e0, const double dx0,
-                       const double dy0, const double dz0, int& nel);
+                       const double dy0, const double dz0, int& ne);
 
   /// Take the electric field into account in the stepping algorithm.
   void EnableElectricField();
