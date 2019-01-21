@@ -147,6 +147,13 @@ class TrackHeed : public Track {
     m_stepAngleStraight = stepAngleStraight;
     m_stepAngleCurved = stepAngleCurved;
   }
+  void GetSteppingLimits(double& maxStep, double& radStraight, 
+                         double& stepAngleStraight, double& stepAngleCurved) {
+    maxStep = m_maxStep;
+    radStraight = m_radStraight;
+    stepAngleStraight = m_stepAngleStraight;
+    stepAngleCurved = m_stepAngleCurved;
+  }
 
   /// Switch simulation of delta electrons on.
   void EnableDeltaElectronTransport() { m_doDeltaTransport = true; }
