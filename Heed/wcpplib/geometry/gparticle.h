@@ -46,8 +46,9 @@ class stvpoint {
   vfloat prange = 0.;
   vfloat time = 0.;
 
-  // constructors
+  /// Default constructor.
   stvpoint() = default;
+  /// Constructor.
   stvpoint(const point& fpt, const vec& fdir, vfloat fspeed,
            manip_absvol_treeid& ftid, vfloat fprange, vfloat ftime, int fsb,
            int fs_ent, manip_absvol* faeid)
@@ -65,8 +66,15 @@ class stvpoint {
     dirloc = dir;
     tid.up_absref(&dirloc);
   }
-  stvpoint(const stvpoint& pstv, const trajestep& ts,  // in the local system
-           vfloat mrange,  // may be less than one in ts
+  /** Constructor.
+    * \param pstv previous point
+    * \param ts trajectory step (in the local system)
+    * \param mrange step length (may be less than the one in ts)
+    * \param fsb position flag 
+    * \param fs_ent "entering" flag
+    * \param faeid next volume
+    **/
+  stvpoint(const stvpoint& pstv, const trajestep& ts, vfloat mrange,
            int fsb, int fs_ent, manip_absvol* faeid)
       : pt(),
         dir(),
@@ -77,8 +85,7 @@ class stvpoint {
         sb(fsb),
         s_ent(fs_ent),
         next_eid(faeid),
-        prange(mrange),
-        time(pstv.time + mrange / pstv.speed) {
+        prange(mrange) {
     if (pstv.speed == 0) {
       time = pstv.time;  // just to put anything
     } else {
@@ -91,8 +98,14 @@ class stvpoint {
     dir = dirloc;
     tid.down_absref(&dir);
   }
-
-  stvpoint(const stvpoint& pstv, const trajestep& ts,  // in the local system
+  /** Constructor.
+    * \param pstv previous point
+    * \param ts trajectory step (in the local system)
+    * \param fsb position flag 
+    * \param fs_ent "entering" flag
+    * \param faeid next volume
+    **/
+  stvpoint(const stvpoint& pstv, const trajestep& ts,
            int fsb, int fs_ent, manip_absvol* faeid)
       : pt(),
         dir(),
@@ -103,8 +116,7 @@ class stvpoint {
         sb(fsb),
         s_ent(fs_ent),
         next_eid(faeid),
-        prange(ts.mrange),
-        time(pstv.time + ts.mrange / pstv.speed) {
+        prange(ts.mrange) {
     if (pstv.speed == 0) {
       time = pstv.time;  // just to put anything
     } else {
@@ -119,18 +131,8 @@ class stvpoint {
     dir = dirloc;
     tid.down_absref(&dir);
   }
-  stvpoint(const stvpoint& fp)
-      : pt(fp.pt),
-        dir(fp.dir),
-        ptloc(fp.ptloc),
-        dirloc(fp.dirloc),
-        speed(fp.speed),
-        tid(fp.tid),
-        sb(fp.sb),
-        s_ent(fp.s_ent),
-        next_eid(fp.next_eid),
-        prange(fp.prange),
-        time(fp.time) {}
+  /// Copy constructor.
+  stvpoint(const stvpoint& fp) = default;
   void print(std::ostream& file, int l) const;
 };
 

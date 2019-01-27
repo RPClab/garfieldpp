@@ -112,9 +112,7 @@ void HeedParticle::physics(std::vector<gparticle*>& secondaries) {
         vel.random_conic_vec(fabs(theta_t));
         vel.down(&tempbas);  // direction is OK
         vel *= c_light;
-        // HS
-        double speed = vel.length();
-        double t = arange / speed;
+        const double t = m_prevpos.time + arange / m_prevpos.speed;
         if (m_print_listing) mcout << "generating new virtual photon\n";
         HeedPhoton* hp = new HeedPhoton(m_currpos.tid.eid[0], pt, vel, t,
                                         m_particle_number, et, m_fieldMap);
