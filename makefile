@@ -303,6 +303,10 @@ $(OBJDIR)/OpticalData.o: \
 	@echo $@
 	@$(CXX) $(CFLAGS) $< -o $@
 
+$(OBJDIR)/Solid.o: \
+	$(SRCDIR)/Solid.cc $(INCDIR)/Solid.hh
+	@echo $@
+	@$(CXX) $(CFLAGS) $< -o $@
 $(OBJDIR)/SolidBox.o: \
 	$(SRCDIR)/SolidBox.cc $(INCDIR)/SolidBox.hh
 	@echo $@
