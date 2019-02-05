@@ -180,11 +180,7 @@ class Solid {
   void SetDirection(const double dx, const double dy, const double dz);
 
  private:
-  double NotImplemented(const std::string& fcn) const {
-    std::cerr << m_className << "::" << fcn 
-              << ": function not implemented.\n";
-    return 0.;
-  }
+  double NotImplemented(const std::string& fcn) const;
 };
 }
 

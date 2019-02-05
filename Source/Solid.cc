@@ -36,4 +36,9 @@ void Solid::SetDirection(const double dx, const double dy, const double dz) {
   m_sPhi = sin(phi);
 }
 
+double Solid::NotImplemented(const std::string& fcn) const {
+
+  std::cerr << m_className << "::" << fcn << ": function not implemented.\n";
+  return 0.;
+}
 }
