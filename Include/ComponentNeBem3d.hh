@@ -20,8 +20,6 @@ class ComponentNeBem3d : public ComponentBase {
                      Medium*& m, int& status) override;
   bool GetVoltageRange(double& vmin, double& vmax) override;
 
-  void SetGeometry(GeometryBase* geo) { m_geometry = geo; }
-
   unsigned int GetNumberOfPanels() const { return m_panels.size(); }
   bool GetPanel(unsigned int i, double& a, double& b, double& c, 
 		            std::vector<double>& xv, std::vector<double>& yv, 
@@ -35,9 +33,6 @@ class ComponentNeBem3d : public ComponentBase {
   bool Initialise();
 
  private:
-
-  /// Pointer to the geometry.
-  GeometryBase* m_geometry = nullptr;
 
   /// List of surface panels.
   std::vector<Panel> m_panels;
