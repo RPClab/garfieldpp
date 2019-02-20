@@ -371,6 +371,10 @@ bool ComponentNeBem3d::Initialise() {
   // Reset the panel list.
   m_panels.clear();
 
+  if (!m_geometry) {
+    std::cerr << m_className << "::Initialise: Geometry not set.\n";
+    return false;
+  }
   // Be sure we won't have intersections with the bounding box.
   // TODO! Loop over the solids and call PLACYE, PLACHE, PLABXE, PLASPE, ... 
   // Loop over the solids.
@@ -896,10 +900,10 @@ bool ComponentNeBem3d::EliminateOverlaps(const Panel& panel1,
   if (m_debug) {
     for (unsigned int j = 0; j < 2; ++j) {
       std::cout << "Polygon " << j << "\n"; 
-      std::cout << " No Type            x            y        Q links\n";
+      std::cout << " No Type            x            y        Q   links\n";
       const unsigned int n = xl[j].size();
       for (unsigned int i = 0; i < n; ++i) {
-        printf("  %3d %5d %13.6f %13.6f %10.3f %3d\n", i, flags[j][i], 
+        printf("  %3d %5d %13.6f %13.6f %5.3f %3d\n", i, flags[j][i], 
                xl[j][i], yl[j][i], points[j][i].q, links[j][i]);
       }
     }
@@ -968,7 +972,7 @@ bool ComponentNeBem3d::EliminateOverlaps(const Panel& panel1,
     bool done = false;
     while (!done) {
       if (m_debug) {
-        std::cout << "Searching for starting point on " << ic + 1 << "1.\n";
+        std::cout << "Searching for starting point on " << ic + 1 << ".\n";
       }
       done = true;
       // Try and find a new starting point
@@ -1018,6 +1022,7 @@ bool ComponentNeBem3d::EliminateOverlaps(const Panel& panel1,
   std::vector<bool> mark1(n1, false);
   bool done = false;
   while (!done) { 
+    done = true;
     if (m_debug) std::cout << "Searching for starting point on overlap.\n";
     for (unsigned int i = 0; i < n1; ++i) {
       // Skip points already processed.

@@ -20,6 +20,8 @@ class ComponentNeBem3d : public ComponentBase {
                      Medium*& m, int& status) override;
   bool GetVoltageRange(double& vmin, double& vmax) override;
 
+  void SetGeometry(GeometryBase* geo) { m_geometry = geo; }
+
   unsigned int GetNumberOfPanels() const { return m_panels.size(); }
   bool GetPanel(unsigned int i, double& a, double& b, double& c, 
 		            std::vector<double>& xv, std::vector<double>& yv, 
@@ -33,11 +35,11 @@ class ComponentNeBem3d : public ComponentBase {
   bool Initialise();
 
  private:
-  // Access to geometry: 
-  // ComponentBase::SetGeometry(GeometryBase* geo)
-  // GeometryBase* m_geometry
 
-  // Create and clean up the panels structure
+  /// Pointer to the geometry.
+  GeometryBase* m_geometry = nullptr;
+
+  /// List of surface panels.
   std::vector<Panel> m_panels;
 
   // Array of boundary elements (version for nebem 3d)
@@ -60,6 +62,7 @@ class ComponentNeBem3d : public ComponentBase {
   };
   std::vector<Element> m_elements;
 
+  /// Remove ontacts and cut polygons to rectangles and right-angle triangles.
   bool MakePanels();
   /// Isolate the parts of polygon 1 that are not hidden by 2 and vice versa.
   bool EliminateOverlaps(const Panel& panel1, const Panel& panel2, 
@@ -93,6 +96,8 @@ class ComponentNeBem3d : public ComponentBase {
   bool MakePrimitives(const Panel& panelIn, 
                       std::vector<Panel>& panelsOut) const;
 
+  /// Check whether a polygon contains parallel lines. 
+  /// If it does, split it in rectangular and non-rectangular parts.
   bool SplitTrapezium(const Panel& panelIn, 
                       std::vector<Panel>& stack, 
                       std::vector<Panel>& panelsOut, const double epsang) const;
