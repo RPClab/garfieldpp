@@ -158,6 +158,7 @@ bool SolidTube::SolidPanels(std::vector<Panel>& panels) {
   // B    direction vector m_dY
   // C    direction vector m_dZ
 
+  const auto id = GetId();
   const unsigned int nPanels = panels.size();
   // Direction vector.
   const double fnorm = sqrt(m_dX * m_dX + m_dY * m_dY + m_dZ * m_dZ);
@@ -197,7 +198,7 @@ bool SolidTube::SolidPanels(std::vector<Panel>& panels) {
     newpanel.yv = yv;
     newpanel.zv = zv;
     newpanel.colour = 0;
-    newpanel.volume = 0;
+    newpanel.volume = id;
     panels.push_back(std::move(newpanel));
   }
   // Create the bottom lid.
@@ -222,7 +223,7 @@ bool SolidTube::SolidPanels(std::vector<Panel>& panels) {
     newpanel.yv = yv;
     newpanel.zv = zv;
     newpanel.colour = 0;
-    newpanel.volume = 0;
+    newpanel.volume = id;
     panels.push_back(std::move(newpanel));
   }
   // Create the side panels.
@@ -256,7 +257,7 @@ bool SolidTube::SolidPanels(std::vector<Panel>& panels) {
     newpanel.yv = {yv0, yv1, yv2, yv3};
     newpanel.zv = {zv0, zv1, zv2, zv3};
     newpanel.colour = 0;
-    newpanel.volume = 0;
+    newpanel.volume = id;
     panels.push_back(std::move(newpanel));
     // Shift the points.
     xv0 = xv3;

@@ -103,6 +103,7 @@ void SolidSphere::SetMeridians(const unsigned int n) {
 
 bool SolidSphere::SolidPanels(std::vector<Panel>& panels) {
 
+  const auto id = GetId();
   const unsigned int nPanels = panels.size();
   const double R = m_rMax;
   // Loop over the sphere.
@@ -173,6 +174,7 @@ bool SolidSphere::SolidPanels(std::vector<Panel>& panels) {
       newpanel.a = cos(0.5 * (phi0 + phi1)) * calpha;
       newpanel.b = sin(0.5 * (phi0 + phi1)) * calpha;
       newpanel.c = salpha;
+      newpanel.volume = id; 
       panels.push_back(std::move(newpanel));
     }
   }

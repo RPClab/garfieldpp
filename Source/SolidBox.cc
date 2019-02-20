@@ -105,6 +105,7 @@ void SolidBox::SetHalfLengthZ(const double lz) {
 
 bool SolidBox::SolidPanels(std::vector<Panel>& panels) {
 
+  const auto id = GetId();
   const auto nPanels = panels.size();
   double xv0, yv0, zv0;
   double xv1, yv1, zv1;
@@ -125,7 +126,7 @@ bool SolidBox::SolidPanels(std::vector<Panel>& panels) {
     newpanel.yv = {yv0, yv1, yv2, yv3};
     newpanel.zv = {zv0, zv1, zv2, zv3};
     newpanel.colour = 0;
-    newpanel.volume = 0;
+    newpanel.volume = id;
     panels.push_back(std::move(newpanel));
   }
   // The x = xmax face.
@@ -142,7 +143,7 @@ bool SolidBox::SolidPanels(std::vector<Panel>& panels) {
     newpanel.yv = {yv0, yv1, yv2, yv3};
     newpanel.zv = {zv0, zv1, zv2, zv3};
     newpanel.colour = 0;
-    newpanel.volume = 0;
+    newpanel.volume = id; 
     panels.push_back(std::move(newpanel));
   }
   // The y = ymin face.
@@ -159,7 +160,7 @@ bool SolidBox::SolidPanels(std::vector<Panel>& panels) {
     newpanel.yv = {yv0, yv1, yv2, yv3};
     newpanel.zv = {zv0, zv1, zv2, zv3};
     newpanel.colour = 0;
-    newpanel.volume = 0;
+    newpanel.volume = id;
     panels.push_back(std::move(newpanel));
   }
   // The y = ymax face.
@@ -176,7 +177,7 @@ bool SolidBox::SolidPanels(std::vector<Panel>& panels) {
     newpanel.yv = {yv0, yv1, yv2, yv3};
     newpanel.zv = {zv0, zv1, zv2, zv3};
     newpanel.colour = 0;
-    newpanel.volume = 0;
+    newpanel.volume = id;
     panels.push_back(std::move(newpanel));
   }
   // The z = zmin face.
@@ -193,7 +194,7 @@ bool SolidBox::SolidPanels(std::vector<Panel>& panels) {
     newpanel.yv = {yv0, yv1, yv2, yv3};
     newpanel.zv = {zv0, zv1, zv2, zv3};
     newpanel.colour = 0;
-    newpanel.volume = 0;
+    newpanel.volume = id;
     panels.push_back(std::move(newpanel));
   }
   // The z = zmax face.
@@ -210,7 +211,7 @@ bool SolidBox::SolidPanels(std::vector<Panel>& panels) {
     newpanel.yv = {yv0, yv1, yv2, yv3};
     newpanel.zv = {zv0, zv1, zv2, zv3};
     newpanel.colour = 0;
-    newpanel.volume = 0;
+    newpanel.volume = id;
     panels.push_back(std::move(newpanel));
   }
   // Done, check panel count.

@@ -28,11 +28,13 @@ class Solid {
 
  public:
   /// Default constructor.
-  Solid() = default;
+  Solid() = delete;
   /// Constructor.
   Solid(const double cx, const double cy, const double cz,
         const std::string& name)
-    : m_cX(cx), m_cY(cy), m_cZ(cz), m_className(name) {}
+    : m_cX(cx), m_cY(cy), m_cZ(cz), m_className(name) {
+    m_id = s_id++;
+  }
  
   /// Destructor
   virtual ~Solid() {}
@@ -97,6 +99,9 @@ class Solid {
   virtual double GetRidgeHeight() const {
     return NotImplemented("GetRidgeHeight");
   }
+
+  /// Get the ID of the solid.
+  unsigned int GetId() const { return m_id; }
 
   /// Retrieve the surface panels of the solid.
   virtual bool SolidPanels(std::vector<Panel>& panels) = 0;
@@ -181,6 +186,11 @@ class Solid {
 
  private:
   double NotImplemented(const std::string& fcn) const;
+  /// ID counter.
+  static unsigned int s_id;
+  /// ID of the solid.
+  unsigned int m_id;
+
 };
 }
 
