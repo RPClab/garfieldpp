@@ -176,6 +176,111 @@ bool Crossing(const double x1, const double y1,
   return false;
 }
 
+void AddPoints(const std::vector<double>& xp1, const std::vector<double>& yp1,
+               const std::vector<double>& xp2, const std::vector<double>& yp2,
+               std::vector<double>& xl, std::vector<double>& yl,
+               std::vector<int>& flags, std::vector<double>& qs,
+               const double epsx, const double epsy) {
+
+  struct Point {
+    double x;
+    double y;
+    int flag;
+    double q;
+  };
+
+  std::vector<Point> points;
+ 
+  const unsigned int np1 = xp1.size();
+  const unsigned int np2 = xp2.size();
+  for (unsigned int i = 0; i < np1; ++i) {
+    const double xi0 = xp1[i];
+    const double yi0 = yp1[i];
+    const double xi1 = xp1[NextPoint(i, np1)];
+    const double yi1 = yp1[NextPoint(i, np1)];
+    // Add the vertex.
+    Point p1;
+    p1.x = xi0;
+    p1.y = yi0;
+    p1.flag = 1;
+    p1.q = 0.;
+    // If also on 2 or vertex of 2, flag it as crossing or foreign.
+    for (unsigned int j = 0; j < np2; ++j) {
+      const double xj0 = xp2[j];
+      const double yj0 = yp2[j];
+      if (fabs(xj0 - xi0) < epsx && fabs(yj0 - yi0) < epsy) {
+        p1.flag = 2;
+      }
+      const double xj1 = xp2[NextPoint(j, np2)];
+      const double yj1 = yp2[NextPoint(j, np2)];
+      if (OnLine(xj0, yj0, xj1, yj1, xi0, yi0) &&
+          (fabs(xj0 - xi0) > epsx || fabs(yj0 - yi0) > epsy) &&
+          (fabs(xj1 - xi0) > epsx || fabs(yj1 - yi0) > epsy)) {
+        p1.flag = 3;
+      }
+    }
+    points.push_back(std::move(p1));
+    // Go over the line segments of the other polygon.
+    std::vector<Point> pointsOther;
+    for (unsigned int j = 0; j < np2; ++j) {
+      const double xj0 = xp2[j];
+      const double yj0 = yp2[j];
+      // Add vertices of 2 that are on this line.
+      if (OnLine(xi0, yi0, xi1, yi1, xj0, yj0) &&
+          (fabs(xi0 - xj0) > epsx || fabs(yi0 - yj0) > epsy) && 
+          (fabs(xi1 - xj0) > epsx || fabs(yi1 - yj0) > epsy)) {
+        Point p2;
+        p2.x = xj0;
+        p2.y = yj0;
+        p2.flag = 2;
+        pointsOther.push_back(std::move(p2));
+      }
+      const double xj1 = xp2[NextPoint(j, np2)];
+      const double yj1 = yp2[NextPoint(j, np2)];
+      // Add crossing points.
+      double xc = 0., yc = 0.;
+      bool add = Crossing(xi0, yi0, xi1, yi1, xj0, yj0, xj1, yj1, xc, yc);
+      if (add) {
+        if ((fabs(xi0 - xc) < epsx && fabs(yi0 - yc) < epsy) || 
+            (fabs(xi1 - xc) < epsx && fabs(yi1 - yc) < epsy) ||
+            (fabs(xj0 - xc) < epsx && fabs(yj0 - yc) < epsy) || 
+            (fabs(xj1 - xc) < epsx && fabs(yj1 - yc) < epsy)) {
+          add = false; 
+        }
+        if ((fabs(xi0 - xj0) < epsx && fabs(yi0 - yj0) < epsy) || 
+            (fabs(xi0 - xj1) < epsx && fabs(yi0 - yj1) < epsy) || 
+            (fabs(xi1 - xj0) < epsx && fabs(yi1 - yj0) < epsy) || 
+            (fabs(xi1 - xj1) < epsx && fabs(yi1 - yj1) < epsy)) {
+          add = false; 
+        }
+      }
+      if (add) {
+        Point p2;
+        p2.x = xc;
+        p2.y = yc;
+        p2.flag = 3;
+        pointsOther.push_back(std::move(p2));
+      }
+    }
+    // Compute the lambdas for these points.
+    for (auto& p : pointsOther) {
+      p.q = Lambda(xi0, p.x, xi1, yi0, p.y, yi1);
+    }
+    // Sort the list by using the lambdas.
+    std::sort(pointsOther.begin(), pointsOther.end(),
+              [](const Point& lhs, const Point& rhs)
+                 { return (lhs.q < rhs.q); });
+    points.insert(points.end(), pointsOther.begin(), pointsOther.end());
+  }
+
+  for (const Point& p : points) {
+    xl.push_back(p.x);
+    yl.push_back(p.y);
+    flags.push_back(p.flag);
+    qs.push_back(p.q);
+  }
+}
+
 /// Determine whether the point (x, y) is located inside of the
 /// polygon (xpl, ypl).
 void Inside(const std::vector<double>& xpl, const std::vector<double>& ypl,
@@ -521,7 +626,6 @@ bool ComponentNeBem3d::MakePanels() {
     unsigned int jmin = 0;
     bool change = true;
     while (change) {
-      // 100    CONTINUE
       change = false;
       const unsigned int n = newPanels.size(); 
       for (unsigned int j = 0; j < n; ++j) {
@@ -619,30 +723,23 @@ bool ComponentNeBem3d::MakePanels() {
 }
 
 bool ComponentNeBem3d::EliminateOverlaps(const Panel& panel1, 
-  const Panel& panel2, std::vector<Panel>& panels, 
+  const Panel& panel2, std::vector<Panel>& panelsOut, 
   std::vector<int>& itypo) {
 
  // *-----------------------------------------------------------------------
  // *   PLAOVL - Isolates the parts of plane 1 that are not hidden by 2.
  // *-----------------------------------------------------------------------
 
-  struct Point {
-    double x;
-    double y;
-    int flag;
-    double q;
-  };
- 
   const auto& xp1 = panel1.xv;
   const auto& yp1 = panel1.yv;
   const auto& zp1 = panel1.zv;
   const auto& xp2 = panel2.xv;
   const auto& yp2 = panel2.yv;
   const auto& zp2 = panel2.zv;
-  const unsigned int np1 = xp1.size();
-  const unsigned int np2 = xp2.size();
+  // const unsigned int np1 = xp1.size();
+  // const unsigned int np2 = xp2.size();
   // If the size of either is less than 3, simply return.
-  if (np1 <= 2 || np2 <= 2) {
+  if (xp1.size() <= 2 || xp2.size() <= 2) {
     return true;
   }
   // Compute the various tolerances.
@@ -666,233 +763,47 @@ bool ComponentNeBem3d::EliminateOverlaps(const Panel& panel1,
 
   const double zsum1 = std::accumulate(std::begin(zp1), std::end(zp1), 0.);
   const double zsum2 = std::accumulate(std::begin(zp2), std::end(zp2), 0.);
-  const double zmean = (zsum1 + zsum2) / (np1 + np2); 
+  const double zmean = (zsum1 + zsum2) / (zp1.size() + zp2.size());
 
-  std::array<std::vector<Point>, 2> points;
-  // Establish the list of special points around polygon 1.
-  bool ok = true;
-  for (unsigned int i = 0; i < np1; ++i) {
-    const double xi0 = xp1[i];
-    const double yi0 = yp1[i];
-    const double xi1 = xp1[NextPoint(i, np1)];
-    const double yi1 = yp1[NextPoint(i, np1)];
-    // Add the vertex.
-    Point p1;
-    p1.x = xi0;
-    p1.y = yi0;
-    p1.flag = 1;
-    p1.q = 0.;
-    // If also on 2 or vertex of 2, flag it as crossing or foreign.
-    for (unsigned int j = 0; j < np2; ++j) {
-      const double xj0 = xp2[j];
-      const double yj0 = yp2[j];
-      if (fabs(xj0 - xi0) < epsx && fabs(yj0 - yi0) < epsy) {
-        p1.flag = 2;
-      }
-      const double xj1 = xp2[NextPoint(j, np2)];
-      const double yj1 = yp2[NextPoint(j, np2)];
-      if (OnLine(xj0, yj0, xj1, yj1, xi0, yi0) &&
-          (fabs(xj0 - xi0) > epsx || fabs(yj0 - yi0) > epsy) &&
-          (fabs(xj1 - xi0) > epsx || fabs(yj1 - yi0) > epsy)) {
-        p1.flag = 3;
-      }
-    }
-    points[0].push_back(std::move(p1));
-    // Go over the line segments of the other polygon.
-    std::vector<Point> pointsOther;
-    for (unsigned int j = 0; j < np2; ++j) {
-      const double xj0 = xp2[j];
-      const double yj0 = yp2[j];
-      // Add vertices of 2 that are on this line.
-      if (OnLine(xi0, yi0, xi1, yi1, xj0, yj0) &&
-          (fabs(xi0 - xj0) > epsx || fabs(yi0 - yj0) > epsy) && 
-          (fabs(xi1 - xj0) > epsx || fabs(yi1 - yj0) > epsy)) {
-        Point p2;
-        p2.x = xj0;
-        p2.y = yj0;
-        p2.flag = 2;
-        pointsOther.push_back(std::move(p2));
-      }
-      const double xj1 = xp2[NextPoint(j, np2)];
-      const double yj1 = yp2[NextPoint(j, np2)];
-      // Add crossing points.
-      double xc = 0., yc = 0.;
-      bool add = Crossing(xi0, yi0, xi1, yi1, xj0, yj0, xj1, yj1, xc, yc);
-      if (add) {
-        if ((fabs(xi0 - xc) < epsx && fabs(yi0 - yc) < epsy) || 
-            (fabs(xi1 - xc) < epsx && fabs(yi1 - yc) < epsy) ||
-            (fabs(xj0 - xc) < epsx && fabs(yj0 - yc) < epsy) || 
-            (fabs(xj1 - xc) < epsx && fabs(yj1 - yc) < epsy)) {
-          add = false; 
-        }
-        if ((fabs(xi0 - xj0) < epsx && fabs(yi0 - yj0) < epsy) || 
-            (fabs(xi0 - xj1) < epsx && fabs(yi0 - yj1) < epsy) || 
-            (fabs(xi1 - xj0) < epsx && fabs(yi1 - yj0) < epsy) || 
-            (fabs(xi1 - xj1) < epsx && fabs(yi1 - yj1) < epsy)) {
-          add = false; 
-        }
-      }
-      if (add) {
-        Point p2;
-        p2.x = xc;
-        p2.y = yc;
-        p2.flag = 3;
-        pointsOther.push_back(std::move(p2));
-      }
-    }
-    // Compute the lambdas for these points.
-    for (auto& p : pointsOther) {
-      p.q = Lambda(xi0, p.x, xi1, yi0, p.y, yi1);
-    }
-    // Sort the list by using the lambdas.
-    std::sort(pointsOther.begin(), pointsOther.end(),
-              [](const Point& lhs, const Point& rhs)
-                 { return (lhs.q < rhs.q); });
-    points[0].insert(points[0].end(), pointsOther.begin(), pointsOther.end());
-  }
-
-  // Establish the list of special points around polygon 2.
-  for (unsigned int i = 0; i < np2; ++i) {
-    const double xi0 = xp2[i];
-    const double yi0 = yp2[i];
-    const double xi1 = xp2[NextPoint(i, np2)];  
-    const double yi1 = yp2[NextPoint(i, np2)];  
-    // Add the vertex.
-    Point p1;
-    p1.x = xi0;
-    p1.y = yi0;
-    p1.flag = 1;
-    p1.q = 0.;
-    // If also on 1 or a vertex of 1, flag it as crossing or foreign.
-    for (unsigned int j = 0; j < np1; ++j) {
-      const double xj0 = xp1[j];
-      const double yj0 = yp1[j];
-      if (fabs(xj0 - xi0) < epsx && fabs(yj0 - yi0) < epsy) {
-        p1.flag = 2;
-      }
-      const double xj1 = xp1[NextPoint(j, np1)];
-      const double yj1 = yp1[NextPoint(j, np1)];
-      if (OnLine(xj0, yj0, xj1, yj1, xi0, yi0) &&
-          (fabs(xj0 - xi0) > epsx || fabs(yj0 - yi0) > epsy) && 
-          (fabs(xj1 - xi0) > epsx || fabs(yj1 - yi0) > epsy)) {
-        p1.flag = 3;
-      }
-    }
-    points[1].push_back(std::move(p1));
-    // Go over the line segments of the other polygon.
-    std::vector<Point> pointsOther;
-    for (unsigned int j = 0; j < np1; ++j) {
-      const double xj0 = xp1[j];
-      const double yj0 = yp1[j];
-      // Add vertices of 1 that are on this line.
-      if (OnLine(xi0, yi0, xi1, yi1, xj0, yj0) && 
-          (fabs(xi0 - xj0) > epsx || fabs(yi0 - yj0) > epsy) && 
-          (fabs(xi1 - xj0) > epsx || fabs(yi1 - yj0) > epsy)) {
-        Point p2;
-        p2.x = xj0;
-        p2.y = yj0;
-        p2.flag = 2;
-        pointsOther.push_back(std::move(p2));
-      }
-      const double xj1 = xp1[NextPoint(j, np1)];
-      const double yj1 = yp1[NextPoint(j, np1)];
-      // Add crossing points.
-      double xc = 0., yc = 0.;
-      bool add = Crossing(xi0, yi0, xi1, yi1, xj0, yj0, xj1, yj1, xc, yc);
-      if (add) {
-        if ((fabs(xi0 - xc) < epsx && fabs(yi0 - yc) < epsy) || 
-            (fabs(xi1 - xc) < epsx && fabs(yi1 - yc) < epsy) ||
-            (fabs(xj0 - xc) < epsx && fabs(yj0 - yc) < epsy) || 
-            (fabs(xj1 - xc) < epsx && fabs(yj1 - yc) < epsy)) {
-          add = false; 
-        }
-        if ((fabs(xj0 - xi0) < epsx && fabs(yj0 - yi0) < epsy) || 
-            (fabs(xj0 - xi1) < epsx && fabs(yj0 - yi1) < epsy) || 
-            (fabs(xj1 - xi0) < epsx && fabs(yj1 - yi0) < epsy) || 
-            (fabs(xj1 - xi1) < epsx && fabs(yj1 - yi1) < epsy)) {
-          add = false;
-        }
-      }
-      if (add) {
-        Point p2;
-        p2.x = xc;
-        p2.y = yc;
-        p2.flag = 3;
-        pointsOther.push_back(std::move(p2));
-      }
-    }
-    // Compute the lambdas for these points.
-    for (auto& p : pointsOther) {
-      p.q = Lambda(xi0, p.x, xi1, yi0, p.y, yi1);
-    }
-    // Sort the list by using the lambdas.
-    std::sort(pointsOther.begin(), pointsOther.end(),
-              [](const Point& lhs, const Point& rhs)
-                 { return (lhs.q < rhs.q); });
-    points[1].insert(points[1].end(), pointsOther.begin(), pointsOther.end());
-  }
-
-  const unsigned int n1 = points[0].size();
-  const unsigned int n2 = points[1].size();
-  // Make separate containers for (x, y) coordinates and flags.
   std::array<std::vector<double>, 2> xl;
   std::array<std::vector<double>, 2> yl;
   std::array<std::vector<int>, 2> flags;
-  for (unsigned int i = 0; i < 2; ++i) {
-    for (const Point& p : points[i]) {
-      xl[i].push_back(p.x);
-      yl[i].push_back(p.y);
-      flags[i].push_back(p.flag);
-    }
-  }
+  std::array<std::vector<double>, 2> qs;
+  // Establish the list of special points around polygon 1.
+  AddPoints(xp1, yp1, xp2, yp2, xl[0], yl[0], flags[0], qs[0], epsx, epsy);
+  // Establish the list of special points around polygon 2.
+  AddPoints(xp2, yp2, xp1, yp1, xl[1], yl[1], flags[1], qs[1], epsx, epsy);
 
-  ok = true;
-  // Look up the cross-links: from plane 1 to plane 2.
+  bool ok = true;
+  // Look up the cross-links: from plane 1 (2) to plane 2 (1).
   std::array<std::vector<int>, 2> links;
-  links[0].assign(n1, -1);
-  for (unsigned int i = 0; i < n1; ++i) {
-    unsigned int nFound = 0;
-    for (unsigned int j = 0; j < n2; ++j) {
-      if (fabs(xl[0][i] - xl[1][j]) < epsx && 
-          fabs(yl[0][i] - yl[1][j]) < epsy) {
-        ++nFound;
-        links[0][i] = j;
+  for (unsigned int ic = 0; ic < 2; ++ic) {
+    const unsigned int n1 = xl[ic].size();
+    links[ic].assign(n1, -1);
+    const unsigned int jc = ic == 0 ? 1 : 0;
+    const unsigned int n2 = xl[jc].size();
+    for (unsigned int i = 0; i < n1; ++i) {
+      unsigned int nFound = 0;
+      for (unsigned int j = 0; j < n2; ++j) {
+        if (fabs(xl[ic][i] - xl[jc][j]) < epsx && 
+            fabs(yl[ic][i] - yl[jc][j]) < epsy) {
+          ++nFound;
+          links[ic][i] = j;
+        }
       }
-    }
-    if (nFound == 0 && (flags[0][i] == 2 || flags[0][i] == 3)) {
-      std::cerr << m_className 
-                << ": Warning. Expected match not found (1-2).\n";
-      links[0][i] = -1;
-      ok = false;
-    } else if (nFound > 1) {
-      std::cerr << m_className 
-                << ": Warning. More than 1 match found (1-2).\n";
-      links[0][i] = -1;
-      ok = false;
-    }
-  }
-
-  // Links from plane 2 to plane 1.
-  links[1].assign(n2, -1);
-  for (unsigned int i = 0; i < n2; ++i) {
-    unsigned int nFound = 0;
-    for (unsigned int j = 0; j < n1; ++j) {
-      if (fabs(xl[1][i] - xl[0][j]) < epsx && 
-          fabs(yl[1][i] - yl[0][j]) < epsy) {
-        ++nFound;
-        links[1][i] = j;
+      if (nFound == 0 && (flags[ic][i] == 2 || flags[ic][i] == 3)) {
+        std::cerr << m_className << "::EliminateOverlaps: " 
+                  << "Warning. Expected match not found (" 
+                  << ic + 1 << "-" << jc + 1 << ").\n";
+        links[ic][i] = -1;
+        ok = false;
+      } else if (nFound > 1) {
+        std::cerr << m_className << "::EliminateOverlaps: " 
+                  << "Warning. More than 1 match found ("
+                  << ic + 1 << "-" << jc + 1 << ").\n";
+        links[ic][i] = -1;
+        ok = false;
       }
-    }
-    if (nFound == 0 && (flags[1][i] == 2 || flags[1][i] == 3)) {
-      std::cerr << m_className 
-                << ": Warning. Expected match not found (2-1).\n";
-      links[1][i] = -1;
-      ok = false; 
-    } else if (nFound > 1) {
-      std::cerr << m_className 
-                << ": Warning. More than 1 match found (2-1).\n";
-      links[1][i] = -1;
-      ok = false;
     }
   }
 
@@ -904,7 +815,7 @@ bool ComponentNeBem3d::EliminateOverlaps(const Panel& panel1,
       const unsigned int n = xl[j].size();
       for (unsigned int i = 0; i < n; ++i) {
         printf("  %3d %5d %13.6f %13.6f %5.3f %3d\n", i, flags[j][i], 
-               xl[j][i], yl[j][i], points[j][i].q, links[j][i]);
+               xl[j][i], yl[j][i], qs[j][i], links[j][i]);
       }
     }
   }
@@ -913,16 +824,17 @@ bool ComponentNeBem3d::EliminateOverlaps(const Panel& panel1,
   for (unsigned int ic = 0; ic < 2; ++ic) {
     // See whether all of 1 (2) is inside 2 (1).
     bool allInside = true;
-    for (const auto& p : points[ic]) {
-      if (p.flag != 1) {
+    const unsigned int np = xl[ic].size();
+    for (unsigned int i = 0; i < np; ++i) {
+      if (flags[ic][i] != 1) {
         allInside = false;
         break;
       }
       bool inside = false, edge = false;
       if (ic == 0) {
-        Inside(xp2, yp2, p.x, p.y, inside, edge);
+        Inside(xp2, yp2, xl[ic][i], yl[ic][i], inside, edge);
       } else {
-        Inside(xp1, yp1, p.x, p.y, inside, edge);
+        Inside(xp1, yp1, xl[ic][i], yl[ic][i], inside, edge);
       }
       if (!(inside || edge)) {
         allInside = false;
@@ -934,12 +846,13 @@ bool ComponentNeBem3d::EliminateOverlaps(const Panel& panel1,
       if (ic == 0) {
         if (m_debug) std::cout << "Curve 1 fully inside 2.\n";
         // Write out curve 1.
-        panels.push_back(panel1);
+        panelsOut.push_back(panel1);
       } else {
         if (m_debug) std::cout << "Curve 2 fully inside 1.\n";
         // Write out curve 2.
-        panels.push_back(panel2);
+        panelsOut.push_back(panel2);
       }
+      panelsOut.back().zv.assign(panelsOut.back().xv.size(), zmean);
       itypo.push_back(3);
       std::vector<Panel> newPanels;
       if (ic == 0) {
@@ -959,7 +872,7 @@ bool ComponentNeBem3d::EliminateOverlaps(const Panel& panel1,
           itypo.push_back(1);
         }
       }
-      panels.insert(panels.end(), newPanels.begin(), newPanels.end());
+      panelsOut.insert(panelsOut.end(), newPanels.begin(), newPanels.end());
       return true;
     }
   }
@@ -1011,7 +924,7 @@ bool ComponentNeBem3d::EliminateOverlaps(const Panel& panel1,
       panel.zv.assign(panel.xv.size(), zmean);
       itypo.push_back(ic + 1);
     }
-    panels.insert(panels.end(), newPanels.begin(), newPanels.end());
+    panelsOut.insert(panelsOut.end(), newPanels.begin(), newPanels.end());
     if (m_debug) {
       std::cout << "No further non-overlapped areas of " << ic + 1 << ".\n";
     }
@@ -1019,6 +932,7 @@ bool ComponentNeBem3d::EliminateOverlaps(const Panel& panel1,
 
   // Look for the overlapped parts.
   std::vector<Panel> newPanels;
+  const unsigned int n1 = xl[0].size();
   std::vector<bool> mark1(n1, false);
   bool done = false;
   while (!done) { 
@@ -1049,33 +963,34 @@ bool ComponentNeBem3d::EliminateOverlaps(const Panel& panel1,
     panel.zv.assign(panel.xv.size(), zmean);
     itypo.push_back(3);
   }
-  panels.insert(panels.end(), newPanels.begin(), newPanels.end());
+  panelsOut.insert(panelsOut.end(), newPanels.begin(), newPanels.end());
   // Finished
   if (m_debug) std::cout << "No further overlapped areas.\n";
   return true;
 }
 
+
 bool ComponentNeBem3d::TraceEnclosed(
   const std::vector<double>& xl1, const std::vector<double>& yl1,
   const std::vector<double>& xl2, const std::vector<double>& yl2,
-  const Panel& originalPanel, std::vector<Panel>& newPanels) const {
+  const Panel& panel2, std::vector<Panel>& panelsOut) const {
 
-  const unsigned int n1 = xl1.size();
-  const unsigned int n2 = xl2.size();
+  const int n1 = xl1.size();
+  const int n2 = xl2.size();
   // Find 2 non-crossing connections: JP1-JP2 and KP1-KP2.
   unsigned int nFound = 0;
-  unsigned int jp1 = 0, jp2 = 0; 
-  unsigned int kp1 = 0, kp2 = 0; 
-  for (unsigned int ip1 = 0; ip1 < n1; ++ip1) {
+  int jp1 = 0, jp2 = 0; 
+  int kp1 = 0, kp2 = 0; 
+  for (int ip1 = 0; ip1 < n1; ++ip1) {
     const double x1 = xl1[ip1];
     const double y1 = yl1[ip1];
-    for (unsigned int ip2 = 0; ip2 < n2; ++ip2) {
+    for (int ip2 = 0; ip2 < n2; ++ip2) {
       if (nFound > 0 && ip2 == jp2) continue;
       const double x2 = xl2[ip2];
       const double y2 = yl2[ip2];
       bool cross = false;
-      for (unsigned int k = 0; k < n1; ++k) {
-        const unsigned int kk = NextPoint(k, n1);
+      for (int k = 0; k < n1; ++k) {
+        const int kk = NextPoint(k, n1);
         if (k == ip1 || kk == ip1) continue;
         double xc = 0., yc = 0.;
         cross = Crossing(x1, y1, x2, y2, xl1[k], yl1[k], xl1[kk], yl1[kk], 
@@ -1084,8 +999,8 @@ bool ComponentNeBem3d::TraceEnclosed(
       }
       if (cross) continue;
       if (m_debug) std::cout << "No crossing with 1.\n";
-      for (unsigned int k = 0; k < n2; ++k) {
-        const unsigned int kk = NextPoint(k, n2);
+      for (int k = 0; k < n2; ++k) {
+        const int kk = NextPoint(k, n2);
         if (k == ip2 || kk == ip2) continue;
         double xc = 0., yc = 0.;
         cross = Crossing(x1, y1, x2, y2, xl2[k], yl2[k], xl2[kk], yl2[kk], 
@@ -1126,23 +1041,24 @@ bool ComponentNeBem3d::TraceEnclosed(
   // Create part 1 of area 2.
   std::vector<double> xpl;
   std::vector<double> ypl;
-  // TODO: check counter!!
-  for (unsigned int ip1 = jp1; ip1 <= kp1; ++ip1) {
+  if (m_debug) std::cout << "Creating part 1 of area 2.\n";
+  for (int ip1 = jp1; ip1 <= kp1; ++ip1) {
+    if (m_debug) std::cout << "Adding " << ip1 << " on 1.\n";
     xpl.push_back(xl1[ip1]);
     ypl.push_back(yl1[ip1]);
   }
   // Try one way.
-  unsigned int imax = jp2 < kp2 ? jp2 + n2 : jp2;
+  int imax = jp2 < kp2 ? jp2 + n2 : jp2;
   int dir = +1;
-  // TODO: check!
-  for (unsigned int i = kp2; i <= imax; ++i) {
-    unsigned int ip2 = i % n2;
+  for (int i = kp2; i <= imax; ++i) {
+    int ip2 = i % n2;
+    if (m_debug) std::cout << "Adding " << ip2 << " on 2.\n";
     xpl.push_back(xl2[ip2]);
     ypl.push_back(yl2[ip2]);
   }
   // Check for undesirable crossings.
   bool ok = true;
-  for (unsigned int ip1 = 0; ip1 < n1; ++ip1) {
+  for (int ip1 = 0; ip1 < n1; ++ip1) {
     if (ip1 == jp1 || ip1 == kp1) continue;
     bool inside = false, edge = false;
     Inside(xpl, ypl, xl1[ip1], yl1[ip1], inside, edge);
@@ -1153,54 +1069,61 @@ bool ComponentNeBem3d::TraceEnclosed(
   }
   if (!ok) {
     // Use the other way if this failed
+    if (m_debug) std::cout << "Trying the other direction.\n";
     xpl.resize(kp1 - jp1 + 1);
     ypl.resize(kp1 - jp1 + 1);
     imax = jp2 < kp2 ? kp2 : kp2 + n2;
     dir = -1;
-    // TODO: check!
-    for (unsigned int i = imax; i >= jp2; --i) {
-      const unsigned int ip2 = i % n2;
+    for (int i = imax; i >= jp2; --i) {
+      const int ip2 = i % n2;
+      if (m_debug) std::cout << "Adding " << ip2 << " on 2.\n";
       xpl.push_back(xl2[ip2]);
       ypl.push_back(yl2[ip2]);
     }
   }
 
   // Save this part.
-  Panel newPanel1 = originalPanel;
+  Panel newPanel1 = panel2;
   newPanel1.xv = xpl;
   newPanel1.yv = ypl;
-  newPanels.push_back(std::move(newPanel1));
+  panelsOut.push_back(std::move(newPanel1));
+  if (m_debug) std::cout << "Part 1 has " << xpl.size() << " nodes.\n";
 
   // Create part 2 of area 2.
   xpl.clear();
   ypl.clear();
-  for (unsigned int ip1 = kp1; ip1 < jp1 + n1; ++ip1) {
-    const unsigned int ii = ip1 % n1;
-    xpl.push_back(xl1[ii]);
-    ypl.push_back(yl1[ii]);
+  if (m_debug) std::cout << "Creating part 2 of area 2.\n";
+  imax = jp1 + n1;
+  for (int i = kp1; i <= imax; ++i) {
+    const int ip1 = i % n1;
+    if (m_debug) std::cout << "Adding " << ip1 << " on 1.\n";
+    xpl.push_back(xl1[ip1]);
+    ypl.push_back(yl1[ip1]);
   }
   // Add the part over area 2.
   if (dir == -1) {
     imax = jp2 > kp2 ? jp2 : jp2 + n2;
-    // TODO!!
-    for (unsigned int i = imax; i >= kp2; --i) {
-      const unsigned int ip2 = i % n2;
+    for (int i = imax; i >= kp2; --i) {
+      const int ip2 = i % n2;
+      if (m_debug) std::cout << "Adding " << ip2 << " on 2.\n";
       xpl.push_back(xl2[ip2]);
       ypl.push_back(yl2[ip2]);
     }
   } else {
     imax = jp2 > kp2 ? kp2 + n2 : kp2;
-    for (unsigned int i = jp2; i <= imax; ++i) {
-      const unsigned int ip2 = i % n2;
+    for (int i = jp2; i <= imax; ++i) {
+      const int ip2 = i % n2;
+      if (m_debug) std::cout << "Adding " << ip2 << " on 2.\n";
       xpl.push_back(xl2[ip2]);
       ypl.push_back(yl2[ip2]);
     }
   }
   // Save this part.
-  Panel newPanel2 = originalPanel;
+  Panel newPanel2 = panel2;
   newPanel2.xv = xpl;
   newPanel2.yv = ypl;
-  newPanels.push_back(std::move(newPanel2));
+  panelsOut.push_back(std::move(newPanel2));
+  if (m_debug) std::cout << "Part 1 has " << xpl.size() << " nodes.\n";
   return true;
 }
 
@@ -1211,7 +1134,7 @@ void ComponentNeBem3d::TraceNonOverlap(
   const std::vector<int>& flags1, const std::vector<int>& flags2,
   const std::vector<int>& links1, const std::vector<int>& links2,
   std::vector<bool>& mark1, int ip1, 
-  const Panel& originalPanel, std::vector<Panel>& newPanels) const {
+  const Panel& panel1, std::vector<Panel>& panelsOut) const {
 
   const unsigned int n1 = xl1.size();
   const unsigned int n2 = xl2.size();
@@ -1343,10 +1266,10 @@ void ComponentNeBem3d::TraceNonOverlap(
     }
   }
   
-  Panel newPanel = originalPanel;
+  Panel newPanel = panel1;
   newPanel.xv = xpl;
   newPanel.yv = ypl;
-  newPanels.push_back(std::move(newPanel));
+  panelsOut.push_back(std::move(newPanel));
   if (m_debug) {
     std::cout << "End of curve reached, " << xpl.size() << " points.\n";
   }
@@ -1360,7 +1283,7 @@ void ComponentNeBem3d::TraceOverlap(
   const std::vector<int>& flags1, 
   const std::vector<int>& links1, const std::vector<int>& links2,
   std::vector<bool>& mark1, int ip1, int ip2, 
-  const Panel& originalPanel, std::vector<Panel>& newPanels) const {
+  const Panel& panel1, std::vector<Panel>& panelsOut) const {
 
   int ip1L = -1;
   int ip1LL= -1;
@@ -1542,10 +1465,10 @@ void ComponentNeBem3d::TraceOverlap(
   if (xpl.size() <= 2) {
     if (m_debug) std::cout << "Too few points.\n";
   } else {
-    Panel newPanel = originalPanel;
+    Panel newPanel = panel1;
     newPanel.xv = xpl;
     newPanel.yv = ypl;
-    newPanels.push_back(std::move(newPanel));
+    panelsOut.push_back(std::move(newPanel));
   }
 
   if (m_debug) {
@@ -1711,7 +1634,6 @@ bool ComponentNeBem3d::MakePrimitives(const Panel& panelIn,
       panel.yv = {yp1[iprev], yp1[ip], yp1[inext]};
       stack.push_back(std::move(panel));
       // Eliminate this node from the polygon.
-      // TODO!
       stack[k].xv.erase(stack[k].xv.begin() + ip);
       stack[k].yv.erase(stack[k].yv.begin() + ip);
       stack.push_back(std::move(stack[k]));
