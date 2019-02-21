@@ -106,6 +106,15 @@ class Solid {
   /// Retrieve the surface panels of the solid.
   virtual bool SolidPanels(std::vector<Panel>& panels) = 0;
 
+  enum BoundaryCondition {
+    Voltage = 1,
+    Charge,
+    Float,
+    Dielectric,
+    ParallelField = 6,
+    PerpendicularField
+  };
+
   /// Apply Dirichlet boundary conditions (fixed voltage).
   void SetBoundaryPotential(const double v) {
     m_volt = v;
@@ -118,16 +127,19 @@ class Solid {
   }
   /// Make the potential at the surface of the solid floating.
   void SetBoundaryFloat() { m_bctype = Float; }
-  /// Set the dielectric constant.
-  void SetBoundaryDielectric(const double eps) {
-    m_eps = eps;  
-    m_bctype = Dielectric;
-  }
+  /// Make the surfaces of the solid dielectric-dielectric interfaces.
+  void SetBoundaryDielectric() { m_bctype = Dielectric; }
   void SetBoundaryParallelField() { m_bctype = ParallelField; }
   void SetBoundaryPerpendicularField() { m_bctype = PerpendicularField; }
 
+  /// Retrieve the type of boundary condition.
+  BoundaryCondition GetBoundaryConditionType() const { return m_bctype; }
+  /// Retrieve the potential.
+  double GetBoundaryPotential() const { return m_volt; }
+ 
   /// Switch debugging messages on/off.
   void EnableDebugging(const bool on = true) { m_debug = on; }
+
 
  protected:
   /// Centre of the solid.
@@ -146,14 +158,6 @@ class Solid {
   /// Debug flag.
   bool m_debug = false;
 
-  enum BoundaryCondition {
-    Voltage = 1,
-    Charge,
-    Float,
-    Dielectric,
-    ParallelField = 6,
-    PerpendicularField
-  };
   /// Type of boundary condition.
   BoundaryCondition m_bctype = Voltage;
   /// Potential at the surface.

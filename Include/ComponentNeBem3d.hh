@@ -30,6 +30,8 @@ class ComponentNeBem3d : public ComponentBase {
   void Reset() override;
   void UpdatePeriodicity() override;
 
+  /// Retrieve surface panels, remove contacts and cut polygons to rectangles 
+  /// and right-angle triangles.
   bool Initialise();
 
  private:
@@ -57,8 +59,6 @@ class ComponentNeBem3d : public ComponentBase {
   };
   std::vector<Element> m_elements;
 
-  /// Remove ontacts and cut polygons to rectangles and right-angle triangles.
-  bool MakePanels();
   /// Isolate the parts of polygon 1 that are not hidden by 2 and vice versa.
   bool EliminateOverlaps(const Panel& panel1, const Panel& panel2, 
     std::vector<Panel>& panelsOut, std::vector<int>& itypo); 

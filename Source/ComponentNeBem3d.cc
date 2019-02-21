@@ -4,6 +4,7 @@
 #include <cmath>
 #include <numeric>
 #include <vector>
+#include <map>
 
 #include "ComponentNeBem3d.hh"
 #include "FundamentalConstants.hh"
@@ -483,21 +484,33 @@ bool ComponentNeBem3d::Initialise() {
   // Be sure we won't have intersections with the bounding box.
   // TODO! Loop over the solids and call PLACYE, PLACHE, PLABXE, PLASPE, ... 
   // Loop over the solids.
-  const unsigned int nSolids = m_geometry->GetNumberOfSolids();
+  std::map<int, Solid::BoundaryCondition> bc;
+  std::map<int, double> volt;
+  std::map<int, double> eps;
+  const unsigned int nSolids = m_geometry->GetNumberOfSolids(); 
   for (unsigned int i = 0; i < nSolids; ++i) {
+    const auto solid = m_geometry->GetSolid(i);
+    if (!solid) continue;
     // Get the panels.
-    m_geometry->GetSolid(i)->SolidPanels(m_panels);
+    solid->SolidPanels(m_panels);
+    // Get the boundary condition.
+    const auto id = solid->GetId();
+    bc[id] = solid->GetBoundaryConditionType();
+    volt[id] = solid->GetBoundaryPotential();
+    // Get the dielectric constant from the medium associated to the solid.
+    const auto medium = m_geometry->GetMedium(i);
+    if (!medium) {
+      eps[id] = 1.;
+    } else {
+      eps[id] = medium->GetDielectricConstant();
+    }
   }
   // Apply cuts.
   // CALL CELSCT('APPLY')
   // Reduce to basic periodic copy.
   // CALL BEMBAS
-  // Find contact panels and split into primitives.
-  MakePanels();
-  return true;
-}
 
-bool ComponentNeBem3d::MakePanels() {
+  // Find contact panels and split into primitives.
 
   // *---------------------------------------------------------------------
   // * PLABEM - Prepares panels for BEM applications: removes the contacts
@@ -2000,6 +2013,7 @@ void ComponentNeBem3d::Reset() {
 
   m_panels.clear();
   m_elements.clear();
+  m_ready = false;
 }
 
 void ComponentNeBem3d::UpdatePeriodicity() {
