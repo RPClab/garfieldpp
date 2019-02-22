@@ -489,7 +489,8 @@ bool ComponentNeBem3d::Initialise() {
   std::map<int, double> eps;
   const unsigned int nSolids = m_geometry->GetNumberOfSolids(); 
   for (unsigned int i = 0; i < nSolids; ++i) {
-    const auto solid = m_geometry->GetSolid(i);
+    Medium* medium = nullptr;
+    const auto solid = m_geometry->GetSolid(i, medium);
     if (!solid) continue;
     // Get the panels.
     solid->SolidPanels(m_panels);
@@ -497,8 +498,6 @@ bool ComponentNeBem3d::Initialise() {
     const auto id = solid->GetId();
     bc[id] = solid->GetBoundaryConditionType();
     volt[id] = solid->GetBoundaryPotential();
-    // Get the dielectric constant from the medium associated to the solid.
-    const auto medium = m_geometry->GetMedium(i);
     if (!medium) {
       eps[id] = 1.;
     } else {
@@ -597,12 +596,12 @@ bool ComponentNeBem3d::Initialise() {
     // Pick up all matching planes.
     for (unsigned int j = i + 1; j < nRef; ++j) {
       if (mark[j]) continue;
-      const double a2 = m_panels[j].a;
-      const double b2 = m_panels[j].b;
-      const double c2 = m_panels[j].c;
-      const auto& xp2 = m_panels[j].xv;
-      const auto& yp2 = m_panels[j].yv;
-      const auto& zp2 = m_panels[j].zv;
+      const double a2 = oldPanels[j].a;
+      const double b2 = oldPanels[j].b;
+      const double c2 = oldPanels[j].c;
+      const auto& xp2 = oldPanels[j].xv;
+      const auto& yp2 = oldPanels[j].yv;
+      const auto& zp2 = oldPanels[j].zv;
       const unsigned int np2 = xp2.size();
       // See whether this matches the first.
       const double d2 = a2 * xp2[0] + b2 * yp2[0] + c2 * zp2[0];
@@ -613,6 +612,7 @@ bool ComponentNeBem3d::Initialise() {
       if (fabs(fabs(dot) - 1.) > epsang || fabs(offset) > epsxyz) continue;
       // Found a match.
       mark[j] = true;
+      if (m_debug) std::cout << "Match with panel " << j << "\n";
       // Rotate this plane too.
       xp.assign(np2, 0.);
       yp.assign(np2, 0.);
@@ -749,8 +749,6 @@ bool ComponentNeBem3d::EliminateOverlaps(const Panel& panel1,
   const auto& xp2 = panel2.xv;
   const auto& yp2 = panel2.yv;
   const auto& zp2 = panel2.zv;
-  // const unsigned int np1 = xp1.size();
-  // const unsigned int np2 = xp2.size();
   // If the size of either is less than 3, simply return.
   if (xp1.size() <= 2 || xp2.size() <= 2) {
     return true;
@@ -1524,7 +1522,6 @@ bool ComponentNeBem3d::MakePrimitives(const Panel& panelIn,
     }
 
     // See whether this is a right-angled triangle.
-
     if (np == 3) {
       const double x12 = xp1[0] - xp1[1];
       const double y12 = yp1[0] - yp1[1];
@@ -1600,7 +1597,7 @@ bool ComponentNeBem3d::MakePrimitives(const Panel& panelIn,
     if (m_debug) std::cout << "Trying to find a right-angle\n";
     bool corner = false; 
     for (unsigned int ip = 0; ip < np; ++ip) {
-      // Take only right angles
+      // Take only right angles.
       const unsigned int inext = NextPoint(ip, np);
       const unsigned int iprev = PrevPoint(ip, np);
 
@@ -1787,12 +1784,12 @@ bool ComponentNeBem3d::MakePrimitives(const Panel& panelIn,
   return true;
 }
 
-bool ComponentNeBem3d::SplitTrapezium(const Panel& panelIn, 
+bool ComponentNeBem3d::SplitTrapezium(const Panel panelIn, 
     std::vector<Panel>& stack, std::vector<Panel>& panelsOut,
     const double epsang) const {
   
-  const auto& xp1 = panelIn.xv;
-  const auto& yp1 = panelIn.yv;
+  const auto xp1 = panelIn.xv;
+  const auto yp1 = panelIn.yv;
   const unsigned int np = xp1.size();
   for (unsigned int ip = 0; ip < np; ++ip) {
     const unsigned int inext = NextPoint(ip, np);
@@ -1926,7 +1923,7 @@ bool ComponentNeBem3d::SplitTrapezium(const Panel& panelIn,
       // First non-rectangular section.
       xpl.clear();
       ypl.clear();
-      for (unsigned int i = jp + 1; i < ip + np; ++i) {
+      for (unsigned int i = jp + 1; i <= ip + np; ++i) {
         const unsigned int ii = i % np;
         xpl.push_back(xp1[ii]);
         ypl.push_back(yp1[ii]);
@@ -1949,6 +1946,10 @@ bool ComponentNeBem3d::SplitTrapezium(const Panel& panelIn,
           std::cout << "Not stored, only " << xpl.size() << " vertices.\n";
         }
       } else {
+        if (m_debug) {
+          std::cout << "Adding non-rectangular part with " << xpl.size() 
+                    << " vertices.\n";
+        }
         Panel panel = panelIn;
         panel.xv = xpl;
         panel.yv = ypl;
@@ -1957,7 +1958,7 @@ bool ComponentNeBem3d::SplitTrapezium(const Panel& panelIn,
       // Second non-rectangular section.
       xpl.clear();
       ypl.clear();
-      for (unsigned int i = ip + 1; i < jp; ++i) {
+      for (unsigned int i = ip + 1; i <= jp; ++i) {
         const unsigned int ii = i % np;
         xpl.push_back(xp1[ii]);
         ypl.push_back(yp1[ii]);
@@ -1980,6 +1981,10 @@ bool ComponentNeBem3d::SplitTrapezium(const Panel& panelIn,
           std::cout << "Not stored, only " << xpl.size() << " vertices.\n";
         }
       } else {
+        if (m_debug) {
+          std::cout << "Adding non-rectangular part with " << xpl.size() 
+                    << " vertices.\n";
+        }
         Panel panel = panelIn;
         panel.xv = xpl;
         panel.yv = ypl;
@@ -1992,8 +1997,8 @@ bool ComponentNeBem3d::SplitTrapezium(const Panel& panelIn,
 }
 
 bool ComponentNeBem3d::GetPanel(const unsigned int i, 
-    double &a, double &b, double &c, std::vector<double>& xv, 
-    std::vector<double> &yv, std::vector<double> &zv) {
+    double& a, double& b, double& c, std::vector<double>& xv, 
+    std::vector<double>& yv, std::vector<double>& zv) {
 
   if (i >= m_panels.size()) {
     std::cerr << m_className << ":: Incorrect panel number.\n";

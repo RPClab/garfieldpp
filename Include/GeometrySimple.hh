@@ -19,14 +19,14 @@ class GeometrySimple : public GeometryBase {
 
   Medium* GetMedium(const double x, const double y, const double z) const override;
   /// Get the number of media in the geometry.
-  unsigned int GetNumberOfMedia() const override { return m_media.size(); }
+  unsigned int GetNumberOfMedia() const { return m_media.size(); }
   /// Get a medium from the list.
-  Medium* GetMedium(const unsigned int i) const override;
+  Medium* GetMedium(const unsigned int i) const;
 
   unsigned int GetNumberOfSolids() const override { return m_solids.size(); }
-  /// Get a solid from the list.
   Solid* GetSolid(const unsigned int i) const override;
-
+  Solid* GetSolid(const unsigned int i, Medium*& medium) const override;
+ 
   /// Add a solid to the geometry, together with the medium inside.
   void AddSolid(Solid* s, Medium* m);
   /// Get the solid at a given location (x, y, z).

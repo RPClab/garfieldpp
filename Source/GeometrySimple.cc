@@ -91,6 +91,18 @@ Solid* GeometrySimple::GetSolid(const unsigned int i) const {
   return m_solids[i].first;
 }
 
+Solid* GeometrySimple::GetSolid(const unsigned int i, Medium*& medium) const {
+
+  if (i >= m_solids.size()) {
+    std::cerr << m_className << "::GetSolid:\n"
+              << "    Requested solid " << i << " does not exist.\n";
+    return nullptr;
+  }
+
+  medium = m_media[m_solids[i].second];
+  return m_solids[i].first;
+}
+
 Medium* GeometrySimple::GetMedium(const unsigned int i) const {
 
   if (i >= m_media.size()) {

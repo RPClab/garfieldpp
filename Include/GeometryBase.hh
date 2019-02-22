@@ -21,16 +21,16 @@ class GeometryBase {
   /// Retrieve the medium at a given point.
   virtual Medium* GetMedium(const double x, const double y, 
                             const double z) const = 0;
-  /// Get the number of media in the geometry.
-  virtual unsigned int GetNumberOfMedia() const { return 0; }
-  /// Get a medium from the list.
-  virtual Medium* GetMedium(const unsigned int /*i*/) const { return nullptr; }
 
   /// Return the number of solids in the geometry.
   virtual unsigned int GetNumberOfSolids() const { return 0; }
   /// Get a solid from the list.
   virtual Solid* GetSolid(const unsigned int /*i*/) const { return nullptr; }
-
+  /// Get a solid from the list, together with the associated medium.
+  virtual Solid* GetSolid(const unsigned int /*i*/, Medium*& medium) const {
+    medium = nullptr;
+    return nullptr; 
+  }
   /// Check if a point is inside the geometry.
   virtual bool IsInside(const double x, const double y, 
                         const double z) const = 0;

@@ -35,7 +35,6 @@ class ComponentNeBem3d : public ComponentBase {
   bool Initialise();
 
  private:
-
   /// List of surface panels.
   std::vector<Panel> m_panels;
 
@@ -93,7 +92,7 @@ class ComponentNeBem3d : public ComponentBase {
 
   /// Check whether a polygon contains parallel lines. 
   /// If it does, split it in rectangular and non-rectangular parts.
-  bool SplitTrapezium(const Panel& panelIn, 
+  bool SplitTrapezium(const Panel panelIn, 
                       std::vector<Panel>& stack, 
                       std::vector<Panel>& panelsOut, const double epsang) const;
 };
