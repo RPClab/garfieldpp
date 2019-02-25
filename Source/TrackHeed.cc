@@ -287,7 +287,7 @@ bool TrackHeed::GetCluster(double& xcls, double& ycls, double& zcls,
     if (!IsInside(xcls, ycls, zcls)) continue;
     // Add the first ion (at the position of the cluster).
     m_conductionIons.emplace_back(
-        Heed::HeedCondElectron(xcls, ycls, zcls, tcls));
+         Heed::HeedCondElectron(Heed::point(virtualPhoton->position()), tcls));
     ++m_bankIterator;
     break;
   }
