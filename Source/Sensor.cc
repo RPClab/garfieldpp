@@ -13,8 +13,6 @@ namespace Garfield {
 
 double Sensor::m_signalConversion = ElementaryCharge;
 
-Sensor::Sensor() {}
-
 ComponentBase* Sensor::GetComponent(const unsigned int i) {
 
   if (i >= m_components.size()) {
@@ -95,11 +93,10 @@ void Sensor::WeightingField(const double x, const double y, const double z,
                             const std::string& label) {
 
   wx = wy = wz = 0.;
-  double fx = 0., fy = 0., fz = 0.;
   // Add up field contributions from all components.
   for (const auto& electrode : m_electrodes) {
     if (electrode.label == label) {
-      fx = fy = fz = 0.;
+      double fx = 0., fy = 0., fz = 0.;
       electrode.comp->WeightingField(x, y, z, fx, fy, fz, label);
       wx += fx;
       wy += fy;
@@ -158,16 +155,13 @@ bool Sensor::SetArea() {
   std::cout << "    " << m_yMinUser << " < y [cm] < " << m_yMaxUser << "\n";
   std::cout << "    " << m_zMinUser << " < z [cm] < " << m_zMaxUser << "\n";
   if (std::isinf(m_xMinUser) || std::isinf(m_xMaxUser)) {
-    std::cerr << m_className << "::SetArea:\n";
-    std::cerr << "    Warning: infinite x-range\n";
+    std::cerr << m_className << "::SetArea: Warning. Infinite x-range.\n";
   }
   if (std::isinf(m_yMinUser) || std::isinf(m_yMaxUser)) {
-    std::cerr << m_className << "::SetArea:\n";
-    std::cerr << "    Warning: infinite x-range\n";
+    std::cerr << m_className << "::SetArea: Warning. Infinite y-range.\n";
   }
   if (std::isinf(m_zMinUser) || std::isinf(m_zMaxUser)) {
-    std::cerr << m_className << "::SetArea:\n";
-    std::cerr << "    Warning: infinite x-range\n";
+    std::cerr << m_className << "::SetArea: Warning. Infinite z-range.\n";
   }
   m_hasUserArea = true;
   return true;
@@ -178,8 +172,7 @@ bool Sensor::SetArea(const double xmin, const double ymin, const double zmin,
 
   if (fabs(xmax - xmin) < Small || fabs(ymax - ymin) < Small ||
       fabs(zmax - zmin) < Small) {
-    std::cerr << m_className << "::SetArea:\n";
-    std::cerr << "    Invalid range.\n";
+    std::cerr << m_className << "::SetArea: Invalid range.\n";
     return false;
   }
 
@@ -237,8 +230,7 @@ bool Sensor::IsInArea(const double x, const double y, const double z) {
 
   if (!m_hasUserArea) {
     if (!SetArea()) {
-      std::cerr << m_className << "::IsInArea:\n";
-      std::cerr << "    User area cannot be established.\n";
+      std::cerr << m_className << "::IsInArea: User area could not be set.\n";
       return false;
     }
     m_hasUserArea = true;
@@ -250,9 +242,8 @@ bool Sensor::IsInArea(const double x, const double y, const double z) {
   }
 
   if (m_debug) {
-    std::cout << m_className << "::IsInArea:\n" << std::endl;
-    std::cout << "    (" << x << ", " << y << ", " << z << ") "
-              << " is outside.\n";
+    std::cout << m_className << "::IsInArea: (" 
+              << x << ", " << y << ", " << z << ") " << " is outside.\n";
   }
   return false;
 }
@@ -356,8 +347,8 @@ bool Sensor::GetVoltageRange(double& vmin, double& vmax) {
   }
 
   if (m_debug) {
-    std::cout << m_className << "::GetVoltageRange:\n";
-    std::cout << "    Voltage range " << vmin << " < V < " << vmax << ".\n";
+    std::cout << m_className << "::GetVoltageRange: " 
+              << vmin << " < V < " << vmax << ".\n";
   }
   return true;
 }
@@ -376,33 +367,30 @@ void Sensor::ClearSignal() {
 void Sensor::AddSignal(const double q, const double t, const double dt,
                        const double x, const double y, const double z,
                        const double vx, const double vy, const double vz) {
+
+  if (m_debug) std::cout << m_className << "::AddSignal:\n";
   // Get the time bin.
   if (t < m_tStart || dt <= 0.) {
     if (m_debug) {
-      std::cerr << m_className << "::AddSignal:\n";
-      if (t < m_tStart) std::cerr << "    Time " << t << " out of range.\n";
-      if (dt <= 0.) std::cerr << "    Time step < 0.\n";
+      if (t < m_tStart) std::cout << "  Time " << t << " out of range.\n";
+      if (dt <= 0.) std::cout << "  Time step < 0.\n";
     }
     return;
   }
   const int bin = int((t - m_tStart) / m_tStep);
   // Check if the starting time is outside the range
   if (bin < 0 || bin >= (int)m_nTimeBins) {
-    if (m_debug) {
-      std::cerr << m_className << "::AddSignal:\n";
-      std::cerr << "    Bin " << bin << " out of range.\n";
-    }
+    if (m_debug) std::cout << "  Bin " << bin << " out of range.\n";
     return;
   }
   if (m_nEvents <= 0) m_nEvents = 1;
 
   double wx = 0., wy = 0., wz = 0.;
   if (m_debug) {
-    std::cout << m_className << "::AddSignal:\n";
-    std::cout << "    Time: " << t << "\n";
-    std::cout << "    Step: " << dt << "\n";
-    std::cout << "    Charge: " << q << "\n";
-    std::cout << "    Velocity: (" << vx << ", " << vy << ", " << vz << ")\n";
+    std::cout << "  Time: " << t << "\n"
+              << "  Step: " << dt << "\n"
+              << "  Charge: " << q << "\n"
+              << "  Velocity: (" << vx << ", " << vy << ", " << vz << ")\n";
   }
   for (auto& electrode : m_electrodes) {
     // Calculate the weighting field for this electrode
@@ -410,10 +398,9 @@ void Sensor::AddSignal(const double q, const double t, const double dt,
     // Calculate the induced current
     const double cur = -q * (wx * vx + wy * vy + wz * vz);
     if (m_debug) {
-      std::cout << "    Electrode " << electrode.label << ":\n";
-      std::cout << "      Weighting field: (" << wx << ", " << wy << ", " << wz
-                << ")\n";
-      std::cout << "      Induced charge: " << cur* dt << "\n";
+      std::cout << "  Electrode " << electrode.label << ":\n"
+                << "    Weighting field: (" << wx << ", " << wy << ", " << wz
+                << ")\n    Induced charge: " << cur * dt << "\n";
     }
     double delta = m_tStart + (bin + 1) * m_tStep - t;
     // Check if the provided timestep extends over more than one time bin
@@ -468,12 +455,12 @@ void Sensor::AddInducedCharge(const double q, const double x0, const double y0,
     const double w1 = cmp->WeightingPotential(x1, y1, z1, electrode.label);
     electrode.charge += q * (w1 - w0);
     if (m_debug) {
-      std::cout << "    Electrode " << electrode.label << ":\n";
-      std::cout << "      Weighting potential at (" << x0 << ", " << y0 << ", "
-                << z0 << "): " << w0 << "\n";
-      std::cout << "      Weighting potential at (" << x1 << ", " << y1 << ", "
-                << z1 << "): " << w1 << "\n";
-      std::cout << "      Induced charge: " << electrode.charge << "\n";
+      std::cout << "  Electrode " << electrode.label << ":\n"
+                << "    Weighting potential at (" << x0 << ", " << y0 << ", "
+                << z0 << "): " << w0 << "\n"
+                << "    Weighting potential at (" << x1 << ", " << y1 << ", "
+                << z1 << "): " << w1 << "\n"
+                << "    Induced charge: " << electrode.charge << "\n";
     }
   }
 }
@@ -483,28 +470,24 @@ void Sensor::SetTimeWindow(const double tstart, const double tstep,
 
   m_tStart = tstart;
   if (tstep <= 0.) {
-    std::cerr << m_className << "::SetTimeWindow:\n";
-    std::cerr << "    Starting time out of range.\n";
+    std::cerr << m_className << "::SetTimeWindow: Start time out of range.\n";
   } else {
     m_tStep = tstep;
   }
 
   if (nsteps == 0) {
-    std::cerr << m_className << "::SetTimeWindow:\n";
-    std::cerr << "    Number of time bins out of range.\n";
+    std::cerr << m_className << "::SetTimeWindow: Invalid number of bins.\n";
   } else {
     m_nTimeBins = nsteps;
   }
 
   if (m_debug) {
-    std::cout << m_className << "::SetTimeWindow:\n";
-    std::cout << "    " << m_tStart << " < t [ns] < "
-              << m_tStart + m_nTimeBins* m_tStep << "\n";
-    std::cout << "    Step size: " << m_tStep << " ns\n";
+    std::cout << m_className << "::SetTimeWindow: " << m_tStart 
+              << " < t [ns] < " << m_tStart + m_nTimeBins * m_tStep << "\n"
+              << "    Step size: " << m_tStep << " ns\n";
   }
 
-  std::cout << m_className << "::SetTimeWindow:\n";
-  std::cout << "    Resetting all signals.\n";
+  std::cout << m_className << "::SetTimeWindow: Resetting all signals.\n";
   for (auto& electrode : m_electrodes) {
     electrode.signal.assign(m_nTimeBins, 0.);
     electrode.electronsignal.assign(m_nTimeBins, 0.);
@@ -522,12 +505,6 @@ double Sensor::GetElectronSignal(const std::string& label,
   for (const auto& electrode : m_electrodes) {
     if (electrode.label == label) sig += electrode.electronsignal[bin];
   }
-  if (m_debug) {
-    std::cout << m_className << "::GetElectronSignal:\n";
-    std::cout << "    Electrode: " << label << "\n";
-    std::cout << "    Bin: " << bin << "\n";
-    std::cout << "    ElectronSignal: " << sig / m_tStep << "\n";
-  }
   return m_signalConversion * sig / (m_nEvents * m_tStep);
 }
 
@@ -538,12 +515,6 @@ double Sensor::GetIonSignal(const std::string& label, const unsigned int bin) {
   double sig = 0.;
   for (const auto& electrode : m_electrodes) {
     if (electrode.label == label) sig += electrode.ionsignal[bin];
-  }
-  if (m_debug) {
-    std::cout << m_className << "::GetIonSignal:\n";
-    std::cout << "    Electrode: " << label << "\n";
-    std::cout << "    Bin: " << bin << "\n";
-    std::cout << "    IonSignal: " << sig / m_tStep << "\n";
   }
   return m_signalConversion * sig / (m_nEvents * m_tStep);
 }
@@ -556,12 +527,6 @@ double Sensor::GetSignal(const std::string& label, const unsigned int bin) {
   for (const auto& electrode : m_electrodes) {
     if (electrode.label == label) sig += electrode.signal[bin];
   }
-  if (m_debug) {
-    std::cout << m_className << "::GetSignal:\n";
-    std::cout << "    Electrode: " << label << "\n";
-    std::cout << "    Bin: " << bin << "\n";
-    std::cout << "    Signal: " << sig / m_tStep << "\n";
-  }
   return m_signalConversion * sig / (m_nEvents * m_tStep);
 }
 
@@ -572,11 +537,6 @@ double Sensor::GetInducedCharge(const std::string& label) {
   for (const auto& electrode : m_electrodes) {
     if (electrode.label == label) charge += electrode.charge;
   }
-  if (m_debug) {
-    std::cout << m_className << "::GetInducedCharge:\n";
-    std::cout << "    Electrode: " << label << "\n";
-    std::cout << "    Charge: " << charge / m_tStep << "\n";
-  }
 
   return charge / m_nEvents;
 }
@@ -584,7 +544,7 @@ double Sensor::GetInducedCharge(const std::string& label) {
 void Sensor::SetTransferFunction(double (*f)(double t)) {
 
   if (!f) {
-    std::cerr << m_className << "::SetTransferFunction:\n    Null pointer.\n";
+    std::cerr << m_className << "::SetTransferFunction: Null pointer.\n";
     return;
   }
   m_fTransfer = f;
@@ -597,12 +557,11 @@ void Sensor::SetTransferFunction(const std::vector<double>& times,
                                  const std::vector<double>& values) {
 
   if (times.empty() || values.empty()) {
-    std::cerr << m_className << "::SetTransferFunction:\n";
-    std::cerr << "    Time and value vectors must not be empty.\n";
+    std::cerr << m_className << "::SetTransferFunction: Empty vector.\n";
     return;
   } else if (times.size() != values.size()) {
-    std::cerr << m_className << "::SetTransferFunction:\n";
-    std::cerr << "    Time and value vectors must have same size.\n";
+    std::cerr << m_className << "::SetTransferFunction:\n"
+              << "    Time and value vectors must have same size.\n";
     return;
   }
   m_transferFunctionTimes = times;
@@ -611,7 +570,7 @@ void Sensor::SetTransferFunction(const std::vector<double>& times,
   m_hasTransferFunction = true;
 }
 
-double Sensor::InterpolateTransferFunctionTable(double t) {
+double Sensor::InterpolateTransferFunctionTable(const double t) const {
 
   if (m_transferFunctionTimes.empty() || m_transferFunctionValues.empty()) {
     return 0.;
@@ -643,13 +602,12 @@ double Sensor::GetTransferFunction(const double t) {
 bool Sensor::ConvoluteSignal() {
 
   if (!m_hasTransferFunction) {
-    std::cerr << m_className << "::ConvoluteSignal:\n";
-    std::cerr << "    No transfer function available.\n";
+    std::cerr << m_className << "::ConvoluteSignal: "
+              << "Transfer function not set.\n";
     return false;
   }
   if (m_nEvents == 0) {
-    std::cerr << m_className << "::ConvoluteSignal:\n";
-    std::cerr << "    No signals present.\n";
+    std::cerr << m_className << "::ConvoluteSignal: No signals present.\n";
     return false;
   }
 
@@ -699,8 +657,7 @@ bool Sensor::ConvoluteSignal() {
 bool Sensor::IntegrateSignal() {
 
   if (m_nEvents == 0) {
-    std::cerr << m_className << "::IntegrateSignal:\n";
-    std::cerr << "    No signals present.\n";
+    std::cerr << m_className << "::IntegrateSignal: No signals present.\n";
     return false;
   }
 
@@ -732,8 +689,7 @@ void Sensor::SetNoiseFunction(double (*f)(double t)) {
 void Sensor::AddNoise(const bool total, const bool electron, const bool ion) {
 
   if (!m_hasNoiseFunction) {
-    std::cerr << m_className << "::AddNoise:\n";
-    std::cerr << "    Noise function is not defined.\n";
+    std::cerr << m_className << "::AddNoise: Noise function not set.\n";
     return;
   }
   if (m_nEvents == 0) m_nEvents = 1;
@@ -761,8 +717,8 @@ bool Sensor::ComputeThresholdCrossings(const double thr,
   int iOrder = 1;
 
   if (m_nEvents == 0) {
-    std::cerr << m_className << "::ComputeThresholdCrossings:\n";
-    std::cerr << "    No signals present.\n";
+    std::cerr << m_className << "::ComputeThresholdCrossings: "
+              << "No signals present.\n";
     return false;
   }
 
@@ -779,8 +735,8 @@ bool Sensor::ComputeThresholdCrossings(const double thr,
     }
   }
   if (!foundLabel) {
-    std::cerr << m_className << "::ComputeThresholdCrossings:\n";
-    std::cerr << "    Electrode " << label << " not found.\n";
+    std::cerr << m_className << "::ComputeThresholdCrossings: Electrode "
+              << label << " not found.\n";
     return false;
   }
   const double scale = m_signalConversion / (m_nEvents * m_tStep);
@@ -793,10 +749,10 @@ bool Sensor::ComputeThresholdCrossings(const double thr,
     if (signal[i] < vMin) vMin = signal[i];
     if (signal[i] > vMax) vMax = signal[i];
   }
+  if (m_debug) std::cout <<  m_className << "::ComputeThresholdCrossings:\n";
   if (thr < vMin && thr > vMax) {
     if (m_debug) {
-      std::cout << m_className << "::ComputeThresholdCrossings:\n";
-      std::cout << "    Threshold outside the range [" << vMin << ", " << vMax
+      std::cout << "  Threshold outside the range [" << vMin << ", " << vMax
                 << "]\n";
     }
     return true;
@@ -809,11 +765,9 @@ bool Sensor::ComputeThresholdCrossings(const double thr,
   while (rise || fall) {
     if (m_debug) {
       if (rise) {
-        std::cout << m_className << "::ComputeThresholdCrossings:\n";
-        std::cout << "    Hunting for rising edges.\n";
+        std::cout << "  Hunting for rising edges.\n";
       } else if (fall) {
-        std::cout << m_className << "::ComputeThresholdCrossings:\n";
-        std::cout << "    Hunting for falling edges.\n";
+        std::cout << "  Hunting for falling edges.\n";
       }
     }
     // Initialise the vectors.
@@ -876,8 +830,7 @@ bool Sensor::ComputeThresholdCrossings(const double thr,
   n = m_thresholdCrossings.size();
 
   if (m_debug) {
-    std::cout << m_className << "::ComputeThresholdCrossings:\n";
-    std::cout << "    Found " << n << " crossings.\n";
+    std::cout << "  Found " << n << " crossings.\n";
     if (n > 0) std::cout << "      Time  [ns]    Direction\n";
     for (int i = 0; i < n; ++i) {
       std::cout << "      " << m_thresholdCrossings[i].time << "      ";
@@ -898,8 +851,7 @@ bool Sensor::GetThresholdCrossing(const unsigned int i, double& time,
   level = m_thresholdLevel;
 
   if (i >= m_thresholdCrossings.size()) {
-    std::cerr << m_className << "::GetThresholdCrossing:\n";
-    std::cerr << "    Index (" << i << ") out of range.\n";
+    std::cerr << m_className << "::GetThresholdCrossing: Index out of range.\n";
     time = m_tStart + m_nTimeBins * m_tStep;
     return false;
   }
@@ -938,18 +890,18 @@ bool Sensor::GetBoundingBox(double& xmin, double& ymin, double& zmin,
 
   // Warn if we still don't know the range
   if (!set) {
-    std::cerr << m_className << "::GetBoundingBox:\n";
-    std::cerr << "    Sensor bounding box not known.\n";
+    std::cerr << m_className << "::GetBoundingBox:\n"
+              << "    Sensor bounding box not known.\n";
     xmin = ymin = zmin = 0.;
     xmax = ymax = zmax = 0.;
     return false;
   }
 
   if (m_debug) {
-    std::cout << m_className << "::GetBoundingBox:\n";
-    std::cout << "    " << xmin << " < x [cm] < " << xmax << "\n";
-    std::cout << "    " << ymin << " < y [cm] < " << ymax << "\n";
-    std::cout << "    " << zmin << " < z [cm] < " << zmax << "\n";
+    std::cout << m_className << "::GetBoundingBox:\n"
+              << "    " << xmin << " < x [cm] < " << xmax << "\n"
+              << "    " << ymin << " < y [cm] < " << ymax << "\n"
+              << "    " << zmin << " < z [cm] < " << zmax << "\n";
   }
   return true;
 }

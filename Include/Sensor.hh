@@ -13,17 +13,20 @@ class Sensor {
 
  public:
   /// Constructor
-  Sensor();
+  Sensor() = default;
   /// Destructor
   ~Sensor() {}
 
   /// Add a component.
   void AddComponent(ComponentBase* comp);
+  /// Get the number of components attached to the sensor.
   unsigned int GetNumberOfComponents() const { return m_components.size(); }
+  /// Retrieve the pointer to a given component.
   ComponentBase* GetComponent(const unsigned int i);
 
   /// Add an electrode.
   void AddElectrode(ComponentBase* comp, const std::string& label);
+  /// Get the number of electrodes attached to the sensor.
   unsigned int GetNumberOfElectrodes() const { return m_electrodes.size(); }
   /// Remove all components, electrodes and reset the sensor.
   void Clear();
@@ -63,13 +66,6 @@ class Sensor {
   /// Check if a point is inside the user area.
   bool IsInArea(const double x, const double y, const double z);
 
-  bool IsWireCrossed(const double x0, const double y0, const double z0,
-                     const double x1, const double y1, const double z1,
-                     double& xc, double& yc, double& zc);
-
-  bool IsInTrapRadius(const double q0, const double x0, const double y0, 
-                      const double z0, double& xw, double& yw, double& rw);
-
   /// Return the voltage range.
   bool GetVoltageRange(double& vmin, double& vmax);
 
@@ -77,44 +73,82 @@ class Sensor {
   void NewSignal() { ++m_nEvents; }
   /// Reset signals and induced charges of all electrodes.
   void ClearSignal();
+
   void AddSignal(const double q, const double t, const double dt,
                  const double x, const double y, const double z,
                  const double vx, const double vy, const double vz);
   void AddInducedCharge(const double q, const double x0, const double y0,
                         const double z0, const double x1, const double y1,
                         const double z1);
-  // Set/get the time window and binning for the signal calculation
+
+  /** Set the time window and binning for the signal calculation.
+    * \param tstart start time [ns]
+    * \param tstep bin width [ns]
+    * \param nstep number of bins
+    */ 
   void SetTimeWindow(const double tstart, const double tstep, 
                      const unsigned int nsteps);
-  void GetTimeWindow(double& tstart, double& tstep, unsigned int& nsteps) {
+  /// Retrieve the time window and binning.
+  void GetTimeWindow(double& tstart, double& tstep, unsigned int& nsteps) const {
     tstart = m_tStart;
     tstep = m_tStep;
     nsteps = m_nTimeBins;
   }
+  /// Retrieve the total signal for a given electrode and time bin. 
   double GetSignal(const std::string& label, const unsigned int bin);
+  /// Retrieve the electron signal for a given electrode and time bin.
   double GetElectronSignal(const std::string& label, const unsigned int bin);
+  /// Retrieve the ion or hole signal for a given electrode and time bin.
   double GetIonSignal(const std::string& label, const unsigned int bin);
+  /// Retrieve the total induced charge for a given electrode, 
+  /// calculated using the weighting potentials at the start and end points. 
   double GetInducedCharge(const std::string& label);
+  /// Set the function to be used for evaluating the transfer function.
   void SetTransferFunction(double (*f)(double t));
+  /// Set the points to be used for interpolating the transfer function. 
   void SetTransferFunction(const std::vector<double>& times,
                            const std::vector<double>& values);
+  /// Evaluate the transfer function at a given time.
   double GetTransferFunction(const double t);
+  /// Convolute the induced current with the transfer function.
   bool ConvoluteSignal();
+  /// Replace the current signal curve by its integral.
   bool IntegrateSignal();
+  /// Set the function to be used for evaluating the noise component.
   void SetNoiseFunction(double (*f)(double t));
+  /// Add noise to the induced signal.
   void AddNoise(const bool total = true, const bool electron = false, 
                 const bool ion = false);
+  /** Determine the threshold crossings of the current signal curve. 
+    * \param thr threshold value
+    * \param label electrode for which to compute the threshold crossings
+    * \param n number of threshold crossings
+    */ 
   bool ComputeThresholdCrossings(const double thr, const std::string& label,
                                  int& n);
+  /// Get the number of threshold crossings 
+  /// (after having called ComputeThresholdCrossings).
   unsigned int GetNumberOfThresholdCrossings() const { 
     return m_thresholdCrossings.size(); 
   }
+  /** Retrieve the time and type of a given threshold crossing (after having 
+    * called ComputeThresholdCrossings.
+    * \param i index
+    * \param time threshold crossing time [ns]
+    * \param level threshold (should correspond to the value requested).
+    * \param rise flag whether the crossing is on a rising or falling slope.
+    */
   bool GetThresholdCrossing(const unsigned int i, double& time, double& level,
                             bool& rise) const;
 
-  /// Switch on debugging messages
-  void EnableDebugging() { m_debug = true; }
-  void DisableDebugging() { m_debug = false; }
+  /// Switch debugging messages on/off.
+  void EnableDebugging(const bool on = true) { m_debug = on; }
+
+  bool IsWireCrossed(const double x0, const double y0, const double z0,
+                     const double x1, const double y1, const double z1,
+                     double& xc, double& yc, double& zc);
+  bool IsInTrapRadius(const double q0, const double x0, const double y0, 
+                      const double z0, double& xw, double& yw, double& rw);
 
  private:
   std::string m_className = "Sensor";
@@ -156,7 +190,7 @@ class Sensor {
     bool rise;
   };
   std::vector<ThresholdCrossing> m_thresholdCrossings;
-  double m_thresholdLevel;
+  double m_thresholdLevel = 0.;
 
   // User bounding box
   bool m_hasUserArea = false;
@@ -170,7 +204,7 @@ class Sensor {
   bool GetBoundingBox(double& xmin, double& ymin, double& zmin, double& xmax,
                       double& ymax, double& zmax);
 
-  double InterpolateTransferFunctionTable(double t);
+  double InterpolateTransferFunctionTable(const double t) const;
 };
 }
 
