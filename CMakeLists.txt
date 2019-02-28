@@ -7,6 +7,11 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.6 FATAL_ERROR)
 
 PROJECT( Garfield CXX Fortran)
 
+# Set the C++ standard
+set(CMAKE_CXX_STANDARD 11 CACHE STRING "C++ standard used for compiling" FORCE)
+set(CMAKE_CXX_STANDARD_REQUIRED ON CACHE BOOL "C++ standard required" FORCE)
+set(CMAKE_CXX_EXTENSIONS OFF CACHE BOOL "Allow C++ extensions" FORCE)
+
 ### DEPENDENCIES #######################################
 IF(DEFINED ENV{ROOTSYS})
     list(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
@@ -21,6 +26,15 @@ ENDIF(DEFINED ENV{ROOTSYS})
 
 
 FIND_PACKAGE( ROOT 5.0 REQUIRED COMPONENTS Geom Gdml)
+
+if(ROOT_cxx17_FOUND AND "${CMAKE_CXX_STANDARD}" STREQUAL "11" OR "${CMAKE_CXX_STANDARD}" STREQUAL "14")
+	message(WARNING "DQM4hep will be compiled with CXX17")
+	set(CMAKE_CXX_STANDARD 17)
+elseif(ROOT_cxx14_FOUND AND "${CMAKE_CXX_STANDARD}" STREQUAL "11")
+	message(WARNING "DQM4hep will be compiled with CXX14")
+	set(CMAKE_CXX_STANDARD 14)
+endif()
+
 # Define useful ROOT functions and macros (e.g. ROOT_GENERATE_DICTIONARY)
 include(${ROOT_USE_FILE})
 
@@ -93,11 +107,6 @@ IF( CMAKE_BUILD_TYPE STREQUAL "Debug" OR
  ADD_DEFINITIONS( "-ggdb -O0" )
 ELSE()
  ADD_DEFINITIONS( "-O2" )
-ENDIF()
-IF(ROOT_VERSION VERSION_GREATER 6.06)
-    ADD_DEFINITIONS( "-std=c++1y" )
-ELSEIF(ROOT_VERSION VERSION_GREATER 5)
-    ADD_DEFINITIONS( "-std=c++0x" )
 ENDIF()
 
 # Add switches used in HEED
