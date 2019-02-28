@@ -2,10 +2,11 @@
 # build Garfield++ library and examples
 # depend on: ROOT
 # @author Klaus Zenker
-CMAKE_MINIMUM_REQUIRED(VERSION 2.6 FATAL_ERROR)
+CMAKE_MINIMUM_REQUIRED(VERSION 3.13 FATAL_ERROR)
 ########################################################
 
-PROJECT( Garfield CXX Fortran)
+cmake_policy(SET CMP0048 NEW)
+PROJECT( Garfield VERSION 0.2.0 LANGUAGES CXX Fortran)
 
 # Set the C++ standard
 set(CMAKE_CXX_STANDARD 11 CACHE STRING "C++ standard used for compiling" FORCE)
@@ -45,17 +46,6 @@ IF(ROOT_VERSION VERSION_LESS 6.02)
     INCLUDE( MacroRootDict )
     MESSAGE(STATUS "Using Garfields FindRoot.cmake")
 ENDIF()
-
-# If you cannot create symbolic links turn FALSE the library version
-SET(BUILD_WITH_VERSION_NUMBER TRUE)
-IF(BUILD_WITH_VERSION_NUMBER)
-    SET( ${PROJECT_NAME}_MAJOR_VERSION 0 )
-    SET( ${PROJECT_NAME}_MINOR_VERSION 2 )
-    SET( ${PROJECT_NAME}_PATCH_VERSION 0 )
-    SET( ${PROJECT_NAME}_VERSION
-    ${${PROJECT_NAME}_MAJOR_VERSION}.${${PROJECT_NAME}_MINOR_VERSION}.${${PROJECT_NAME}_PATCH_VERSION} )
-    SET( ${PROJECT_NAME}_SOVERSION ${${PROJECT_NAME}_VERSION} )
-ENDIF(BUILD_WITH_VERSION_NUMBER)
 
 ## Add root libs ##
 MESSAGE(" Root libraries: ${ROOT_LIBRARIES} ")
@@ -148,11 +138,7 @@ ADD_LIBRARY( ${PROJECT_NAME} SHARED
     ${magboltz_sources}
     ${heed_sources})
 TARGET_LINK_LIBRARIES( ${PROJECT_NAME} ${ROOT_LIBRARIES} ${ROOT_COMPONENT_LIBRARIES} )
-IF(BUILD_WITH_VERSION_NUMBER)
-    SET_TARGET_PROPERTIES( ${PROJECT_NAME} PROPERTIES
-        VERSION ${${PROJECT_NAME}_VERSION}
-        SOVERSION ${${PROJECT_NAME}_SOVERSION} )
-ENDIF(BUILD_WITH_VERSION_NUMBER)
+SET_TARGET_PROPERTIES( ${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_VERSION})
 
 ## BUILD examples             ##########################
 option(WITH_EXAMPLES "Build Garfield++ examples" ON)

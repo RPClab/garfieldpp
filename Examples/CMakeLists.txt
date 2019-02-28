@@ -1,8 +1,9 @@
 ########################################################
 # @author Klaus Zenker
-CMAKE_MINIMUM_REQUIRED(VERSION 2.6 FATAL_ERROR)
+CMAKE_MINIMUM_REQUIRED(VERSION 3.0 FATAL_ERROR)
 ########################################################
-PROJECT(GarfieldExamples)
+cmake_policy(SET CMP0048 NEW)
+PROJECT(GarfieldExamples VERSION 0.2.0 LANGUAGES CXX)
 
 #### GasFile               #############################
 add_executable(gasfile GasFile/gasfile.C)
