@@ -114,15 +114,15 @@ ELSE()
 ENDIF()
 
 ## print information on considered files and the root dictionary include directories
-MESSAGE( STATUS "###########################################################" )
-MESSAGE( STATUS "Considered Garfield files :             ${garfield_sources}" )
-MESSAGE( STATUS "-----------------------------------------------------------" )
-MESSAGE( STATUS "Considered heed files :                 ${heed_sources}" )
-MESSAGE( STATUS "-----------------------------------------------------------" )
-MESSAGE( STATUS "Considered magboltz files :             ${magboltz_sources}" )
-MESSAGE( STATUS "-----------------------------------------------------------" )
-MESSAGE( STATUS "Directory used to find root dict files: ${ROOT_DICT_INCLUDE_DIRS}" )
-MESSAGE( STATUS "###########################################################" )
+#MESSAGE( STATUS "###########################################################" )
+#MESSAGE( STATUS "Considered Garfield files :             ${garfield_sources}" )
+#MESSAGE( STATUS "-----------------------------------------------------------" )
+#MESSAGE( STATUS "Considered heed files :                 ${heed_sources}" )
+#MESSAGE( STATUS "-----------------------------------------------------------" )
+#MESSAGE( STATUS "Considered magboltz files :             ${magboltz_sources}" )
+#MESSAGE( STATUS "-----------------------------------------------------------" )
+#MESSAGE( STATUS "Directory used to find root dict files: ${ROOT_DICT_INCLUDE_DIRS}" )
+#MESSAGE( STATUS "###########################################################" )
 
 
 ## SET output path for libraries 
@@ -171,16 +171,10 @@ INSTALL( FILES ${PROJECT_BINARY_DIR}/GarfieldConfig.cmake
         ${PROJECT_BINARY_DIR}/GarfieldConfigVersion.cmake
         DESTINATION ${CMAKE_INSTALL_PREFIX}/cmake
         COMPONENT cmakefiles )
-# install pcm file in case of root 6
-IF(ROOT_VERSION VERSION_GREATER 6.06)
-    INSTALL( FILES ${PROJECT_BINARY_DIR}/lib${PROJECT_NAME}Dict_rdict.pcm 
-             DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/ 
-             COMPONENT dict)
-ELSEIF(ROOT_VERSION VERSION_GREATER 5)
-    INSTALL( FILES ${PROJECT_BINARY_DIR}/${PROJECT_NAME}Dict_rdict.pcm 
-             DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/ 
-             COMPONENT dict)
-ENDIF()   
+        
+# install pcm file
+file(GLOB PCM_FILE "${PROJECT_BINARY_DIR}/*.pcm")
+file(COPY ${PCM_FILE} DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
 
 INSTALL (DIRECTORY ${CMAKE_SOURCE_DIR}/Include/ DESTINATION ${CMAKE_INSTALL_PREFIX}/include/Garfield FILES_MATCHING PATTERN "*.h*")
 INSTALL (DIRECTORY ${CMAKE_SOURCE_DIR}/Heed/ DESTINATION ${CMAKE_INSTALL_PREFIX}/include/Heed FILES_MATCHING PATTERN "*.h*")
