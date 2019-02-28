@@ -87,17 +87,14 @@ ENDFOREACH()
 SET_SOURCE_FILES_PROPERTIES( ${heed_sources} PROPERTIES LANGUAGE CXX)
 
 ## Flags to pass to the compiler #######################
-set(CMAKE_CXX_FLAGS "-Wall -Wextra -pedantic -ansi -Wabi -Wno-long-long -Woverloaded-virtual -fno-common -pg" )
+SET(CMAKE_CXX_FLAGS "-Wall -Wextra -pedantic -ansi -Wno-long-long -Woverloaded-virtual -fno-common -pg")
+SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O3 -g")
+SET(CMAKE_CXX_FLAGS_RELEASE "-O3")
+SET(CMAKE_CXX_FLAGS_DEBUG  "-ggdb -O0")
 
-# Add common flags for gfortran and g++
+
 ADD_DEFINITIONS( "-c" )
-# Allow to use debug symbols
-IF( CMAKE_BUILD_TYPE STREQUAL "Debug" OR
- CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo" )
- ADD_DEFINITIONS( "-ggdb -O0" )
-ELSE()
- ADD_DEFINITIONS( "-O2" )
-ENDIF()
+
 
 # Add switches used in HEED
 # -DNOT_INCLUDE_GASLIB_IN_PACSLIB is used in Heed/heed++/code/PhotoAbsCS.c

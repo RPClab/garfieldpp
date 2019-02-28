@@ -28,9 +28,9 @@ SET(CMAKE_MODULE_PATH /afs/cern.ch/sw/lcg/external/geant4/10.1/share/cmake/Modul
 #
 option(WITH_GEANT4_UIVIS "Build example with Geant4 UI and Vis drivers" ON)
 if(WITH_GEANT4_UIVIS)
-  find_package(Geant4 COMPONENTS ui_all vis_all)
+  find_package(Geant4 COMPONENTS ui_all vis_all QUIET)
 else()
-  find_package(Geant4 )
+  find_package(Geant4 QUIET)
 endif()
 if(Geant4_FOUND)
 #----------------------------------------------------------------------------
@@ -72,6 +72,8 @@ foreach(_script ${EXAMPLEGARFIELD_SCRIPTS})
     )
   INSTALL(FILES ${G4_DIR}/${_script} DESTINATION ${CMAKE_INSTALL_PREFIX}/bin/)
 endforeach()
+else()
+message( STATUS "Geant4 NOT found ! exampleGeant4Interface will be not compiled" )
 endif(Geant4_FOUND)
 #### Install                ############################
 if(Geant4_FOUND)
