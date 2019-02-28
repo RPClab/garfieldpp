@@ -8,6 +8,14 @@ CMAKE_MINIMUM_REQUIRED(VERSION 3.13 FATAL_ERROR)
 cmake_policy(SET CMP0048 NEW)
 PROJECT( Garfield VERSION 0.2.0 LANGUAGES CXX Fortran)
 
+# Say to user he can change the install directory if i didn't do it before
+if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+    message(STATUS "Install path: ${CMAKE_INSTALL_PREFIX}")
+    message(STATUS "If you want to change this path call cmake -DCMAKE_INSTALL_PREFIX=my_install_path ...")
+endif()
+
+SET(CMAKE_INSTALL_RPATH ${CMAKE_INSTALL_PREFIX})
+
 # Set the C++ standard
 set(CMAKE_CXX_STANDARD 11 CACHE STRING "C++ standard used for compiling" FORCE)
 set(CMAKE_CXX_STANDARD_REQUIRED ON CACHE BOOL "C++ standard required" FORCE)
@@ -114,15 +122,15 @@ ELSE()
 ENDIF()
 
 ## print information on considered files and the root dictionary include directories
-#MESSAGE( STATUS "###########################################################" )
-#MESSAGE( STATUS "Considered Garfield files :             ${garfield_sources}" )
-#MESSAGE( STATUS "-----------------------------------------------------------" )
-#MESSAGE( STATUS "Considered heed files :                 ${heed_sources}" )
-#MESSAGE( STATUS "-----------------------------------------------------------" )
-#MESSAGE( STATUS "Considered magboltz files :             ${magboltz_sources}" )
-#MESSAGE( STATUS "-----------------------------------------------------------" )
-#MESSAGE( STATUS "Directory used to find root dict files: ${ROOT_DICT_INCLUDE_DIRS}" )
-#MESSAGE( STATUS "###########################################################" )
+MESSAGE( STATUS "###########################################################" )
+MESSAGE( STATUS "Considered Garfield files :             ${garfield_sources}" )
+MESSAGE( STATUS "-----------------------------------------------------------" )
+MESSAGE( STATUS "Considered heed files :                 ${heed_sources}" )
+MESSAGE( STATUS "-----------------------------------------------------------" )
+MESSAGE( STATUS "Considered magboltz files :             ${magboltz_sources}" )
+MESSAGE( STATUS "-----------------------------------------------------------" )
+MESSAGE( STATUS "Directory used to find root dict files: ${ROOT_DICT_INCLUDE_DIRS}" )
+MESSAGE( STATUS "###########################################################" )
 
 
 ## SET output path for libraries 
@@ -154,10 +162,6 @@ configure_file(CMake/GarfieldConfig.cmake.in
   "${PROJECT_BINARY_DIR}/GarfieldConfig.cmake" @ONLY)
 configure_file(CMake/GarfieldConfigVersion.cmake.in
   "${PROJECT_BINARY_DIR}/GarfieldConfigVersion.cmake" @ONLY)
-
-MESSAGE(STATUS "Install path: ${CMAKE_INSTALL_PREFIX}")
-MESSAGE(STATUS "If you want to change this path call cmake -DCMAKE_INSTALL_PREFIX=my_install_path ...")
-SET(CMAKE_INSTALL_RPATH ${CMAKE_INSTALL_PREFIX})
 
 
 # decide were the library will end up and to write info in  GarfieldLibraryDepends.cmake
