@@ -4,7 +4,7 @@
 #  GARFIELD_LIBRARIES - at the moment only Garfield
  
 SET(GARFIELD_INCLUDE_DIRS
-  "@CMAKE_INSTALL_PREFIX@/include/Garfiel"
+  "@CMAKE_INSTALL_PREFIX@/include/Garfield"
   "@CMAKE_INSTALL_PREFIX@/include/Heed/"
   )
 SET(GARFIELD_LIBRARIES Garfield)
