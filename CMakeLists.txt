@@ -14,7 +14,7 @@ if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
     message(STATUS "If you want to change this path call cmake -DCMAKE_INSTALL_PREFIX=my_install_path ...")
 endif()
 
-SET(CMAKE_INSTALL_RPATH ${CMAKE_INSTALL_PREFIX})
+SET(CMAKE_INSTALL_RPATH ${CMAKE_INSTALL_PREFIX}/lib)
 
 # Set the C++ standard
 set(CMAKE_CXX_STANDARD 11 CACHE STRING "C++ standard used for compiling" FORCE)
@@ -142,6 +142,7 @@ ADD_LIBRARY( ${PROJECT_NAME} SHARED
     ${garfield_sources} 
     ${magboltz_sources}
     ${heed_sources})
+    
 TARGET_LINK_LIBRARIES( ${PROJECT_NAME} ${ROOT_LIBRARIES} ${ROOT_COMPONENT_LIBRARIES} )
 SET_TARGET_PROPERTIES( ${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_VERSION})
 
