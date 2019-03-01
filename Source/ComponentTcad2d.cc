@@ -64,8 +64,7 @@ bool ComponentTcad2d::ElectronAttachment(const double x, const double y,
 
   if (m_donors.empty() && m_acceptors.empty()) {
     if (m_debug) {
-      std::cerr << m_className << "::ElectronAttachment:\n"
-                << "    There are no traps defined.\n";
+      std::cerr << m_className << "::ElectronAttachment: No traps defined.\n";
     }
     return true;
   }
@@ -99,8 +98,7 @@ bool ComponentTcad2d::HoleAttachment(const double x, const double y,
 
   if (m_donors.empty() && m_acceptors.empty()) {
     if (m_debug) {
-      std::cerr << m_className << "::HoleAttachment:\n"
-                << "    There are no traps defined.\n";
+      std::cerr << m_className << "::HoleAttachment: No traps defined.\n";
     }
     return true;
   }
@@ -126,7 +124,7 @@ void ComponentTcad2d::WeightingField(const double x, const double y, const doubl
                                      double& wx, double& wy, double& wz, 
 				                             const std::string& /*label*/) {
   int status = 0;
-  Medium* med = NULL;
+  Medium* med = nullptr;
   double v = 0.;
   ElectricField(x, y, z, wx, wy, wz, v, med, status);
 }

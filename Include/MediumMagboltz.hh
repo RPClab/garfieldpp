@@ -1,6 +1,8 @@
 #ifndef G_MEDIUM_MAGBOLTZ_9
 #define G_MEDIUM_MAGBOLTZ_9
 
+#include <array>
+
 #include "MediumGas.hh"
 
 namespace Garfield {
@@ -134,15 +136,6 @@ class MediumMagboltz : public MediumGas {
   void GenerateGasTable(const int numCollisions = 10,
                         const bool verbose = true);
 
-  double fit3d4p, fitHigh4p;
-  double fit3dQCO2, fit3dEtaCO2;
-  double fit3dQCH4, fit3dEtaCH4;
-  double fit3dQC2H6, fit3dEtaC2H6;
-  double fit4pEtaCH4;
-  double fit4pEtaC2H6;
-  double fit4sEtaC2H6;
-  double fitLineCut;
-
  private:
   static const int nEnergySteps = 20000;
   static const int nEnergyStepsLog = 200;
@@ -227,7 +220,7 @@ class MediumMagboltz : public MediumGas {
   // (absorption of photons discrete excitation lines)
   bool m_useRadTrap = true;
 
-  struct deexcitation {
+  struct Deexcitation {
     // Gas component
     int gas;
     // Associated cross-section term
@@ -236,8 +229,6 @@ class MediumMagboltz : public MediumGas {
     std::string label;
     // Energy
     double energy;
-    // Number of de-excitation channels
-    int nChannels;
     // Branching ratios
     std::vector<double> p;
     // Final levels
@@ -257,12 +248,11 @@ class MediumMagboltz : public MediumGas {
     // Integrated absorption collision rate
     double cf;
   };
-  std::vector<deexcitation> m_deexcitations;
+  std::vector<Deexcitation> m_deexcitations;
   // Mapping between deexcitations and cross-section terms.
-  int m_iDeexcitation[nMaxLevels];
+  std::array<int, nMaxLevels> m_iDeexcitation;
 
   // List of de-excitation products
-  int nDeexcitationProducts;
   struct dxcProd {
     // Radial spread
     double s;
@@ -307,6 +297,17 @@ class MediumMagboltz : public MediumGas {
   void SetupGreenSawada();
   void ComputeAngularCut(const double parIn, double& cut, double& parOut) const;
   void ComputeDeexcitationTable(const bool verbose);
+  void AddPenningDeexcitation(Deexcitation& dxc, const double rate, 
+                              const double pPenning) {
+    dxc.p.push_back(rate * pPenning);
+    dxc.p.push_back(rate * (1. - pPenning));
+    dxc.type.push_back(DxcTypeCollIon);
+    dxc.type.push_back(DxcTypeCollNonIon);
+  }
+  double RateConstantWK(const double energy, const double osc, 
+    const double pacs, const int igas1, const int igas2) const;
+  double RateConstantHardSphere(const double r1, const double r2,
+    const int igas1, const int igas2) const;
   void ComputeDeexcitationInternal(int iLevel, int& fLevel);
   bool ComputePhotonCollisionTable(const bool verbose);
 };

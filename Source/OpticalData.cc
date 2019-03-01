@@ -50,6 +50,7 @@ bool OpticalData::GetPhotoabsorptionCrossSection(const std::string& material,
                                                  const double e, double& cs,
                                                  double& eta) {
 
+  cs = eta = 0.;
   if (material == "Ne") return PhotoAbsorptionCsNeon(e, cs, eta);
   if (material == "Ar") return PhotoAbsorptionCsArgon(e, cs, eta);
   if (material == "CO2") return PhotoAbsorptionCsCO2(e, cs, eta);
