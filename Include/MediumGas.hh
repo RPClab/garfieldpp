@@ -2,6 +2,7 @@
 #define G_MEDIUM_GAS_H
 
 #include <vector>
+#include <array>
 #include <cmath>
 
 #include "Medium.hh"
@@ -99,10 +100,12 @@ class MediumGas : public Medium {
   bool m_usePenning = false;
   // Penning transfer probability
   double m_rPenningGlobal = 0.;
-  double m_rPenningGas[m_nMaxGases];
   // Mean distance of Penning ionisation
   double m_lambdaPenningGlobal = 0.;
-  double m_lambdaPenningGas[m_nMaxGases];
+  // Penning transfer probability per component
+  std::array<double, m_nMaxGases> m_rPenningGas;
+  // Penning transfer distance per component
+  std::array<double, m_nMaxGases> m_lambdaPenningGas;
 
   // Pressure at which the transport parameter table was calculated
   double m_pressureTable;

@@ -66,8 +66,7 @@ class MediumMagboltz : public MediumGas {
 
   // When enabled, the gas cross-section table is written to file
   // when loaded into memory.
-  void EnableCrossSectionOutput() { m_useCsOutput = true; }
-  void DisableCrossSectionOutput() { m_useCsOutput = false; }
+  void EnableCrossSectionOutput(const bool on = true) { m_useCsOutput = on; }
 
   // Multiply excitation cross-sections by a uniform scaling factor
   void SetExcitationScalingFactor(const double r, std::string gasname);
@@ -103,10 +102,10 @@ class MediumMagboltz : public MediumGas {
   // Get total number of electron collisions
   unsigned int GetNumberOfElectronCollisions() const;
   // Get number of collisions broken down by cross-section type
-  unsigned int GetNumberOfElectronCollisions(int& nElastic, int& nIonising,
-                                             int& nAttachment, int& nInelastic,
-                                             int& nExcitation, 
-                                             int& nSuperelastic) const;
+  unsigned int GetNumberOfElectronCollisions(unsigned int& nElastic, 
+    unsigned int& nIonising, unsigned int& nAttachment, 
+    unsigned int& nInelastic, unsigned int& nExcitation,
+    unsigned int& nSuperelastic) const;
   // Get number of cross-section terms
   int GetNumberOfLevels();
   // Get detailed information about a given cross-section term i
@@ -118,10 +117,10 @@ class MediumMagboltz : public MediumGas {
   int GetNumberOfPenningTransfers() const { return m_nPenning; }
 
   // Get total number of photon collisions
-  int GetNumberOfPhotonCollisions() const;
+  unsigned int GetNumberOfPhotonCollisions() const;
   // Get number of photon collisions by collision type
-  int GetNumberOfPhotonCollisions(int& nElastic, int& nIonising,
-                                  int& nInelastic) const;
+  unsigned int GetNumberOfPhotonCollisions(unsigned int& nElastic, 
+    unsigned int& nIonising, unsigned int& nInelastic) const;
 
   void RunMagboltz(const double e, const double b, const double btheta,
                    const int ncoll, bool verbose, double& vx, double& vy,
@@ -160,27 +159,26 @@ class MediumMagboltz : public MediumGas {
   // Number of different cross-section types in the current gas mixture
   unsigned int m_nTerms = 0;
   // Recoil energy parameter
-  double m_rgas[m_nMaxGases];
+  std::array<double, m_nMaxGases> m_rgas;
   // Opal-Beaty-Peterson splitting parameter [eV]
-  double m_wOpalBeaty[nMaxLevels];
-  // Green-Sawada splitting parameters [eV]
-  double m_gsGreenSawada[m_nMaxGases];
-  double m_gbGreenSawada[m_nMaxGases];
-  double m_tsGreenSawada[m_nMaxGases];
-  double m_taGreenSawada[m_nMaxGases];
-  double m_tbGreenSawada[m_nMaxGases];
-  bool m_hasGreenSawada[m_nMaxGases];
+  std::array<double, nMaxLevels> m_wOpalBeaty;
+  /// Green-Sawada splitting parameters [eV] 
+  /// (&Gamma;s, &Gamma;b, Ts, Ta, Tb).
+  std::array<std::array<double, 5>, m_nMaxGases> m_parGreenSawada;
+  std::array<bool, m_nMaxGases> m_hasGreenSawada;
+
   // Energy loss
-  std::vector<double> m_energyLoss;
+  std::array<double, nMaxLevels> m_energyLoss;
   // Cross-section type
-  std::vector<int> m_csType;
+  std::array<int, nMaxLevels> m_csType;
+
   // Parameters for calculation of scattering angles
   bool m_useAnisotropic = true;
-  double m_scatParameter[nEnergySteps][nMaxLevels];
-  double m_scatParameterLog[nEnergyStepsLog][nMaxLevels];
-  std::vector<int> m_scatModel;
-  double m_scatCut[nEnergySteps][nMaxLevels];
-  double m_scatCutLog[nEnergyStepsLog][nMaxLevels];
+  std::vector<std::vector<double> > m_scatPar;
+  std::vector<std::vector<double> > m_scatCut;
+  std::vector<std::vector<double> > m_scatParLog;
+  std::vector<std::vector<double> > m_scatCutLog;
+  std::array<int, nMaxLevels> m_scatModel;
 
   // Level description
   std::vector<std::string> m_description;
@@ -189,7 +187,7 @@ class MediumMagboltz : public MediumGas {
   std::vector<double> m_cfTot;
   std::vector<double> m_cfTotLog;
   // Null-collision frequency
-  double m_cfNull;
+  double m_cfNull = 0.;
   // Collision frequencies
   std::vector<std::vector<double> > m_cf;
   std::vector<std::vector<double> > m_cfLog;
@@ -201,15 +199,15 @@ class MediumMagboltz : public MediumGas {
   // 3: inelastic
   // 4: excitation
   // 5: super-elastic
-  unsigned int m_nCollisions[nCsTypes];
+  std::array<unsigned int, nCsTypes> m_nCollisions;
   // Number of collisions for each cross-section term
   std::vector<unsigned int> m_nCollisionsDetailed;
 
   // Penning transfer
   // Penning transfer probability (by level)
-  std::vector<double> m_rPenning;
+  std::array<double, nMaxLevels> m_rPenning;
   // Mean distance of Penning ionisation (by level)
-  std::vector<double> m_lambdaPenning;
+  std::array<double, nMaxLevels> m_lambdaPenning;
   // Number of Penning ionisations
   unsigned int m_nPenning = 0;
 
@@ -266,12 +264,12 @@ class MediumMagboltz : public MediumGas {
   std::vector<dxcProd> m_dxcProducts;
 
   // Ionisation potentials
-  double m_ionPot[m_nMaxGases];
+  std::array<double, m_nMaxGases> m_ionPot;
   // Minimum ionisation potential
-  double m_minIonPot;
+  double m_minIonPot = -1.;
 
   // Scaling factor for excitation cross-sections
-  double m_scaleExc[m_nMaxGases];
+  std::array<double, m_nMaxGases> m_scaleExc;
   // Flag selecting secondary electron energy distribution model
   bool m_useOpalBeaty = true;
   bool m_useGreenSawada = false;
@@ -279,7 +277,7 @@ class MediumMagboltz : public MediumGas {
   // Energy spacing of photon collision rates table
   double m_eFinalGamma, m_eStepGamma;
   // Number of photon collision cross-section terms
-  int m_nPhotonTerms;
+  unsigned int m_nPhotonTerms = 0;
   // Total photon collision frequencies
   std::vector<double> m_cfTotGamma;
   // Photon collision frequencies
@@ -290,7 +288,7 @@ class MediumMagboltz : public MediumGas {
   // 1: ionisation
   // 2: inelastic
   // 3: excitation
-  int m_nPhotonCollisions[nCsTypesGamma];
+  std::array<unsigned int, nCsTypesGamma> m_nPhotonCollisions;
 
   bool GetGasNumberMagboltz(const std::string& input, int& number) const;
   bool Mixer(const bool verbose = false);

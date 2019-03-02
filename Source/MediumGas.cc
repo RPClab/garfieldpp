@@ -63,12 +63,6 @@ MediumGas::MediumGas() : Medium(),
   EnableDrift();
   EnablePrimaryIonisation();
 
-  // Initialise Penning parameters
-  for (unsigned int i = 0; i < m_nMaxGases; ++i) {
-    m_rPenningGas[i] = 0.;
-    m_lambdaPenningGas[i] = 0.;
-  }
-
 }
 
 bool MediumGas::SetComposition(const std::string& gas1, const double f1,
@@ -145,14 +139,10 @@ bool MediumGas::SetComposition(const std::string& gas1, const double f1,
   m_isChanged = true;
 
   // Copy the previous Penning transfer parameters.
-  double rPenningGasOld[m_nMaxGases];
-  double lambdaPenningGasOld[m_nMaxGases];
-  for (unsigned int i = 0; i < m_nMaxGases; ++i) {
-    rPenningGasOld[i] = m_rPenningGas[i];
-    lambdaPenningGasOld[i] = m_lambdaPenningGas[i];
-    m_rPenningGas[i] = 0.;
-    m_lambdaPenningGas[i] = 0.;
-  }
+  std::array<double, m_nMaxGases> rPenningGasOld;
+  std::array<double, m_nMaxGases> lambdaPenningGasOld;
+  rPenningGasOld.swap(m_rPenningGas);
+  lambdaPenningGasOld.swap(m_lambdaPenningGas);
   for (unsigned int i = 0; i < m_nComponents; ++i) {
     for (unsigned int j = 0; j < nComponentsOld; ++j) {
       if (m_gas[i] != gasOld[j]) continue;
