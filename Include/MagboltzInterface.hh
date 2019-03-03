@@ -9,6 +9,10 @@ namespace Garfield {
 
 namespace Magboltz {
 
+constexpr unsigned int nMaxIonisationTerms = 8; 
+constexpr unsigned int nMaxInelasticTerms = 250;
+constexpr unsigned int nMaxAttachmentTerms = 8;
+
 extern "C" {
 
 // Magboltz COMMON blocks

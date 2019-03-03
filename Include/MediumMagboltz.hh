@@ -139,7 +139,6 @@ class MediumMagboltz : public MediumGas {
   static const int nEnergySteps = 20000;
   static const int nEnergyStepsLog = 200;
   static const int nEnergyStepsGamma = 5000;
-  static const int nMaxInelasticTerms = 250;
   static const int nMaxLevels = 512;
   static const int nCsTypes = 6;
   static const int nCsTypesGamma = 4;
@@ -293,6 +292,8 @@ class MediumMagboltz : public MediumGas {
   bool GetGasNumberMagboltz(const std::string& input, int& number) const;
   bool Mixer(const bool verbose = false);
   void SetupGreenSawada();
+  void SetScatteringParameters(const int model, const double parIn, 
+                               double& cut, double& parOut) const;
   void ComputeAngularCut(const double parIn, double& cut, double& parOut) const;
   void ComputeDeexcitationTable(const bool verbose);
   void AddPenningDeexcitation(Deexcitation& dxc, const double rate, 
