@@ -310,7 +310,7 @@ C  GAS61-80 :DUMMY ROUTINES
 C------------------------------------------------------------------
 C
 C      PROGRAM MAGBOLTZ 2                                                
-      SUBROUTINE MAGBOLTZ2
+      SUBROUTINE MAGBOLTZ
       IMPLICIT REAL*8 (A-H,O-Z)
       IMPLICIT INTEGER*8 (I-N)
       COMMON/BFLD/EOVB,WB,BTHETA,BMAG                                  
@@ -318,8 +318,8 @@ C      PROGRAM MAGBOLTZ 2
       COMMON/SETP/TMAX,SMALL,API,ESTART,THETA,PHI,RSTART,EFIELD,NMAX
       COMMON/CTOWNS/ALPHA,ATT
       COMMON/THRM/AMGAS(6),VTMB(6),TCFMX,TCFMXG(6),ITHRM
- 1    CALL READIN(LAST)
-      IF(LAST.EQ.1) GO TO 99
+C 1    CALL READIN(LAST)
+C      IF(LAST.EQ.1) GO TO 99
       IF(ITHRM.EQ.0) GO TO 6 
       CALL SETUPT(LAST)                                                
       IF(LAST.EQ.1) GO TO 99
@@ -374,7 +374,8 @@ C*****************
       IF(DABS(ALPP-ATTP).GT.SSTMIN) GO TO 5 
       IF(ALPP.GT.SSTMIN.OR.ATTP.GT.SSTMIN) GO TO 5
       CALL OUTPUT2T
-      GO TO 1
+C      GO TO 1
+      RETURN
    5  IF(BMAG.EQ.0.0D0) THEN 
        CALL ALPCALCT
       ELSE IF(BTHETA.EQ.0.0D0.OR.BTHETA.EQ.180.0D0) THEN
@@ -385,8 +386,9 @@ C*****************
        CALL ALPCLCCT
       ENDIF
       CALL OUTPUT2T
-      GO TO 1
-  99  STOP                 
+C      GO TO 1
+   99  RETURN 
+C  99  STOP                 
     6 CALL SETUP(LAST)                                                
       IF(LAST.EQ.1) GO TO 999
       IF(EFINAL.GT.0.0D0) GO TO 13
@@ -440,7 +442,8 @@ C*****************
       IF(DABS(ALPP-ATTP).GT.SSTMIN) GO TO 15
       IF(ALPP.GT.SSTMIN.OR.ATTP.GT.SSTMIN) GO TO 15
       CALL OUTPUT2
-      GO TO 1
+C      GO TO 1
+      RETURN
    15 IF(BMAG.EQ.0.0D0) THEN 
        CALL ALPCALC
       ELSE IF(BTHETA.EQ.0.0D0.OR.BTHETA.EQ.180.0D0) THEN
@@ -451,8 +454,9 @@ C*****************
        CALL ALPCLCC
       ENDIF
       CALL OUTPUT2 
-      GO TO 1 
-  999 STOP                 
+C      GO TO 1 
+C  999 STOP                 
+  999 RETURN
       END
       SUBROUTINE ANGCUT(PSCT1,ANGC,PSCT2)        
       IMPLICIT REAL*8 (A-H,O-Z)
@@ -9987,124 +9991,6 @@ C   METRES PER PICOSECOND
    99 LAST=1                                                            
       RETURN                                                            
       END                                                               
-C Previous SUBROUTINE: SETUP
-C Modified version of subroutine SETUP for interface.
-      SUBROUTINE SETUP1()                                           
-      IMPLICIT REAL*8 (A-H,O-Z)                                         
-      IMPLICIT INTEGER*8 (I-N)
-      COMMON/INPT/NGAS,NSTEP,NANISO,EFINAL,ESTEP,AKT,ARY,TEMPC,TORR,IPEN
-      COMMON/CNSTS/ECHARG,EMASS,AMU,PIR2                                
-      COMMON/CNSTS1/CONST1,CONST2,CONST3,CONST4,CONST5                  
-      COMMON/RATIO/AN1,AN2,AN3,AN4,AN5,AN6,AN,FRAC(6)               
-      COMMON/GASN/NGASN(6)                                 
-      COMMON/SETP/TMAX,SMALL,API,ESTART,THETA,PHI,RSTART,EFIELD,NMAX
-      COMMON/VEL/WX,WY,WZ
-      COMMON/VELERR/DWX,DWY,DWZ
-      COMMON/CTOWNS/ALPHA,ATT
-      COMMON/CTWNER/ALPER,ATTER
-      COMMON/DIFVEL/DIFLN,DIFTR
-      COMMON/DIFERL/DFLER,DFTER
-      COMMON/DIFLAB/DIFXX,DIFYY,DIFZZ,DIFYZ,DIFXY,DIFXZ
-      COMMON/DIFERB/DXXER,DYYER,DZZER,DYZER,DXYER,DXZER
-      COMMON/BFLD/EOVB,WB,BTHETA,BMAG 
-      COMMON/MRATIO/VAN1,VAN2,VAN3,VAN4,VAN5,VAN6,VAN
-      COMMON/TTRM/ZTOT,TTOT,ZTOTS,TTOTS                             
-      COMMON/OUTPT/TIME(300),ICOLL(30),SPEC(4000),TMAX1,
-     /AVE,DEN,XID,X,Y,Z,ST,NNULL,ICOLN(512)
-C                                                                       
-C   NEW UPDATE OF CONSTANTS 2008
-C
-      API=DACOS(-1.0D0)                                                 
-      ARY=13.60569193                                                  
-      PIR2=8.7973553523D-17                                             
-      ECHARG=1.602176487D-19                                            
-      EMASS=9.10938215D-31                                              
-      AMU=1.660538782D-27                                               
-      BOLTZ=8.617343D-5       
-      BOLTZJ=1.3806504D-23                                              
-      AWB=1.758820150D10                                                
-      ALOSCH=2.6867774D19                                               
-      EOVM=DSQRT(2.0D0*ECHARG/EMASS)*100.0D0                            
-      ABZERO=273.15D0                                                   
-      ATMOS=760.0D0                                                     
-      CONST1=AWB/2.0D0*1.0D-19                                          
-      CONST2=CONST1*1.0D-02                                             
-      CONST3=DSQRT(0.2D0*AWB)*1.0D-09                                   
-      CONST4=CONST3*ALOSCH*1.0D-15                                      
-      CONST5=CONST3/2.0D0
-      TMAX=100.0D0                                                      
-      NSCALE=40000000
-      NMAX=NMAX*NSCALE 
-      NSTEP=4000                                                        
-      THETA=0.785D0                                                     
-      PHI=0.1D0  
-C ZERO COMMON BLOCKS OF OUTPUT RESULTS
-      WX=0.0D0
-      WY=0.0D0
-      WZ=0.0D0
-      DWX=0.0D0
-      DWY=0.0D0
-      DWZ=0.0D0
-      TTOTS=0.0D0
-      ALPHA=0.0D0
-      ATT=0.0D0
-      ALPER=0.0D0
-      ATTER=0.0D0 
-      DIFLN=0.0D0
-      DIFTR=0.0D0
-      DFLER=0.0D0
-      DFTER=0.0D0
-      DIFXX=0.0D0
-      DIFYY=0.0D0
-      DIFZZ=0.0D0
-      DIFYZ=0.0D0
-      DIFXY=0.0D0
-      DIFXZ=0.0D0
-      DXXER=0.0D0
-      DYYER=0.0D0
-      DZZER=0.0D0
-      DYZER=0.0D0
-      DXYER=0.0D0
-      DXZER=0.0D0
-      DO 65 J=1,300                                                     
-   65 TIME(J)=0.0D0                                                     
-      DO 70 K=1,30                                                      
-   70 ICOLL(K)=0  
-      DO 80 K=1,512
-   80 ICOLN(K)=0                                                        
-      DO 100 K=1,4000                                                   
-  100 SPEC(K)=0.0D0                                                     
-C ---------------------------------------------  
-C CAN SET RANDOM NUMBER SEED TO SEED VALUE HERE
-C                                                               
-      RSTART=0.666D0
-C    RANDOM NUMBER SEED FUNCTION (RSTART)      
-C-----------------------------------------------      
-      ESTART=EFINAL/50.0D0
-      CORR=ABZERO*TORR/(ATMOS*(ABZERO+TEMPC)*100.0D0)                   
-      AKT=(ABZERO+TEMPC)*BOLTZ
-      AN1=FRAC(1)*CORR*ALOSCH                                           
-      AN2=FRAC(2)*CORR*ALOSCH                                           
-      AN3=FRAC(3)*CORR*ALOSCH                                           
-      AN4=FRAC(4)*CORR*ALOSCH
-      AN5=FRAC(5)*CORR*ALOSCH
-      AN6=FRAC(6)*CORR*ALOSCH                                           
-      AN=100.0D0*CORR*ALOSCH                                            
-      VAN1=FRAC(1)*CORR*CONST4*1.0D15                                   
-      VAN2=FRAC(2)*CORR*CONST4*1.0D15                                   
-      VAN3=FRAC(3)*CORR*CONST4*1.0D15                                   
-      VAN4=FRAC(4)*CORR*CONST4*1.0D15
-      VAN5=FRAC(5)*CORR*CONST4*1.0D15
-      VAN6=FRAC(6)*CORR*CONST4*1.0D15                                   
-      VAN=100.0D0*CORR*CONST4*1.0D15
-C  RADIANS PER PICOSECOND                                                        
-      WB=AWB*BMAG*1.0D-12 
-C   METRES PER PICOSECOND
-      IF(BMAG.EQ.0.0D0) RETURN
-      EOVB=EFIELD*1.D-9/BMAG
-      RETURN                                                            
-      END                                                               
-C  NEXT SUBROUTINE: PRNTER
       SUBROUTINE PRNTER                                                 
       IMPLICIT REAL*8 (A-H,O-Z)                                         
       IMPLICIT INTEGER*8 (I-N)
@@ -10499,7 +10385,7 @@ C IF LAST ENERGY BIN IS HIGH INCREASE INTEGRATION ENERGY RANGE
        WRITE(6,50)
    50  FORMAT(' WARNING ENERGY OUT OF RANGE,INCREASE ELECTRON ENERGY INT
      /EGRATION RANGE ')
-C       STOP      
+       STOP      
       ENDIF
 C LOOP                                                                 
   210 CONTINUE
@@ -25812,7 +25698,7 @@ C SAVE COMPUTE TIME
       COMMON/CNSTS/ECHARG,EMASS,AMU,PIR2                                
       COMMON/INPT/NGAS,NSTEP,NANISO,EFINAL,ESTEP,AKT,ARY,TEMPC,TORR,IPEN
       DIMENSION PEQEL(6,4000),PEQIN(250,4000),KIN(250),KEL(6),IOFFN(33)
-      DIMENSION QION(8,4000),PEQION(8,4000),EION(8)
+      DIMENSION QION(8,4000),PEQION(8,4000),EION(8),EOBY(4000)
       DIMENSION Q(6,4000),QIN(250,4000),E(6),EIN(250),PENFRA(3,250)  
       DIMENSION XEN(117),YELM(117),YELT(117),YEPS(117),XATT(6),YATT(6), 
      /XVBV4(36),YVBV4(36),XVBV2(29),YVBV2(29),XVBV1(30),YVBV1(30),
@@ -26287,7 +26173,7 @@ C  FROM EXCITED VIBRATIONAL STATE ( EXACT FOR TWICE GROUND STATE XSEC)
 C
       EN=-ESTEP/2.0  
       DO 1000 I=1,NSTEP                                              
-      EN=EN+ESTEP  
+      EN=EN+ESTEP   
       GAMMA1=(EMASS2+2.0D0*EN)/EMASS2
       GAMMA2=GAMMA1*GAMMA1
       BETA=DSQRT(1.0D0-1.0D0/GAMMA2)
@@ -26329,19 +26215,18 @@ C USE 1.0 OFFSET IN LOG INTERPOLATION (TO AVOID NEGATIVES)
       Q(2,I)=QELA 
       IF(NANISO.EQ.0) Q(2,I)=QMOM
 C GROSS IONISATION                                                      
-      QION(1,I)=0.0
+      QION(1,I)=0.0             
       PEQION(1,I)=0.5   
-      IF(NANISO.EQ.2) PEQION(1,I)=0.0 
+      IF(NANISO.EQ.2) PEQION(1,I)=0.0                                   
       IF(EN.LT.EION(1)) GO TO 200   
 C SET OPAL BEATY ENERGY SPLITTING
-C      EOBY(I)=7.3
-      EOBY=7.3
-      IF(EN.GT.XION(NIOND)) GO TO 123 
+      EOBY(I)=7.3
+      IF(EN.GT.XION(NIOND)) GO TO 123                                   
       DO 110 J=2,NIOND                                                  
       IF(EN.LE.XION(J)) GO TO 120                                       
   110 CONTINUE                                                          
       J=NIOND                                                  
-  120 A=(YION(J)-YION(J-1))/(XION(J)-XION(J-1))                        
+  120 A=(YION(J)-YION(J-1))/(XION(J)-XION(J-1))                         
       B=(XION(J-1)*YION(J)-XION(J)*YION(J-1))/(XION(J-1)-XION(J))       
       QION(1,I)=(A*EN+B)*1.D-16
       GO TO 124
@@ -26369,7 +26254,7 @@ C  IONISATION ENERGY
       PEQION(2,I)=PEQION(1,I)
 C CALCULATE K-SHELL IONISATION
   191 QION(3,I)=0.0D0
-      IF(EN.LE.EION(3)) GO TO 198    
+      IF(EN.LE.EION(3)) GO TO 198     
       DO 192 J=2,NKSH                                                   
       IF(EN.LE.XKSH(J)) GO TO 193                                       
   192 CONTINUE                                                          
@@ -26383,7 +26268,7 @@ C COORECT DISSOCIATIVE IONISATION FOR SPLIT INTO K-SHELL
   198 CONTINUE
 C                                      
 C ATTACHMENT                                               
-  200 Q(4,I)=0.0     
+  200 Q(4,I)=0.0                                                        
       IF(EN.LT.XATT(1)) GO TO 250                                       
       IF(EN.GT.XATT(NATT)) GO TO 250                                   
       DO 210 J=2,NATT                                                   
@@ -26417,7 +26302,7 @@ C  IONISATION ENERGY
       IF(EN.LE.(2.0*E(3))) GO TO 295
       PEQEL(5,I)=PEQEL(2,(I-IOFF))
   295 CONTINUE      
-C
+C 
   300 Q(6,I)=0.0                                                        
 C V4  SUPERELASTIC ISOTROPIC
       QIN(1,I)=0.0

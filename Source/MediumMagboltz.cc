@@ -1423,28 +1423,37 @@ bool MediumMagboltz::Mixer(const bool verbose) {
   // Prefactor for calculation of scattering rate from cross-section.
   const double prefactor = dens * SpeedOfLight * sqrt(2. / ElectronMass);
 
-  // Fill the electron energy array, reset the collision rates.
-  m_cfTot.assign(nEnergySteps, 0.);
-  m_cf.assign(nEnergySteps, std::vector<double>(nMaxLevels, 0.));
+  m_rgas.fill(1.);
 
-  m_scatPar.assign(nEnergySteps, std::vector<double>(nMaxLevels, 0.5));
-  m_scatCut.assign(nEnergySteps, std::vector<double>(nMaxLevels, 1.));
+  m_ionPot.fill(-1.);
+  m_minIonPot = -1.;
+
+  m_parGreenSawada.fill({1., 0., 0., 0., 0.});
+  m_hasGreenSawada.fill(false);
+
+  m_wOpalBeaty.fill(1.);
+  m_energyLoss.fill(0.);
+  m_csType.fill(0);
   m_scatModel.fill(0);
-
-  m_cfTotLog.assign(nEnergyStepsLog, 0.);
-  m_cfLog.assign(nEnergyStepsLog, std::vector<double>(nMaxLevels, 0.));
-  m_scatParLog.assign(nEnergyStepsLog, std::vector<double>(nMaxLevels, 0.5));
-  m_scatCutLog.assign(nEnergyStepsLog, std::vector<double>(nMaxLevels, 1.));
+ 
+  m_rPenning.fill(0.);
+  m_lambdaPenning.fill(0.);
 
   m_deexcitations.clear();
   m_iDeexcitation.fill(-1);
 
-  m_minIonPot = -1.;
-  m_ionPot.fill(-1.);
+  // Reset the collision rates.
+  m_cfTot.assign(nEnergySteps, 0.);
+  m_cfTotLog.assign(nEnergyStepsLog, 0.);
 
-  m_wOpalBeaty.fill(1.);
-  m_parGreenSawada.fill({1., 0., 0., 0., 0.});
-  m_hasGreenSawada.fill(false);
+  m_cf.assign(nEnergySteps, std::vector<double>(nMaxLevels, 0.));
+  m_cfLog.assign(nEnergyStepsLog, std::vector<double>(nMaxLevels, 0.));
+
+  m_scatPar.assign(nEnergySteps, std::vector<double>(nMaxLevels, 0.5));
+  m_scatCut.assign(nEnergySteps, std::vector<double>(nMaxLevels, 1.));
+
+  m_scatParLog.assign(nEnergyStepsLog, std::vector<double>(nMaxLevels, 0.5));
+  m_scatCutLog.assign(nEnergyStepsLog, std::vector<double>(nMaxLevels, 1.));
 
   // Cross-sections
   // 0: total, 1: elastic,
@@ -3459,7 +3468,7 @@ void MediumMagboltz::RunMagboltz(const double e, const double bmag,
   // Convert from Tesla to kGauss.
   Magboltz::bfld_.bmag = bmag * 10.;
   // Convert from radians to degree.
-  Magboltz::bfld_.btheta = btheta * 180. / Pi;
+  Magboltz::bfld_.btheta = btheta * RadToDegree;
 
   // Set the gas composition in Magboltz.
   for (unsigned int i = 0; i < m_nComponents; ++i) {
@@ -3474,76 +3483,8 @@ void MediumMagboltz::RunMagboltz(const double e, const double bmag,
     Magboltz::ratio_.frac[i] = 100 * m_fraction[i];
   }
 
-  // Call Magboltz internal setup routine.
-  Magboltz::setup1_();
-
-  // Calculate the max. energy in the table.
-  if (e * m_temperature / (293.15 * m_pressure) > 15) {
-    // If E/p > 15 start with 8 eV.
-    Magboltz::inpt_.efinal = 8.;
-  } else {
-    Magboltz::inpt_.efinal = 0.5;
-  }
-  Magboltz::setp_.estart = Magboltz::inpt_.efinal / 50.;
-
-  long long ielow = 1;
-  while (ielow == 1) {
-    Magboltz::mixer_();
-    if (bmag == 0. || btheta == 0. || fabs(btheta) == Pi) {
-      Magboltz::elimit_(&ielow);
-    } else if (btheta == HalfPi) {
-      Magboltz::elimitb_(&ielow);
-    } else {
-      Magboltz::elimitc_(&ielow);
-    }
-    if (ielow == 1) {
-      // Increase the max. energy.
-      Magboltz::inpt_.efinal *= sqrt(2.);
-      Magboltz::setp_.estart = Magboltz::inpt_.efinal / 50.;
-    }
-  }
-
-  if (m_debug || verbose) Magboltz::prnter_();
-
-  // Run the Monte Carlo calculation.
-  if (bmag == 0.) {
-    Magboltz::monte_();
-  } else if (btheta == 0. || btheta == Pi) {
-    Magboltz::montea_();
-  } else if (btheta == HalfPi) {
-    Magboltz::monteb_();
-  } else {
-    Magboltz::montec_();
-  }
-  if (m_debug || verbose) Magboltz::output_();
-
-  // If attachment or ionisation rate is greater than sstmin,
-  // include spatial gradients in the solution.
-  const double sstmin = 30.;
-  const double epscale = 760. * m_temperature / (m_pressure * 293.15);
-  double alpp = Magboltz::ctowns_.alpha * epscale;
-  double attp = Magboltz::ctowns_.att * epscale;
-  bool useSST = false;
-  if (fabs(alpp - attp) > sstmin || alpp > sstmin || attp > sstmin) {
-    useSST = true;
-    if (bmag == 0.) {
-      Magboltz::alpcalc_();
-    } else if (btheta == 0. || btheta == Pi) {
-      Magboltz::alpclca_();
-    } else if (btheta == HalfPi) {
-      Magboltz::alpclcb_();
-    } else {
-      Magboltz::alpclcc_();
-    }
-    // Calculate the (effective) TOF Townsend coefficient.
-    double alphapt = Magboltz::tofout_.ralpha;
-    double etapt = Magboltz::tofout_.rattof;
-    double fc1 =
-        1.e5 * Magboltz::tofout_.tofwr / (2. * Magboltz::tofout_.tofdl);
-    double fc2 = 1.e12 * (alphapt - etapt) / Magboltz::tofout_.tofdl;
-    alphatof = fc1 - sqrt(fc1 * fc1 - fc2);
-  }
-  if (m_debug || verbose) Magboltz::output2_();
+  // Run Magboltz.
+  Magboltz::magboltz_();
 
   // Velocities. Convert to cm / ns.
   vx = Magboltz::vel_.wx * 1.e-9;
@@ -3585,7 +3526,7 @@ void MediumMagboltz::RunMagboltz(const double e, const double bmag,
   etaerr = Magboltz::ctwner_.atter;
 
   // Print the results.
-  if (m_debug) {
+  if (m_debug || verbose) {
     std::cout << m_className << "::RunMagboltz:\n    Results:\n";
     std::cout << "      Drift velocity along E:           " << std::right
               << std::setw(10) << std::setprecision(6) << vz << " cm/ns +/- "
@@ -3605,24 +3546,12 @@ void MediumMagboltz::RunMagboltz(const double e, const double bmag,
     std::cout << "      Lorentz Angle:           " << std::right
               << std::setw(10) << std::setprecision(6) << (lor / Pi * 180.) 
               << " degree  +/- " << std::setprecision(2) << lorerr << "%\n";
-    if (useSST) {
-      std::cout << "      Townsend coefficient (SST):       " << std::right
-                << std::setw(10) << std::setprecision(6) << alpha
-                << " cm-1  +/- " << std::setprecision(2) << alphaerr << "%\n";
-      std::cout << "      Attachment coefficient (SST):     " << std::right
-                << std::setw(10) << std::setprecision(6) << eta << " cm-1  +/- "
-                << std::setprecision(2) << etaerr << "%\n";
-      std::cout << "      Eff. Townsend coefficient (TOF):  " << std::right
-                << std::setw(10) << std::setprecision(6) << alphatof
-                << " cm-1\n";
-    } else {
-      std::cout << "      Townsend coefficient:             " << std::right
-                << std::setw(10) << std::setprecision(6) << alpha
-                << " cm-1  +/- " << std::setprecision(2) << alphaerr << "%\n";
-      std::cout << "      Attachment coefficient:           " << std::right
-                << std::setw(10) << std::setprecision(6) << eta << " cm-1  +/- "
-                << std::setprecision(2) << etaerr << "%\n";
-    }
+    std::cout << "      Townsend coefficient:             " << std::right
+              << std::setw(10) << std::setprecision(6) << alpha
+              << " cm-1  +/- " << std::setprecision(2) << alphaerr << "%\n";
+    std::cout << "      Attachment coefficient:           " << std::right
+              << std::setw(10) << std::setprecision(6) << eta << " cm-1  +/- "
+              << std::setprecision(2) << etaerr << "%\n";
   }
 }
 

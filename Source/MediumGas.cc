@@ -58,6 +58,9 @@ MediumGas::MediumGas() : Medium(),
   m_name = m_gas[0];
   GetGasInfo(m_gas[0], m_atWeight[0], m_atNum[0]);
 
+  m_rPenningGas.fill(0.);
+  m_lambdaPenningGas.fill(0.);
+ 
   m_isChanged = true;
 
   EnableDrift();

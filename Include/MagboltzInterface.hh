@@ -114,27 +114,9 @@ void gasmix_(long long* ngs, double* q, double* qin, long long* nin, double* e,
              double* qion, double* peqion, double* eion, long long* nion,
              char scrpt[nMaxLevelsPerComponent][nCharDescr]);
 
-void setup1_();
-
+void magboltz_();
 void mixer_();
 
-void elimit_(long long* ielow);
-void elimitb_(long long* ielow);
-void elimitc_(long long* ielow);
-
-void monte_();
-void montea_();
-void monteb_();
-void montec_();
-
-void alpcalc_();
-void alpclca_();
-void alpclcb_();
-void alpclcc_();
-
-void prnter_();
-void output_();
-void output2_();
 }
 }
 }
