@@ -132,22 +132,16 @@ void AvalancheMicroscopic::EnableDistanceHistogramming(const int type) {
 
 void AvalancheMicroscopic::DisableDistanceHistogramming(const int type) {
 
-  if (m_distanceHistogramType.empty()) {
-    std::cerr << m_className << "::DisableDistanceHistogramming:\n";
-    std::cerr << "    Collision type " << type << " is not histogrammed.\n";
-    return;
-  }
-  const unsigned int nDistanceHistogramTypes = m_distanceHistogramType.size();
-  for (unsigned int i = 0; i < nDistanceHistogramTypes; ++i) {
-    if (m_distanceHistogramType[i] != type) continue;
-    m_distanceHistogramType.erase(m_distanceHistogramType.begin() + i);
-    std::cout << "    Histogramming of collision type " << type
-              << " disabled.\n";
+  if (std::find(m_distanceHistogramType.begin(), m_distanceHistogramType.end(),
+                type) == m_distanceHistogramType.end()) {
+    std::cerr << m_className << "::DisableDistanceHistogramming:\n"
+              << "    Collision type " << type << " is not histogrammed.\n";
     return;
   }
 
-  std::cerr << m_className << "::DisableDistanceHistogramming:\n";
-  std::cerr << "    Collision type " << type << " is not histogrammed.\n";
+  m_distanceHistogramType.erase(std::remove(m_distanceHistogramType.begin(), 
+                                            m_distanceHistogramType.end(), type),
+                                m_distanceHistogramType.end());
 }
 
 void AvalancheMicroscopic::DisableDistanceHistogramming() {
@@ -190,8 +184,7 @@ void AvalancheMicroscopic::GetElectronEndpoint(const unsigned int i, double& x0,
                                                double& e1, int& status) const {
 
   if (i >= m_endpointsElectrons.size()) {
-    std::cerr << m_className << "::GetElectronEndpoint:\n";
-    std::cerr << "    Endpoint index " << i << " out of range.\n";
+    std::cerr << m_className << "::GetElectronEndpoint: Index out of range.\n";
     x0 = y0 = z0 = t0 = e0 = 0.;
     x1 = y1 = z1 = t1 = e1 = 0.;
     status = 0;
@@ -217,8 +210,7 @@ void AvalancheMicroscopic::GetElectronEndpoint(
     double& dy1, double& dz1, int& status) const {
 
   if (i >= m_endpointsElectrons.size()) {
-    std::cerr << m_className << "::GetElectronEndpoint:\n";
-    std::cerr << "    Endpoint index " << i << " out of range.\n";
+    std::cerr << m_className << "::GetElectronEndpoint: Index out of range.\n";
     x0 = y0 = z0 = t0 = e0 = 0.;
     x1 = y1 = z1 = t1 = e1 = 0.;
     dx1 = dy1 = dz1 = 0.;
@@ -249,8 +241,7 @@ void AvalancheMicroscopic::GetHoleEndpoint(const unsigned int i, double& x0, dou
                                            int& status) const {
 
   if (i >= m_endpointsHoles.size()) {
-    std::cerr << m_className << "::GetHoleEndpoint:\n";
-    std::cerr << "    Endpoint index " << i << " out of range.\n";
+    std::cerr << m_className << "::GetHoleEndpoint: Index out of range.\n";
     x0 = y0 = z0 = t0 = e0 = 0.;
     x1 = y1 = z1 = t1 = e1 = 0.;
     status = 0;
@@ -957,13 +948,11 @@ bool AvalancheMicroscopic::TransportElectron(const double x0, const double y0,
         // If activated, histogram the distance with respect to the
         // last collision.
         if (m_histDistance && !m_distanceHistogramType.empty()) {
-          const int nDistanceHistogramTypes = m_distanceHistogramType.size();
-          for (int iType = nDistanceHistogramTypes; iType--;) {
-            if (m_distanceHistogramType[iType] != cstype) continue;
+          for (const auto& htype : m_distanceHistogramType) {
+            if (htype != cstype) continue;
             if (m_debug) {
-              std::cout << m_className << "::TransportElectron:\n";
-              std::cout << "    Collision type: " << cstype << "\n";
-              std::cout << "    Fill distance histogram.\n";
+              std::cout << m_className << "::TransportElectron: Collision type "
+                        << cstype << ". Fill distance histogram.\n";
               getchar();
             }
             switch (m_distanceOption) {
@@ -1121,9 +1110,8 @@ bool AvalancheMicroscopic::TransportElectron(const double x0, const double y0,
 
             // Transport the photons (if any)
             if (aval) {
-              const int nSizePhotons = stackPhotons.size();
-              for (int j = nSizePhotons; j--;) {
-                TransportPhoton(x, y, z, stackPhotons[j].first, stackPhotons[j].second, stackNew);
+              for (const auto& ph : stackPhotons) {
+                TransportPhoton(x, y, z, ph.first, ph.second, stackNew);
               }
             }
             break;
@@ -1192,15 +1180,11 @@ bool AvalancheMicroscopic::TransportElectron(const double x0, const double y0,
 
   // Calculate the induced charge.
   if (m_useInducedCharge) {
-    const unsigned int nElectronEndpoints = m_endpointsElectrons.size();
-    for (unsigned int i = 0; i < nElectronEndpoints; ++i) {
-      const Electron& p = m_endpointsElectrons[i];
-      m_sensor->AddInducedCharge(-1, p.x0, p.y0, p.z0, p.x, p.y, p.z);
+    for (const auto& ep : m_endpointsElectrons) {
+      m_sensor->AddInducedCharge(-1, ep.x0, ep.y0, ep.z0, ep.x, ep.y, ep.z);
     }
-    const unsigned int nHoleEndpoints = m_endpointsHoles.size();
-    for (unsigned int i = 0; i < nHoleEndpoints; ++i) {
-      const Electron& p = m_endpointsHoles[i];
-      m_sensor->AddInducedCharge(+1, p.x0, p.y0, p.z0, p.x, p.y, p.z);
+    for (const auto& ep : m_endpointsHoles) {
+      m_sensor->AddInducedCharge(+1, ep.x0, ep.y0, ep.z0, ep.x, ep.y, ep.z);
     }
   }
 
@@ -1235,10 +1219,8 @@ bool AvalancheMicroscopic::TransportElectron(const double x0, const double y0,
       }
     }
     // Photons
-    const unsigned int nPhotons = m_photons.size();
-    for (unsigned int i = 0; i < nPhotons; ++i) {
-      const photon& p = m_photons[i];
-      m_viewer->NewPhotonTrack(p.x0, p.y0, p.z0, p.x1, p.y1, p.z1);
+    for (const auto& ph : m_photons) {
+      m_viewer->NewPhotonTrack(ph.x0, ph.y0, ph.z0, ph.x1, ph.y1, ph.z1);
     }
   }
   return true;
