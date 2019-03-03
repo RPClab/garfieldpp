@@ -51,6 +51,14 @@ extern struct {
   long long nmax;
 } setp_;
 
+extern struct {
+  double amgas[6];
+  double vtmb[6];
+  double tcfmx;
+  double tcfmxg[6];
+  long long ithrm;
+} thrm_;
+
 // Physical constants
 extern struct {
   double echarg;

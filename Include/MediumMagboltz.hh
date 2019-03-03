@@ -122,6 +122,8 @@ class MediumMagboltz : public MediumGas {
   unsigned int GetNumberOfPhotonCollisions(unsigned int& nElastic, 
     unsigned int& nIonising, unsigned int& nInelastic) const;
 
+  void EnableThermalMotion(const bool on = true) { m_useGasMotion = on; }
+
   void RunMagboltz(const double e, const double b, const double btheta,
                    const int ncoll, bool verbose, double& vx, double& vy,
                    double& vz, double& dl, double& dt, 
@@ -146,6 +148,9 @@ class MediumMagboltz : public MediumGas {
   static const int DxcTypeRad;
   static const int DxcTypeCollIon;
   static const int DxcTypeCollNonIon;
+
+  // Simulate thermal motion of the gas or not (when running Magboltz).
+  bool m_useGasMotion = false;
 
   // Energy spacing of collision rate tables
   double m_eFinal, m_eStep;

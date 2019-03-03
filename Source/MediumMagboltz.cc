@@ -3464,6 +3464,8 @@ void MediumMagboltz::RunMagboltz(const double e, const double bmag,
   Magboltz::inpt_.ipen = 0;
   Magboltz::setp_.nmax = ncoll;
 
+  Magboltz::thrm_.ithrm = m_useGasMotion ? 1 : 0;
+
   Magboltz::setp_.efield = e;
   // Convert from Tesla to kGauss.
   Magboltz::bfld_.bmag = bmag * 10.;
@@ -3506,11 +3508,9 @@ void MediumMagboltz::RunMagboltz(const double e, const double bmag,
   }
 
   // Diffusion coefficients.
-  // dt = sqrt(0.2 * Magboltz::difvel_.diftr / vz) * 1.e-4;
   dt = sqrt(0.2 * 0.5 * (Magboltz::diflab_.difxx + Magboltz::diflab_.difyy) / 
             vz) * 1.e-4;
   dterr = Magboltz::diferl_.dfter;
-  // dl = sqrt(0.2 * Magboltz::difvel_.difln / vz) * 1.e-4;
   dl = sqrt(0.2 * Magboltz::diflab_.difzz / vz) * 1.e-4;
   dlerr = Magboltz::diferl_.dfler;
   // Diffusion tensor.
