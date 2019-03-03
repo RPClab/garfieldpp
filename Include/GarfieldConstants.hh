@@ -18,6 +18,7 @@ static const int ElectronCollisionTypeAttachment = 2;
 static const int ElectronCollisionTypeInelastic = 3;
 static const int ElectronCollisionTypeExcitation = 4;
 static const int ElectronCollisionTypeSuperelastic = 5;
+static const int ElectronCollisionTypeVirtual = 6;
 
 static const int ElectronCollisionTypeAcousticPhonon = 10;
 static const int ElectronCollisionTypeOpticalPhonon = 11;

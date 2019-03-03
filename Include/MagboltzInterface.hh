@@ -12,6 +12,9 @@ namespace Magboltz {
 constexpr unsigned int nMaxIonisationTerms = 8; 
 constexpr unsigned int nMaxInelasticTerms = 250;
 constexpr unsigned int nMaxAttachmentTerms = 8;
+constexpr unsigned int nMaxNullTerms = 10;
+constexpr unsigned int nMaxLevelsPerComponent = 260; 
+constexpr unsigned int nCharDescr = 50;
 
 extern "C" {
 
@@ -109,7 +112,7 @@ void gasmix_(long long* ngs, double* q, double* qin, long long* nin, double* e,
              double* ei, char* name, double* virl, double* eb, double* peqel,
              double* peqin, double* penfra, long long* kel, long long* kin,
              double* qion, double* peqion, double* eion, long long* nion,
-             char scrpt[260][50]);
+             char scrpt[nMaxLevelsPerComponent][nCharDescr]);
 
 void setup1_();
 

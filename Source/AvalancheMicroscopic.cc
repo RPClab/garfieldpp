@@ -1130,6 +1130,9 @@ bool AvalancheMicroscopic::TransportElectron(const double x0, const double y0,
           // Super-elastic collision
           case ElectronCollisionTypeSuperelastic:
             break;
+          // Virtual/null collision
+          case ElectronCollisionTypeVirtual:
+            break;
           // Acoustic phonon scattering (intravalley)
           case ElectronCollisionTypeAcousticPhonon:
             break;
@@ -1279,7 +1282,6 @@ void AvalancheMicroscopic::TransportPhoton(const double x0, const double y0,
   RndmDirection(dx, dy, dz);
   // Energy
   double e = e0;
-
 
   // Photon collision rate
   double f = medium->GetPhotonCollisionRate(e);
