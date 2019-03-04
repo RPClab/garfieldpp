@@ -7,7 +7,7 @@
 
 namespace Garfield {
 
-/// Interface to %Magboltz (version 9).
+/// Interface to %Magboltz (version 11).
 ///  - http://magboltz.web.cern.ch/magboltz/
 
 class MediumMagboltz : public MediumGas {
@@ -51,9 +51,9 @@ class MediumMagboltz : public MediumGas {
   void EnableDeexcitation();
   /// Switch off (microscopic) de-excitation handling.
   void DisableDeexcitation() { m_useDeexcitation = false; }
-  // Switch on discrete photoabsorption levels.
+  /// Switch on discrete photoabsorption levels.
   void EnableRadiationTrapping();
-  // Switch off discrete photoabsorption levels.
+  /// Switch off discrete photoabsorption levels.
   void DisableRadiationTrapping() { m_useRadTrap = false; }
 
   /** Switch on simulation of Penning transfers by means of
@@ -75,8 +75,8 @@ class MediumMagboltz : public MediumGas {
   /// Write the gas cross-section table to a file during the initialisation.
   void EnableCrossSectionOutput(const bool on = true) { m_useCsOutput = on; }
 
-  /// Multiply excitation cross-sections by a uniform scaling factor
-  void SetExcitationScalingFactor(const double r, std::string gasname);
+  /// Multiply all excitation cross-sections by a uniform scaling factor.
+  void SetExcitationScaling(const double r, std::string gasname);
 
   /// Initialise the table of scattering rates (called internally when a 
   /// collision rate is requested and the gas mixture or other parameters 
