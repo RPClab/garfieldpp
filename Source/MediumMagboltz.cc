@@ -1003,7 +1003,7 @@ unsigned int MediumMagboltz::GetNumberOfElectronCollisions(
          nSuperelastic;
 }
 
-int MediumMagboltz::GetNumberOfLevels() {
+unsigned int MediumMagboltz::GetNumberOfLevels() {
 
   if (m_isChanged) {
     if (!Mixer()) {
@@ -1485,8 +1485,6 @@ bool MediumMagboltz::Mixer(const bool verbose) {
   static double pEqIn[Magboltz::nEnergySteps][Magboltz::nMaxInelasticTerms];
   // Parameters for angular distribution in ionising collisions
   static double pEqIon[Magboltz::nEnergySteps][Magboltz::nMaxIonisationTerms];
-  // Opal-Beaty parameter
-  static double eoby[Magboltz::nMaxIonisationTerms];
   // Penning transfer parameters
   static double penFra[Magboltz::nMaxInelasticTerms][3];
   // Description of cross-section terms
@@ -1494,25 +1492,6 @@ bool MediumMagboltz::Mixer(const bool verbose) {
   // Description of "null-collision" cross-section terms
   static char scrptn[Magboltz::nMaxNullTerms][Magboltz::nCharDescr];
 
-  // Threshold energies
-  static double e[6] = {0.};
-  static double eIn[Magboltz::nMaxInelasticTerms] = {0.};
-  static double eIon[Magboltz::nMaxIonisationTerms] = {0.};
-  // Scattering algorithms
-  static long long kIn[Magboltz::nMaxInelasticTerms] = {0};
-  static long long kEl[6] = {0};
-
-  // Scaling factor for "null-collision" terms
-  static double scln[Magboltz::nMaxNullTerms] = {1.};
-  // Parameters for simulation of Auger and fluorescence processes.
-  static long long nc0[Magboltz::nMaxIonisationTerms] = {0};
-  static long long ng1[Magboltz::nMaxIonisationTerms] = {0};
-  static long long ng2[Magboltz::nMaxIonisationTerms] = {0};
-  static double ec0[Magboltz::nMaxIonisationTerms] = {0.};
-  static double wklm[Magboltz::nMaxIonisationTerms] = {0.};
-  static double efl[Magboltz::nMaxIonisationTerms] = {0.};
-  static double eg1[Magboltz::nMaxIonisationTerms] = {0.}; 
-  static double eg2[Magboltz::nMaxIonisationTerms] = {0.}; 
 
   // Check the gas composition and establish the gas numbers.
   int gasNumber[m_nMaxGases];
@@ -1529,7 +1508,7 @@ bool MediumMagboltz::Mixer(const bool verbose) {
     std::cout << m_className << "::Mixer:\n";
     std::cout << "    Creating table of collision rates with " 
               << Magboltz::nEnergySteps << " linear energy steps between 0 and "
-              << std::min(m_eFinal, m_eHigh) << " eV.";
+              << std::min(m_eFinal, m_eHigh) << " eV.\n";
     if (m_eFinal > m_eHigh) {
       std::cout << "    " << nEnergyStepsLog << " logarithmic steps between " 
                 << m_eHigh << " and " << m_eFinal << " eV\n";
@@ -1560,13 +1539,37 @@ bool MediumMagboltz::Mixer(const bool verbose) {
     long long nNull = 0; 
     // Virial coefficient (not used)
     double virial = 0.;
+    // Thresholds/characteristic energies.
+    std::array<double, 6> e;
+    // Energy losses for inelastic cross-sections.
+    std::array<double, Magboltz::nMaxInelasticTerms> eIn;
+    // Ionisation thresholds.
+    std::array<double, Magboltz::nMaxIonisationTerms> eIon;
+    // Scattering algorithms
+    std::array<long long, Magboltz::nMaxInelasticTerms> kIn;
+    std::array<long long, 6> kEl;
+    // Opal-Beaty parameter
+    std::array<double, Magboltz::nMaxIonisationTerms> eoby;
+    // Scaling factor for "null-collision" terms
+    std::array<double, Magboltz::nMaxNullTerms> scln;
+    // Parameters for simulation of Auger and fluorescence processes.
+    std::array<long long, Magboltz::nMaxIonisationTerms> nc0;
+    std::array<long long, Magboltz::nMaxIonisationTerms> ng1;
+    std::array<long long, Magboltz::nMaxIonisationTerms> ng2;
+    std::array<double, Magboltz::nMaxIonisationTerms> ec0;
+    std::array<double, Magboltz::nMaxIonisationTerms> wklm;
+    std::array<double, Magboltz::nMaxIonisationTerms> efl;
+    std::array<double, Magboltz::nMaxIonisationTerms> eg1;
+    std::array<double, Magboltz::nMaxIonisationTerms> eg2;
 
     // Retrieve the cross-section data for this gas from Magboltz.
     long long ngs = gasNumber[iGas];
-    Magboltz::gasmix_(&ngs, q[0], qIn[0], &nIn, e, eIn, name, &virial, eoby,
-                      pEqEl[0], pEqIn[0], penFra[0], kEl, kIn, qIon[0],
-                      pEqIon[0], eIon, &nIon, qAtt[0], &nAtt, qNull[0], &nNull,
-                      scln, nc0, ec0, wklm, efl, ng1, eg1, ng2, eg2, 
+    Magboltz::gasmix_(&ngs, q[0], qIn[0], &nIn, e.data(), eIn.data(), name, 
+                      &virial, eoby.data(), pEqEl[0], pEqIn[0], penFra[0], 
+                      kEl.data(), kIn.data(), qIon[0], pEqIon[0], eIon.data(), 
+                      &nIon, qAtt[0], &nAtt, qNull[0], &nNull, scln.data(), 
+                      nc0.data(), ec0.data(), wklm.data(), efl.data(), 
+                      ng1.data(), eg1.data(), ng2.data(), eg2.data(), 
                       scrpt, scrptn);
     if (m_debug || verbose) {
       const double massAmu =
@@ -1606,7 +1609,6 @@ bool MediumMagboltz::Mixer(const bool verbose) {
     m_rgas[iGas] = r;
     m_energyLoss[np] = 0.;
     m_description[np] = GetDescription(1, scrpt);
-    std::cout << m_description[np] << "\n";
     m_csType[np] = nCsTypes * iGas + ElectronCollisionTypeElastic;
     bool withIon = false;
     // Ionisation
@@ -1666,7 +1668,6 @@ bool MediumMagboltz::Mixer(const bool verbose) {
     int nExc = 0, nSuperEl = 0;
     for (int j = 0; j < nIn; ++j) {
       ++np;
-      std::cout << eIn[j] << "; " << kIn[j] << "\n";
       m_scatModel[np] = kIn[j];
       m_energyLoss[np] = eIn[j] / r;
       m_description[np] = GetDescription(4 + nIon + nAtt + j, scrpt);
@@ -1785,10 +1786,12 @@ bool MediumMagboltz::Mixer(const bool verbose) {
       Magboltz::inpt_.efinal = emax + 0.5 * Magboltz::inpt_.estep;
       Magboltz::mix2_.eg[iemax] = emax;
       Magboltz::mix2_.eroot[iemax] = sqrt(emax);
-      Magboltz::gasmix_(&ngs, q[0], qIn[0], &nIn, e, eIn, name, &virial, eoby,
-                        pEqEl[0], pEqIn[0], penFra[0], kEl, kIn, qIon[0],
-                        pEqIon[0], eIon, &nIon, qAtt[0], &nAtt, qNull[0], &nNull,
-                        scln, nc0, ec0, wklm, efl, ng1, eg1, ng2, eg2, 
+      Magboltz::gasmix_(&ngs, q[0], qIn[0], &nIn, e.data(), eIn.data(), name, 
+                        &virial, eoby.data(), pEqEl[0], pEqIn[0], penFra[0], 
+                        kEl.data(), kIn.data(), qIon[0], pEqIon[0], eIon.data(),
+                        &nIon, qAtt[0], &nAtt, qNull[0], &nNull, scln.data(),
+                        nc0.data(), ec0.data(), wklm.data(), efl.data(), 
+                        ng1.data(), eg1.data(), ng2.data(), eg2.data(), 
                         scrpt, scrptn);
       np = np0;
       if (m_useCsOutput) outfile << emax << "  " << q[iemax][1] << "  ";
