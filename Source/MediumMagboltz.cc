@@ -39,7 +39,7 @@ const int MediumMagboltz::DxcTypeCollNonIon = -1;
 MediumMagboltz::MediumMagboltz()
     : MediumGas(),
       m_eFinal(40.),
-      m_eStep(m_eFinal / nEnergySteps),
+      m_eStep(m_eFinal / Magboltz::nEnergySteps),
       m_eHigh(1.e4),
       m_eHighLog(log(m_eHigh)),
       m_lnStep(1.),
@@ -57,7 +57,7 @@ MediumMagboltz::MediumMagboltz()
 
   // Set parameters in Magboltz common blocks.
   Magboltz::inpt_.nGas = m_nComponents;
-  Magboltz::inpt_.nStep = nEnergySteps;
+  Magboltz::inpt_.nStep = Magboltz::nEnergySteps;
   // Select the scattering model.
   Magboltz::inpt_.nAniso = 2;
   // Max. energy [eV]
@@ -73,9 +73,9 @@ MediumMagboltz::MediumMagboltz()
 
   m_description.assign(nMaxLevels, std::string(Magboltz::nCharDescr, ' '));
 
-  m_cfTot.assign(nEnergySteps, 0.);
+  m_cfTot.assign(Magboltz::nEnergySteps, 0.);
   m_cfTotLog.assign(nEnergyStepsLog, 0.);
-  m_cf.assign(nEnergySteps, std::vector<double>(nMaxLevels, 0.));
+  m_cf.assign(Magboltz::nEnergySteps, std::vector<double>(nMaxLevels, 0.));
   m_cfLog.assign(nEnergyStepsLog, std::vector<double>(nMaxLevels, 0.));
 
   m_isChanged = true;
@@ -97,7 +97,7 @@ bool MediumMagboltz::SetMaxElectronEnergy(const double e) {
   m_eFinal = e;
 
   // Determine the energy interval size.
-  m_eStep = std::min(m_eFinal, m_eHigh) / nEnergySteps;
+  m_eStep = std::min(m_eFinal, m_eHigh) / Magboltz::nEnergySteps;
 
   // Set max. energy and step size also in Magboltz common block.
   Magboltz::inpt_.efinal = m_eFinal;
@@ -545,7 +545,8 @@ double MediumMagboltz::GetElectronCollisionRate(const double e,
   // Get the energy interval.
   if (e <= m_eHigh) {
     // Linear binning
-    const int iE = std::min(std::max(int(e / m_eStep), 0), nEnergySteps - 1);
+    constexpr int iemax = Magboltz::nEnergySteps - 1;
+    const int iE = std::min(std::max(int(e / m_eStep), 0), iemax);
     return m_cfTot[iE];
   }
 
@@ -581,7 +582,8 @@ double MediumMagboltz::GetElectronCollisionRate(const double e,
   // Get the energy interval.
   if (e <= m_eHigh) {
     // Linear binning
-    const int iE = std::min(std::max(int(e / m_eStep), 0), nEnergySteps - 1);
+    constexpr int iemax = Magboltz::nEnergySteps - 1;
+    const int iE = std::min(std::max(int(e / m_eStep), 0), iemax);
     if (level == 0) {
       rate *= m_cf[iE][0];
     } else {
@@ -636,7 +638,8 @@ bool MediumMagboltz::GetElectronCollision(const double e, int& type, int& level,
   if (e <= m_eHigh) {
     // Linear binning
     // Get the energy interval.
-    const int iE = std::min(std::max(int(e / m_eStep), 0), nEnergySteps - 1);
+    constexpr int iemax = Magboltz::nEnergySteps - 1;
+    const int iE = std::min(std::max(int(e / m_eStep), 0), iemax);
 
     // Sample the scattering process.
     const double r = RndmUniform();
@@ -1415,8 +1418,16 @@ bool MediumMagboltz::Mixer(const bool verbose) {
   Magboltz::inpt_.torr = m_pressure;
 
   Magboltz::inpt_.nGas = m_nComponents;
-  Magboltz::inpt_.nStep = nEnergySteps;
+  Magboltz::inpt_.nStep = Magboltz::nEnergySteps;
   Magboltz::inpt_.nAniso = m_useAnisotropic ? 2 : 0;
+
+  for (unsigned int i = 0;  i < Magboltz::nEnergySteps; ++i) {
+    const double en = (i + 0.5) * m_eStep;
+    Magboltz::mix2_.eg[i] = en;
+    Magboltz::mix2_.eroot[i] = sqrt(en);
+    Magboltz::dens_.den[i] = 0.;
+  } 
+  constexpr int iemax = Magboltz::nEnergySteps - 1;
 
   // Calculate the atomic density (ideal gas law).
   const double dens = GetNumberDensity();
@@ -1443,14 +1454,14 @@ bool MediumMagboltz::Mixer(const bool verbose) {
   m_iDeexcitation.fill(-1);
 
   // Reset the collision rates.
-  m_cfTot.assign(nEnergySteps, 0.);
+  m_cfTot.assign(Magboltz::nEnergySteps, 0.);
   m_cfTotLog.assign(nEnergyStepsLog, 0.);
 
-  m_cf.assign(nEnergySteps, std::vector<double>(nMaxLevels, 0.));
+  m_cf.assign(Magboltz::nEnergySteps, std::vector<double>(nMaxLevels, 0.));
   m_cfLog.assign(nEnergyStepsLog, std::vector<double>(nMaxLevels, 0.));
 
-  m_scatPar.assign(nEnergySteps, std::vector<double>(nMaxLevels, 0.5));
-  m_scatCut.assign(nEnergySteps, std::vector<double>(nMaxLevels, 1.));
+  m_scatPar.assign(Magboltz::nEnergySteps, std::vector<double>(nMaxLevels, 0.5));
+  m_scatCut.assign(Magboltz::nEnergySteps, std::vector<double>(nMaxLevels, 1.));
 
   m_scatParLog.assign(nEnergyStepsLog, std::vector<double>(nMaxLevels, 0.5));
   m_scatCutLog.assign(nEnergyStepsLog, std::vector<double>(nMaxLevels, 1.));
@@ -1459,29 +1470,49 @@ bool MediumMagboltz::Mixer(const bool verbose) {
   // 0: total, 1: elastic,
   // 2: ionisation, 3: attachment,
   // 4, 5: unused
-  static double q[nEnergySteps][6];
-  // Parameters for scattering angular distribution
-  static double pEqEl[nEnergySteps][6];
+  static double q[Magboltz::nEnergySteps][6];
   // Inelastic cross-sections
-  static double qIn[nEnergySteps][Magboltz::nMaxInelasticTerms];
+  static double qIn[Magboltz::nEnergySteps][Magboltz::nMaxInelasticTerms];
   // Ionisation cross-sections
-  static double qIon[nEnergySteps][Magboltz::nMaxIonisationTerms];
-  // Parameters for angular distribution in inelastic collisions
-  static double pEqIn[nEnergySteps][Magboltz::nMaxInelasticTerms];
-  // Parameters for angular distribution in ionising collisions
-  static double pEqIon[nEnergySteps][Magboltz::nMaxIonisationTerms];
+  static double qIon[Magboltz::nEnergySteps][Magboltz::nMaxIonisationTerms];
   // Attachment cross-sections
-  static double qAtt[nEnergySteps][Magboltz::nMaxAttachmentTerms];
+  static double qAtt[Magboltz::nEnergySteps][Magboltz::nMaxAttachmentTerms];
   // "Null-collision" cross-sections
-  static double qNull[nEnergySteps][Magboltz::nMaxNullTerms];
+  static double qNull[Magboltz::nEnergySteps][Magboltz::nMaxNullTerms];
+  // Parameters for scattering angular distribution
+  static double pEqEl[Magboltz::nEnergySteps][6];
+  // Parameters for angular distribution in inelastic collisions
+  static double pEqIn[Magboltz::nEnergySteps][Magboltz::nMaxInelasticTerms];
+  // Parameters for angular distribution in ionising collisions
+  static double pEqIon[Magboltz::nEnergySteps][Magboltz::nMaxIonisationTerms];
   // Opal-Beaty parameter
-  static double eoby[nEnergySteps];
+  static double eoby[Magboltz::nMaxIonisationTerms];
   // Penning transfer parameters
   static double penFra[Magboltz::nMaxInelasticTerms][3];
   // Description of cross-section terms
   static char scrpt[Magboltz::nMaxLevelsPerComponent][Magboltz::nCharDescr];
   // Description of "null-collision" cross-section terms
   static char scrptn[Magboltz::nMaxNullTerms][Magboltz::nCharDescr];
+
+  // Threshold energies
+  static double e[6] = {0.};
+  static double eIn[Magboltz::nMaxInelasticTerms] = {0.};
+  static double eIon[Magboltz::nMaxIonisationTerms] = {0.};
+  // Scattering algorithms
+  static long long kIn[Magboltz::nMaxInelasticTerms] = {0};
+  static long long kEl[6] = {0};
+
+  // Scaling factor for "null-collision" terms
+  static double scln[Magboltz::nMaxNullTerms] = {1.};
+  // Parameters for simulation of Auger and fluorescence processes.
+  static long long nc0[Magboltz::nMaxIonisationTerms] = {0};
+  static long long ng1[Magboltz::nMaxIonisationTerms] = {0};
+  static long long ng2[Magboltz::nMaxIonisationTerms] = {0};
+  static double ec0[Magboltz::nMaxIonisationTerms] = {0.};
+  static double wklm[Magboltz::nMaxIonisationTerms] = {0.};
+  static double efl[Magboltz::nMaxIonisationTerms] = {0.};
+  static double eg1[Magboltz::nMaxIonisationTerms] = {0.}; 
+  static double eg2[Magboltz::nMaxIonisationTerms] = {0.}; 
 
   // Check the gas composition and establish the gas numbers.
   int gasNumber[m_nMaxGases];
@@ -1496,13 +1527,12 @@ bool MediumMagboltz::Mixer(const bool verbose) {
 
   if (m_debug || verbose) {
     std::cout << m_className << "::Mixer:\n";
-    std::cout << "    Creating table of collision rates with\n";
-    std::cout << "    " << nEnergySteps << " linear energy steps between 0 and "
-              << std::min(m_eFinal, m_eHigh) << " eV\n";
+    std::cout << "    Creating table of collision rates with " 
+              << Magboltz::nEnergySteps << " linear energy steps between 0 and "
+              << std::min(m_eFinal, m_eHigh) << " eV.";
     if (m_eFinal > m_eHigh) {
-      std::cout << "    " << nEnergyStepsLog
-                << " logarithmic energy steps between " << m_eHigh << " and "
-                << m_eFinal << " eV\n";
+      std::cout << "    " << nEnergyStepsLog << " logarithmic steps between " 
+                << m_eHigh << " and " << m_eFinal << " eV\n";
     }
   }
   m_nTerms = 0;
@@ -1517,7 +1547,9 @@ bool MediumMagboltz::Mixer(const bool verbose) {
   for (unsigned int iGas = 0; iGas < m_nComponents; ++iGas) {
     Magboltz::inpt_.efinal = std::min(m_eFinal, m_eHigh);
     Magboltz::inpt_.estep = m_eStep;
-
+    Magboltz::mix2_.eg[iemax] = (iemax + 0.5) * m_eStep;
+    Magboltz::mix2_.eroot[iemax] = sqrt((iemax + 0.5) * m_eStep);
+    char name[] = "                         ";
     // Number of inelastic cross-sections
     long long nIn = 0;
     // Number of ionisation cross-sections
@@ -1526,24 +1558,16 @@ bool MediumMagboltz::Mixer(const bool verbose) {
     long long nAtt = 1;
     // Number of "null-collision" cross-sections
     long long nNull = 0; 
-    // Threshold energies
-    double e[6] = {0., 0., 0., 0., 0., 0.};
-    double eIn[Magboltz::nMaxInelasticTerms] = {0.};
-    double eIon[Magboltz::nMaxIonisationTerms] = {0.};
     // Virial coefficient (not used)
     double virial = 0.;
-    // Scattering algorithms
-    long long kIn[Magboltz::nMaxInelasticTerms] = {0};
-    long long kEl[6] = {0, 0, 0, 0, 0, 0};
-    char name[] = "                         ";
-    // Scaling factor for "null-collision" terms
-    double scln[Magboltz::nMaxNullTerms] = {1.};
 
     // Retrieve the cross-section data for this gas from Magboltz.
     long long ngs = gasNumber[iGas];
     Magboltz::gasmix_(&ngs, q[0], qIn[0], &nIn, e, eIn, name, &virial, eoby,
                       pEqEl[0], pEqIn[0], penFra[0], kEl, kIn, qIon[0],
-                      pEqIon[0], eIon, &nIon, scrpt);
+                      pEqIon[0], eIon, &nIon, qAtt[0], &nAtt, qNull[0], &nNull,
+                      scln, nc0, ec0, wklm, efl, ng1, eg1, ng2, eg2, 
+                      scrpt, scrptn);
     if (m_debug || verbose) {
       const double massAmu =
           (2. / e[1]) * ElectronMass / AtomicMassUnitElectronVolt;
@@ -1561,7 +1585,6 @@ bool MediumMagboltz::Mixer(const bool verbose) {
       }
     }
     int np0 = m_nTerms;
-
     // Make sure there is still sufficient space.
     if (np0 + nIn + nIon + nAtt + nNull >= nMaxLevels) {
       std::cerr << m_className << "::Mixer:\n";
@@ -1569,8 +1592,7 @@ bool MediumMagboltz::Mixer(const bool verbose) {
                 << ") exceeded.\n";
       return false;
     }
-    double van = m_fraction[iGas] * prefactor;
-
+    const double van = m_fraction[iGas] * prefactor;
     int np = np0;
     if (m_useCsOutput) {
       outfile << "# cross-sections for " << name << "\n";
@@ -1584,6 +1606,7 @@ bool MediumMagboltz::Mixer(const bool verbose) {
     m_rgas[iGas] = r;
     m_energyLoss[np] = 0.;
     m_description[np] = GetDescription(1, scrpt);
+    std::cout << m_description[np] << "\n";
     m_csType[np] = nCsTypes * iGas + ElectronCollisionTypeElastic;
     bool withIon = false;
     // Ionisation
@@ -1643,6 +1666,7 @@ bool MediumMagboltz::Mixer(const bool verbose) {
     int nExc = 0, nSuperEl = 0;
     for (int j = 0; j < nIn; ++j) {
       ++np;
+      std::cout << eIn[j] << "; " << kIn[j] << "\n";
       m_scatModel[np] = kIn[j];
       m_energyLoss[np] = eIn[j] / r;
       m_description[np] = GetDescription(4 + nIon + nAtt + j, scrpt);
@@ -1675,7 +1699,7 @@ bool MediumMagboltz::Mixer(const bool verbose) {
       }
     }
     // Loop over the energy table.
-    for (int iE = 0; iE < nEnergySteps; ++iE) {
+    for (unsigned int iE = 0; iE < Magboltz::nEnergySteps; ++iE) {
       np = np0;
       if (m_useCsOutput) {
         outfile << (iE + 0.5) * m_eStep << "  " << q[iE][1] << "  ";
@@ -1734,7 +1758,7 @@ bool MediumMagboltz::Mixer(const bool verbose) {
         SetScatteringParameters(m_scatModel[np], pEqIn[iE][j], 
                                 m_scatCut[iE][np], m_scatPar[iE][np]);
       }
-      if ((m_debug || verbose) && nIn > 0 && iE == nEnergySteps - 1) {
+      if ((m_debug || verbose) && nIn > 0 && iE == iemax) {
         std::cout << "      " << nIn << " inelastic terms (" << nExc
                   << " excitations, " << nSuperEl << " superelastic, "
                   << nIn - nExc - nSuperEl << " other)\n";
@@ -1755,18 +1779,22 @@ bool MediumMagboltz::Mixer(const bool verbose) {
     m_lnStep = log(rLog);
     // Set the upper limit of the first bin.
     double emax = m_eHigh * rLog;
-    int imax = nEnergySteps - 1;
+
     for (int iE = 0; iE < nEnergyStepsLog; ++iE) {
-      Magboltz::inpt_.estep = emax / (nEnergySteps - 0.5);
+      Magboltz::inpt_.estep = emax / (Magboltz::nEnergySteps - 0.5);
       Magboltz::inpt_.efinal = emax + 0.5 * Magboltz::inpt_.estep;
+      Magboltz::mix2_.eg[iemax] = emax;
+      Magboltz::mix2_.eroot[iemax] = sqrt(emax);
       Magboltz::gasmix_(&ngs, q[0], qIn[0], &nIn, e, eIn, name, &virial, eoby,
                         pEqEl[0], pEqIn[0], penFra[0], kEl, kIn, qIon[0],
-                        pEqIon[0], eIon, &nIon, scrpt);
+                        pEqIon[0], eIon, &nIon, qAtt[0], &nAtt, qNull[0], &nNull,
+                        scln, nc0, ec0, wklm, efl, ng1, eg1, ng2, eg2, 
+                        scrpt, scrptn);
       np = np0;
-      if (m_useCsOutput) outfile << emax << "  " << q[imax][1] << "  ";
+      if (m_useCsOutput) outfile << emax << "  " << q[iemax][1] << "  ";
       // Elastic scattering
-      m_cfLog[iE][np] = q[imax][1] * van;
-      SetScatteringParameters(m_scatModel[np], pEqEl[imax][1], 
+      m_cfLog[iE][np] = q[iemax][1] * van;
+      SetScatteringParameters(m_scatModel[np], pEqEl[iemax][1], 
                               m_scatCutLog[iE][np], m_scatParLog[iE][np]);
       // Ionisation
       if (withIon) {
@@ -1774,39 +1802,39 @@ bool MediumMagboltz::Mixer(const bool verbose) {
           for (int j = 0; j < nIon; ++j) {
             if (m_eFinal < eIon[j]) continue;
             ++np;
-            m_cfLog[iE][np] = qIon[imax][j] * van;
-            SetScatteringParameters(m_scatModel[np], pEqIon[imax][j], 
+            m_cfLog[iE][np] = qIon[iemax][j] * van;
+            SetScatteringParameters(m_scatModel[np], pEqIon[iemax][j], 
                                     m_scatCutLog[iE][np], m_scatParLog[iE][np]);
-            if (m_useCsOutput) outfile << qIon[imax][j] << "  ";
+            if (m_useCsOutput) outfile << qIon[iemax][j] << "  ";
           }
         } else {
           ++np;
           // Gross cross-section
-          m_cfLog[iE][np] = q[imax][2] * van;
+          m_cfLog[iE][np] = q[iemax][2] * van;
           // Counting cross-section
-          // m_cfLog[iE][np] = q[imax][4] * van;
-          SetScatteringParameters(m_scatModel[np], pEqEl[imax][2], 
+          // m_cfLog[iE][np] = q[iemax][4] * van;
+          SetScatteringParameters(m_scatModel[np], pEqEl[iemax][2], 
                                   m_scatCutLog[iE][np], m_scatParLog[iE][np]);
-          if (m_useCsOutput) outfile << q[imax][2] << "  ";
+          if (m_useCsOutput) outfile << q[iemax][2] << "  ";
         }
       }
       // Attachment
       if (nAtt > 1) {
         for (int j = 0; j < nAtt; ++j) {
           ++np;
-          m_cfLog[iE][np] = qAtt[imax][j] * van;
-          if (m_useCsOutput) outfile << qAtt[imax][j] << "  ";
+          m_cfLog[iE][np] = qAtt[iemax][j] * van;
+          if (m_useCsOutput) outfile << qAtt[iemax][j] << "  ";
         }
       } else {
         ++np;
-        m_cfLog[iE][np] = q[imax][3] * van;
-        if (m_useCsOutput) outfile << q[imax][3] << "  ";
+        m_cfLog[iE][np] = q[iemax][3] * van;
+        if (m_useCsOutput) outfile << q[iemax][3] << "  ";
       }
       // Inelastic terms
       for (int j = 0; j < nIn; ++j) {
         ++np;
-        if (m_useCsOutput) outfile << qIn[imax][j] << "  ";
-        m_cfLog[iE][np] = qIn[imax][j] * van;
+        if (m_useCsOutput) outfile << qIn[iemax][j] << "  ";
+        m_cfLog[iE][np] = qIn[iemax][j] * van;
         // Scale the excitation cross-sections (for error estimates).
         m_cfLog[iE][np] *= m_scaleExc[iGas];
         if (m_cfLog[iE][np] < 0.) {
@@ -1815,14 +1843,14 @@ bool MediumMagboltz::Mixer(const bool verbose) {
                     << " eV. Set to zero.\n";
           m_cfLog[iE][np] = 0.;
         }
-        SetScatteringParameters(m_scatModel[np], pEqIn[imax][j], 
+        SetScatteringParameters(m_scatModel[np], pEqIn[iemax][j], 
                                 m_scatCutLog[iE][np], m_scatParLog[iE][np]);
       }
       if (nNull > 0) {
         for (int j = 0; j < nNull; ++j) {
           ++np;
-          m_cfLog[iE][np] = qNull[imax][j] * van * scln[j];
-          if (m_useCsOutput) outfile << qNull[imax][j] << "  ";
+          m_cfLog[iE][np] = qNull[iemax][j] * van * scln[j];
+          if (m_useCsOutput) outfile << qNull[iemax][j] << "  ";
         }
       }
       if (m_useCsOutput) outfile << "\n";
@@ -1844,13 +1872,14 @@ bool MediumMagboltz::Mixer(const bool verbose) {
     std::cout << "      " << m_minIonPot << " eV (" << minIonPotGas << ")\n";
   }
 
-  for (int iE = nEnergySteps; iE--;) {
+  for (int iE = Magboltz::nEnergySteps; iE--;) {
     // Calculate the total collision frequency.
     for (unsigned int k = 0; k < m_nTerms; ++k) {
       if (m_cf[iE][k] < 0.) {
         std::cerr << m_className << "::Mixer:\n";
         std::cerr << "    Negative collision rate at " << (iE + 0.5) * m_eStep
-                  << " eV. Set to zero.\n";
+                  << " eV, cross-section " << k << ". Set to zero.\n";
+        std::cout << m_description[k] << "\n";
         m_cf[iE][k] = 0.;
       }
       m_cfTot[iE] += m_cf[iE][k];
@@ -1896,7 +1925,7 @@ bool MediumMagboltz::Mixer(const bool verbose) {
 
   // Determine the null collision frequency.
   m_cfNull = 0.;
-  for (int j = 0; j < nEnergySteps; ++j) {
+  for (unsigned int j = 0; j < Magboltz::nEnergySteps; ++j) {
     if (m_cfTot[j] > m_cfNull) m_cfNull = m_cfTot[j];
   }
   if (m_eFinal > m_eHigh) {
@@ -1913,12 +1942,13 @@ bool MediumMagboltz::Mixer(const bool verbose) {
   if (m_debug || verbose) {
     std::cout << m_className << "::Mixer:\n";
     std::cout << "    Energy [eV]    Collision Rate [ns-1]\n";
+    const double emax = std::min(m_eHigh, m_eFinal);
     for (int i = 0; i < 8; ++i) {
-      const double emax = std::min(m_eHigh, m_eFinal);
+      const int ie = (i + 1) * Magboltz::nEnergySteps / 16;
+      const double en = (2 * i + 1) * emax / 16;
       std::cout << "    " << std::fixed << std::setw(10) << std::setprecision(2)
-                << (2 * i + 1) * emax / 16 << "    " << std::setw(18)
-                << std::setprecision(2) << m_cfTot[(i + 1) * nEnergySteps / 16]
-                << "\n";
+                << en << "    " << std::setw(18)
+                << std::setprecision(2) << m_cfTot[ie] << "\n";
     }
     std::cout << std::resetiosflags(std::ios_base::floatfield);
   }

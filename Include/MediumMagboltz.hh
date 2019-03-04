@@ -138,10 +138,9 @@ class MediumMagboltz : public MediumGas {
                         const bool verbose = true);
 
  private:
-  static constexpr int nEnergySteps = 20000;
   static constexpr int nEnergyStepsLog = 200;
   static constexpr int nEnergyStepsGamma = 5000;
-  static constexpr int nMaxLevels = 512;
+  static constexpr int nMaxLevels = 960;
   static constexpr int nCsTypes = 7;
   static constexpr int nCsTypesGamma = 4;
 

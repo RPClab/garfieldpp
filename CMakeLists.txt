@@ -59,7 +59,7 @@ ENDIF(DEFINED ROOT_INCLUDE_DIRS)
 AUX_SOURCE_DIRECTORY( Source garfield_sources )
 
 ## add magboltz ########################################
-SET( magboltz_sources Source/magboltz-9.01.f )
+SET( magboltz_sources Source/magboltz-11.7.f )
 SET_SOURCE_FILES_PROPERTIES( ${magboltz_sources}  PROPERTIES LANGUAGE Fortran )
 
 ## add Heed ############################################
