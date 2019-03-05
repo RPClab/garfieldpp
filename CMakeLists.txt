@@ -2,7 +2,7 @@
 # build Garfield++ library and examples
 # depend on: ROOT
 # @author Klaus Zenker
-CMAKE_MINIMUM_REQUIRED(VERSION 3.13 FATAL_ERROR)
+CMAKE_MINIMUM_REQUIRED(VERSION 3.10 FATAL_ERROR)
 ########################################################
 
 cmake_policy(SET CMP0048 NEW)
