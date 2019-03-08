@@ -5,16 +5,13 @@
 
 namespace Garfield {
 
-ComponentConstant::ComponentConstant()
-    : ComponentBase() {
-
+ComponentConstant::ComponentConstant() : ComponentBase() {
   m_className = "ComponentConstant";
 }
 
 void ComponentConstant::ElectricField(const double x, const double y,
                                       const double z, double& ex, double& ey,
                                       double& ez, Medium*& m, int& status) {
-
   ex = m_fx;
   ey = m_fy;
   ez = m_fz;
@@ -40,7 +37,6 @@ void ComponentConstant::ElectricField(const double x, const double y,
                                       const double z, double& ex, double& ey,
                                       double& ez, double& v, Medium*& m,
                                       int& status) {
-
   ex = m_fx;
   ey = m_fy;
   ez = m_fz;
@@ -73,7 +69,6 @@ void ComponentConstant::ElectricField(const double x, const double y,
 }
 
 bool ComponentConstant::GetVoltageRange(double& vmin, double& vmax) {
-
   if (!m_hasPotential) return false;
 
   if (!m_geometry) {
@@ -116,7 +111,6 @@ bool ComponentConstant::GetVoltageRange(double& vmin, double& vmax) {
 void ComponentConstant::WeightingField(const double x, const double y,
                                        const double z, double& wx, double& wy,
                                        double& wz, const std::string& label) {
-
   if (!m_hasWeightingField || label != m_wfield) return;
 
   Medium* m = GetMedium(x, y, z);
@@ -136,10 +130,9 @@ void ComponentConstant::WeightingField(const double x, const double y,
 double ComponentConstant::WeightingPotential(const double x, const double y,
                                              const double z,
                                              const std::string& label) {
-
   if (!m_hasWeightingPotential || label != m_wfield) return 0.;
 
-  Medium* m = GetMedium(x, y, z); 
+  Medium* m = GetMedium(x, y, z);
   if (!m) return 0.;
 
   return m_w0 - (x - m_wx0) * m_fwx - (y - m_wy0) * m_fwy - (z - m_wz0) * m_fwz;
@@ -147,7 +140,6 @@ double ComponentConstant::WeightingPotential(const double x, const double y,
 
 void ComponentConstant::SetElectricField(const double ex, const double ey,
                                          const double ez) {
-
   m_fx = ex;
   m_fy = ey;
   m_fz = ez;
@@ -160,7 +152,6 @@ void ComponentConstant::SetElectricField(const double ex, const double ey,
 
 void ComponentConstant::SetPotential(const double x, const double y,
                                      const double z, const double v) {
-
   m_x0 = x;
   m_y0 = y;
   m_z0 = z;
@@ -171,7 +162,6 @@ void ComponentConstant::SetPotential(const double x, const double y,
 void ComponentConstant::SetWeightingField(const double wx, const double wy,
                                           const double wz,
                                           const std::string label) {
-
   m_wfield = label;
   m_fwx = wx;
   m_fwy = wy;
@@ -181,7 +171,6 @@ void ComponentConstant::SetWeightingField(const double wx, const double wy,
 
 void ComponentConstant::SetWeightingPotential(const double x, const double y,
                                               const double z, const double v) {
-
   if (!m_hasWeightingField) {
     std::cerr << m_className << "::SetWeightingPotential:\n";
     std::cerr << "    Set the weighting field first!\n";
@@ -195,7 +184,6 @@ void ComponentConstant::SetWeightingPotential(const double x, const double y,
 }
 
 void ComponentConstant::Reset() {
-
   m_fx = m_fy = m_fz = 0.;
   m_hasPotential = false;
   m_hasWeightingField = false;
@@ -205,7 +193,6 @@ void ComponentConstant::Reset() {
 }
 
 void ComponentConstant::UpdatePeriodicity() {
-
   if (m_debug) {
     std::cerr << m_className << "::UpdatePeriodicity:\n";
     std::cerr << "    Periodicities are not supported.\n";

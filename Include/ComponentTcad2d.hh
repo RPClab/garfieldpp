@@ -8,7 +8,6 @@ namespace Garfield {
 /// Interpolation in a two-dimensional field map created by Sentaurus Device.
 
 class ComponentTcad2d : public ComponentBase {
-
  public:
   /// Constructor
   ComponentTcad2d();
@@ -21,14 +20,13 @@ class ComponentTcad2d : public ComponentBase {
 
   void ElectricField(const double x, const double y, const double z, double& ex,
                      double& ey, double& ez, Medium*& m, int& status) override {
-
     double v = 0.;
     ElectricField(x, y, z, ex, ey, ez, v, m, status);
   }
 
   void WeightingField(const double x, const double y, const double z,
-                            double& wx, double& wy, double& wz,
-                            const std::string& label) override; 
+                      double& wx, double& wy, double& wz,
+                      const std::string& label) override;
 
   Medium* GetMedium(const double x, const double y, const double z) override;
 
@@ -55,14 +53,13 @@ class ComponentTcad2d : public ComponentBase {
 
   // Retrieve information about the mesh.
   unsigned int GetNumberOfElements() const { return m_elements.size(); }
-  bool GetElement(const unsigned int i, 
-                  double& vol, double& dmin, double& dmax,
+  bool GetElement(const unsigned int i, double& vol, double& dmin, double& dmax,
                   int& type) const;
   bool GetElement(const unsigned int i, double& vol, double& dmin, double& dmax,
                   int& type, int& node1, int& node2, int& node3, int& node4,
                   int& reg) const;
   unsigned int GetNumberOfNodes() const { return m_vertices.size(); }
-  bool GetNode(const unsigned int i, double& x, double& y, double& v, 
+  bool GetNode(const unsigned int i, double& x, double& y, double& v,
                double& ex, double& ey) const;
 
   // Mobilities
@@ -71,33 +68,30 @@ class ComponentTcad2d : public ComponentBase {
 
   // Velocity field maps
   void ElectronVelocity(const double x, const double y, const double z,
-                        double& vx, double& vy, double& vz,
-                        Medium*& m, int& status) override;
-  void HoleVelocity(const double x, const double y, const double z,
-                    double& vx, double& vy, double& vz,
-                    Medium*& m, int& status) override;
+                        double& vx, double& vy, double& vz, Medium*& m,
+                        int& status) override;
+  void HoleVelocity(const double x, const double y, const double z, double& vx,
+                    double& vy, double& vz, Medium*& m, int& status) override;
   // Lifetime field maps
-  bool GetElectronLifetime(const double x, const double y, const double z, 
+  bool GetElectronLifetime(const double x, const double y, const double z,
                            double& etau) override;
-  bool GetHoleLifetime(const double x, const double y, const double z, 
+  bool GetHoleLifetime(const double x, const double y, const double z,
                        double& htau) override;
 
-  // Trapping 
+  // Trapping
   int GetNumberOfDonors() { return m_donors.size(); }
   int GetNumberOfAcceptors() { return m_acceptors.size(); }
 
-  bool GetDonorOccupation(const double x, const double y, const double z, 
-                          const unsigned int donorNumber, 
+  bool GetDonorOccupation(const double x, const double y, const double z,
+                          const unsigned int donorNumber,
                           double& occupationFraction);
-  bool GetAcceptorOccupation(const double x, const double y, const double z, 
+  bool GetAcceptorOccupation(const double x, const double y, const double z,
                              const unsigned int acceptorNumber,
                              double& occupationFraction);
-  bool SetDonor(const unsigned int donorNumber, 
-                const double eXsec, const double hxSec, 
-                const double concentration);
-  bool SetAcceptor(const unsigned int acceptorNumber, 
-                   const double eXsec, const double hxSec, 
-                   const double concentration);
+  bool SetDonor(const unsigned int donorNumber, const double eXsec,
+                const double hxSec, const double concentration);
+  bool SetAcceptor(const unsigned int acceptorNumber, const double eXsec,
+                   const double hxSec, const double concentration);
 
   bool ElectronAttachment(const double x, const double y, const double z,
                           double& eta) override;
@@ -131,7 +125,7 @@ class ComponentTcad2d : public ComponentBase {
     double hVx, hVy;
     // Lifetimes [1/ns]
     double eTau, hTau;
-    // Trap occupations [dimensionless] 
+    // Trap occupations [dimensionless]
     std::vector<float> donorOcc;
     std::vector<float> acceptorOcc;
   };
@@ -168,7 +162,7 @@ class ComponentTcad2d : public ComponentBase {
   };
   std::vector<Defect> m_donors;
   std::vector<Defect> m_acceptors;
-  
+
   // Available data.
   bool m_hasPotential = false;
   bool m_hasField = false;
@@ -197,10 +191,10 @@ class ComponentTcad2d : public ComponentBase {
   void Reset() override;
   void UpdatePeriodicity() override;
 
-  // Check whether a point is inside a given element and calculate the  
+  // Check whether a point is inside a given element and calculate the
   // shape functions if it is.
-  bool CheckElement(const double x, const double y,
-                    const Element& element, double w[nMaxVertices]) const;
+  bool CheckElement(const double x, const double y, const Element& element,
+                    double w[nMaxVertices]) const;
   bool CheckRectangle(const double x, const double y, const Element& element,
                       double w[nMaxVertices]) const;
   bool CheckTriangle(const double x, const double y, const Element& element,

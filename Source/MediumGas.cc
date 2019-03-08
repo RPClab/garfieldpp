@@ -1,39 +1,36 @@
-#include <iostream>
-#include <iomanip>
-#include <cstdio>
-#include <fstream>
-#include <sstream>
-#include <cstring>
-#include <cstdlib>
 #include <algorithm>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <ctime>
+#include <fstream>
+#include <iomanip>
+#include <iostream>
+#include <sstream>
 
-#include "Utilities.hh"
-#include "MediumGas.hh"
-#include "OpticalData.hh"
 #include "FundamentalConstants.hh"
 #include "GarfieldConstants.hh"
+#include "MediumGas.hh"
+#include "OpticalData.hh"
+#include "Utilities.hh"
 
 namespace {
 
-std::string FormatFloat(const double x, 
-    const unsigned int width = 15, const unsigned int precision = 8) {
-
+std::string FormatFloat(const double x, const unsigned int width = 15,
+                        const unsigned int precision = 8) {
   char buffer[256];
   std::snprintf(buffer, width + 1, "%*.*E", width, precision, x);
   return std::string(buffer);
 }
 
 std::string FormatInt(const int n, const unsigned int width) {
-
   char buffer[256];
-  std::snprintf(buffer, width + 1, "%*d", width, n); 
+  std::snprintf(buffer, width + 1, "%*d", width, n);
   return std::string(buffer);
 }
 
-void PrintArray(const std::vector<double>& values, std::ofstream& outfile, 
-    int& col, const int ncols) {
-
+void PrintArray(const std::vector<double>& values, std::ofstream& outfile,
+                int& col, const int ncols) {
   for (const auto value : values) {
     outfile << FormatFloat(value);
     ++col;
@@ -42,7 +39,6 @@ void PrintArray(const std::vector<double>& values, std::ofstream& outfile,
 }
 
 void PrintExtrapolation(const std::pair<unsigned int, unsigned int>& extr) {
-
   std::cout << "        Low field extrapolation: ";
   if (extr.first == 0)
     std::cout << " constant\n";
@@ -62,15 +58,12 @@ void PrintExtrapolation(const std::pair<unsigned int, unsigned int>& extr) {
   else
     std::cout << " unknown\n";
 }
-
 }
 
 namespace Garfield {
 
-MediumGas::MediumGas() : Medium(),
-      m_pressureTable(m_pressure),
-      m_temperatureTable(m_temperature) {
-
+MediumGas::MediumGas()
+    : Medium(), m_pressureTable(m_pressure), m_temperatureTable(m_temperature) {
   m_className = "MediumGas";
 
   m_gas.fill("");
@@ -85,12 +78,11 @@ MediumGas::MediumGas() : Medium(),
 
   m_rPenningGas.fill(0.);
   m_lambdaPenningGas.fill(0.);
- 
+
   m_isChanged = true;
 
   EnableDrift();
   EnablePrimaryIonisation();
-
 }
 
 bool MediumGas::SetComposition(const std::string& gas1, const double f1,
@@ -99,7 +91,6 @@ bool MediumGas::SetComposition(const std::string& gas1, const double f1,
                                const std::string& gas4, const double f4,
                                const std::string& gas5, const double f5,
                                const std::string& gas6, const double f6) {
-
   std::array<std::string, 6> gases = {gas1, gas2, gas3, gas4, gas5, gas6};
   std::array<double, 6> fractions = {f1, f2, f3, f4, f5, f6};
 
@@ -173,8 +164,8 @@ bool MediumGas::SetComposition(const std::string& gas1, const double f1,
       m_rPenningGas[i] = rPenningGasOld[j];
       m_lambdaPenningGas[i] = lambdaPenningGasOld[i];
       std::cout << m_className << "::SetComposition:\n"
-                << "    Using Penning transfer parameters for " 
-                << m_gas[i] << " from previous mixture.\n"
+                << "    Using Penning transfer parameters for " << m_gas[i]
+                << " from previous mixture.\n"
                 << "      r      = " << m_rPenningGas[i] << "\n"
                 << "      lambda = " << m_lambdaPenningGas[i] << " cm\n";
     }
@@ -186,7 +177,6 @@ void MediumGas::GetComposition(std::string& gas1, double& f1, std::string& gas2,
                                double& f2, std::string& gas3, double& f3,
                                std::string& gas4, double& f4, std::string& gas5,
                                double& f5, std::string& gas6, double& f6) {
-
   gas1 = m_gas[0];
   gas2 = m_gas[1];
   gas3 = m_gas[2];
@@ -201,9 +191,8 @@ void MediumGas::GetComposition(std::string& gas1, double& f1, std::string& gas2,
   f6 = m_fraction[5];
 }
 
-void MediumGas::GetComponent(const unsigned int i, 
-                             std::string& label, double& f) {
-
+void MediumGas::GetComponent(const unsigned int i, std::string& label,
+                             double& f) {
   if (i >= m_nComponents) {
     std::cerr << m_className << "::GetComponent: Index out of range.\n";
     label = "";
@@ -216,35 +205,30 @@ void MediumGas::GetComponent(const unsigned int i,
 }
 
 void MediumGas::SetAtomicNumber(const double z) {
-
   std::cerr << m_className << "::SetAtomicNumber:\n"
             << "    Effective Z cannot be changed directly to " << z << ".\n"
             << "    Use SetComposition to define the gas mixture.\n";
 }
 
 void MediumGas::SetAtomicWeight(const double a) {
-
   std::cerr << m_className << "::SetAtomicWeight:\n"
             << "    Effective A cannot be changed directly to " << a << ".\n"
             << "    Use SetComposition to define the gas mixture.\n";
 }
 
 void MediumGas::SetNumberDensity(const double n) {
-
   std::cerr << m_className << "::SetNumberDensity:\n"
             << "    Density cannot directly be changed to " << n << ".\n"
             << "    Use SetTemperature and SetPressure.\n";
 }
 
 void MediumGas::SetMassDensity(const double rho) {
-
   std::cerr << m_className << "::SetMassDensity:\n"
             << "    Density cannot directly be changed to " << rho << ".\n"
             << "    Use SetTemperature, SetPressure and SetComposition.\n";
 }
 
 double MediumGas::GetAtomicWeight() const {
-
   // Effective A, weighted by the fractions of the components.
   double a = 0.;
   for (unsigned int i = 0; i < m_nComponents; ++i) {
@@ -254,19 +238,16 @@ double MediumGas::GetAtomicWeight() const {
 }
 
 double MediumGas::GetNumberDensity() const {
-
   // Ideal gas law.
   return LoschmidtNumber * (m_pressure / AtmosphericPressure) *
          (ZeroCelsius / m_temperature);
 }
 
 double MediumGas::GetMassDensity() const {
-
   return GetNumberDensity() * GetAtomicWeight() * AtomicMassUnit;
 }
 
 double MediumGas::GetAtomicNumber() const {
-
   // Effective Z, weighted by the fractions of the components.
   double z = 0.;
   for (unsigned int i = 0; i < m_nComponents; ++i) {
@@ -276,7 +257,6 @@ double MediumGas::GetAtomicNumber() const {
 }
 
 bool MediumGas::LoadGasFile(const std::string& filename) {
-
   std::ifstream gasfile;
   // Open the file.
   gasfile.open(filename.c_str());
@@ -393,8 +373,8 @@ bool MediumGas::LoadGasFile(const std::string& filename) {
         token = strtok(NULL, " :,%\t");
         const int nion = atoi(token);
         if (m_debug) {
-          std::cout << "    " << nexc << " excitations, " 
-                    << nion << " ionisations.\n";
+          std::cout << "    " << nexc << " excitations, " << nion
+                    << " ionisations.\n";
         }
       } else if (strcmp(token, "E") == 0) {
         token = strtok(NULL, " :,%");
@@ -481,10 +461,9 @@ bool MediumGas::LoadGasFile(const std::string& filename) {
   // (16) ionisation rates
 
   if (m_debug) {
-    std::cout << m_className << "::LoadGasFile:\n    "
-              << nE << " electric fields, " 
-              << nB << " magnetic fields, " 
-              << nA << " angles.\n    ";
+    std::cout << m_className << "::LoadGasFile:\n    " << nE
+              << " electric fields, " << nB << " magnetic fields, " << nA
+              << " angles.\n    ";
   }
   m_eVelocityE.clear();
   if (gasBits[0] == 'T') InitTable(nE, nB, nA, m_eVelocityE, 0.);
@@ -880,7 +859,6 @@ bool MediumGas::LoadGasFile(const std::string& filename) {
 }
 
 bool MediumGas::WriteGasFile(const std::string& filename) {
-
   // Set the gas mixture.
   constexpr int nMagboltzGases = 60;
   std::vector<double> mixture(nMagboltzGases, 0.);
@@ -968,16 +946,15 @@ bool MediumGas::WriteGasFile(const std::string& filename) {
   const unsigned int nB = m_bFields.size();
   const unsigned int nA = m_bAngles.size();
   outfile << FormatInt(nE, 9) << " " << FormatInt(nA, 9) << " "
-          << FormatInt(nB, 9) << " " 
-          << FormatInt(m_excLevels.size(), 9) << " " 
-          << FormatInt(m_ionLevels.size(), 9) << "\n"; 
+          << FormatInt(nB, 9) << " " << FormatInt(m_excLevels.size(), 9) << " "
+          << FormatInt(m_ionLevels.size(), 9) << "\n";
   // Store reduced electric fields (E/p).
   outfile << " E fields   \n";
   std::vector<double> efields = m_eFields;
-  for (auto& field: efields) field /= m_pressure;
+  for (auto& field : efields) field /= m_pressure;
   int cnt = 0;
   // List 5 values, then new line.
-  PrintArray(efields, outfile, cnt, 5); 
+  PrintArray(efields, outfile, cnt, 5);
   if (nE % 5 != 0) outfile << "\n";
   // Store angles.
   outfile << " E-B angles \n";
@@ -987,7 +964,7 @@ bool MediumGas::WriteGasFile(const std::string& filename) {
   // Store B fields (convert to hGauss).
   outfile << " B fields   \n";
   std::vector<double> bfields = m_bFields;
-  for (auto& field: bfields) field *= 100.;
+  for (auto& field : bfields) field *= 100.;
   cnt = 0;
   PrintArray(bfields, outfile, cnt, 5);
   if (nB % 5 != 0) outfile << "\n";
@@ -999,7 +976,7 @@ bool MediumGas::WriteGasFile(const std::string& filename) {
   if (nMagboltzGases % 5 != 0) outfile << "\n";
 
   cnt = 0;
-  for (const auto& exc: m_excLevels) {
+  for (const auto& exc : m_excLevels) {
     ++cnt;
     outfile << " Excitation " << FormatInt(cnt, 5) << ": " << std::setw(45)
             << exc.label << "  " << FormatFloat(exc.energy)
@@ -1042,29 +1019,34 @@ bool MediumGas::WriteGasFile(const std::string& filename) {
         double dt = m_eDiffTrans.empty() ? 0. : m_eDiffTrans[j][k][i] * sqrp;
         // Get the Townsend and attachment coefficients.
         double alpha = m_eTownsend.empty() ? -30. : m_eTownsend[j][k][i] - logp;
-        double alpha0 = m_eTownsendNoPenning.empty() ? -30. : m_eTownsendNoPenning[j][k][i] - logp;
-        double eta = m_eAttachment.empty() ? -30. : m_eAttachment[j][k][i] - logp;
+        double alpha0 = m_eTownsendNoPenning.empty()
+                            ? -30.
+                            : m_eTownsendNoPenning[j][k][i] - logp;
+        double eta =
+            m_eAttachment.empty() ? -30. : m_eAttachment[j][k][i] - logp;
         // Add them to the list.
         if (m_map2d) {
           val.insert(val.end(), {dl, dt, alpha, alpha0, eta});
         } else {
-          val.insert(val.end(), {dl, 0., dt, 0., alpha, 0., alpha0 ,eta, 0.});
-        } 
+          val.insert(val.end(), {dl, 0., dt, 0., alpha, 0., alpha0, eta, 0.});
+        }
         // Get the ion mobility and convert from cm2 / (V ns) to cm2 / (V us).
-        double mu = m_ionMobility.empty() ? 0. :  1.e3 * m_ionMobility[j][k][i];
+        double mu = m_ionMobility.empty() ? 0. : 1.e3 * m_ionMobility[j][k][i];
         // Get the Lorentz angle.
         double lor = m_eLorentzAngle.empty() ? 0 : m_eLorentzAngle[j][k][i];
         // Get the dissociation coefficient.
-        double diss = m_ionDissociation.empty() ? -30. : m_ionDissociation[j][k][i] - logp;
+        double diss = m_ionDissociation.empty()
+                          ? -30.
+                          : m_ionDissociation[j][k][i] - logp;
         // Add them to the list.
         if (m_map2d) {
           val.insert(val.end(), {mu, lor, diss});
         } else {
           val.insert(val.end(), {mu, 0., lor, 0., diss, 0.});
-        } 
+        }
         // Get the components of the diffusion tensor.
         for (int l = 0; l < 6; ++l) {
-          if (!m_eDiffTens.empty()) { 
+          if (!m_eDiffTens.empty()) {
             const double cov = m_eDiffTens[l][j][k][i] * m_pressureTable;
             val.push_back(cov);
           } else {
@@ -1128,10 +1110,11 @@ bool MediumGas::WriteGasFile(const std::string& filename) {
   for (int i = 0; i < 13; i++) outfile << FormatInt(lExtrap[i], 5);
   outfile << "\n";
   outfile << " Thresholds: " << FormatInt(thrElectronTownsend, 10)
-          << FormatInt(thrElectronAttachment, 10)  
+          << FormatInt(thrElectronAttachment, 10)
           << FormatInt(thrIonDissociation, 10) << "\n";
   outfile << " Interp: ";
-  for (int i = 0; i < 13; i++) outfile << FormatInt(interpMeth[i], 5);;
+  for (int i = 0; i < 13; i++) outfile << FormatInt(interpMeth[i], 5);
+  ;
   outfile << "\n";
   outfile << " A     =" << FormatFloat(0.) << ","
           << " Z     =" << FormatFloat(0.) << ","
@@ -1156,7 +1139,6 @@ bool MediumGas::WriteGasFile(const std::string& filename) {
 }
 
 void MediumGas::PrintGas() {
-
   // Print a summary.
   std::cout << m_className << "::PrintGas:\n"
             << "    Gas composition: " << m_name;
@@ -1193,7 +1175,7 @@ void MediumGas::PrintGas() {
   }
   if (m_bAngles.size() > 1) {
     std::cout << "    Angular range:         " << m_bAngles[0] << " - "
-              << m_bAngles.back() << " in " << m_bAngles.size() - 1 
+              << m_bAngles.back() << " in " << m_bAngles.size() - 1
               << " steps.\n";
   } else if (m_bAngles.size() == 1) {
     std::cout << "    Angle between E and B: " << m_bAngles[0] << "\n";
@@ -1211,7 +1193,8 @@ void MediumGas::PrintGas() {
   if (!m_eVelocityExB.empty()) {
     std::cout << "      Velocity along ExB\n";
   }
-  if (!m_eVelocityE.empty() || !m_eVelocityB.empty() || !m_eVelocityExB.empty()) {
+  if (!m_eVelocityE.empty() || !m_eVelocityB.empty() ||
+      !m_eVelocityExB.empty()) {
     PrintExtrapolation(m_extrVel);
     std::cout << "        Interpolation order: " << m_intpVel << "\n";
   }
@@ -1254,9 +1237,9 @@ void MediumGas::PrintGas() {
     std::cout << "        Interpolation order: " << m_intpIonRates << "\n";
   }
   if (m_eVelocityE.empty() && m_eVelocityB.empty() && m_eVelocityExB.empty() &&
-      m_eDiffLong.empty() && m_eDiffTrans.empty() && m_eDiffTens.empty() && 
-      m_eTownsend.empty() && m_eAttachment.empty() && 
-      m_excRates.empty() && m_ionRates.empty() && m_eLorentzAngle.empty()) {
+      m_eDiffLong.empty() && m_eDiffTrans.empty() && m_eDiffTens.empty() &&
+      m_eTownsend.empty() && m_eAttachment.empty() && m_excRates.empty() &&
+      m_ionRates.empty() && m_eLorentzAngle.empty()) {
     std::cout << "      none\n";
   }
 
@@ -1281,21 +1264,21 @@ void MediumGas::PrintGas() {
     PrintExtrapolation(m_extrDissociation);
     std::cout << "        Interpolation order: " << m_intpDissociation << "\n";
   }
-  if (m_ionMobility.empty() && m_ionDiffLong.empty() && m_ionDiffTrans.empty() &&
-      m_ionDissociation.empty()) {
+  if (m_ionMobility.empty() && m_ionDiffLong.empty() &&
+      m_ionDiffTrans.empty() && m_ionDissociation.empty()) {
     std::cout << "      none\n";
   }
 }
 
 bool MediumGas::LoadIonMobility(const std::string& filename) {
-
   // Open the file.
   std::ifstream infile;
   infile.open(filename.c_str(), std::ios::in);
   // Make sure the file could actually be opened.
   if (!infile) {
     std::cerr << m_className << "::LoadIonMobility:\n"
-              << "    Error opening file " << filename << ".\n";;
+              << "    Error opening file " << filename << ".\n";
+    ;
     return false;
   }
 
@@ -1376,8 +1359,8 @@ bool MediumGas::LoadIonMobility(const std::string& filename) {
   // The E/N values in the file are supposed to be in Td (10^-17 V cm2).
   const double scaleField = 1.e-17 * GetNumberDensity();
   // The reduced mobilities in the file are supposed to be in cm2/(V s).
-  const double scaleMobility =
-      1.e-9 * (AtmosphericPressure / m_pressure) * (m_temperature / ZeroCelsius);
+  const double scaleMobility = 1.e-9 * (AtmosphericPressure / m_pressure) *
+                               (m_temperature / ZeroCelsius);
   for (int j = ne; j--;) {
     // Scale the fields and mobilities.
     efields[j] *= scaleField;
@@ -1390,31 +1373,26 @@ bool MediumGas::LoadIonMobility(const std::string& filename) {
   return SetIonMobility(efields, mobilities);
 }
 
-void MediumGas::SetExtrapolationMethodExcitationRates(
-    const std::string& low, const std::string& high) {
-
+void MediumGas::SetExtrapolationMethodExcitationRates(const std::string& low,
+                                                      const std::string& high) {
   SetExtrapolationMethod(low, high, m_extrExcRates, "ExcitationRates");
 }
 
-void MediumGas::SetExtrapolationMethodIonisationRates(
-    const std::string& low, const std::string& high) {
-
+void MediumGas::SetExtrapolationMethodIonisationRates(const std::string& low,
+                                                      const std::string& high) {
   SetExtrapolationMethod(low, high, m_extrIonRates, "IonisationRates");
 }
 
 void MediumGas::SetInterpolationMethodExcitationRates(const int intrp) {
-
   if (intrp > 0) m_intpExcRates = intrp;
 }
 
 void MediumGas::SetInterpolationMethodIonisationRates(const int intrp) {
-
   if (intrp > 0) m_intpIonRates = intrp;
 }
 
 bool MediumGas::GetGasInfo(const std::string& gasname, double& a,
                            double& z) const {
-
   if (gasname == "CF4") {
     a = 12.0107 + 4 * 18.9984032;
     z = 6 + 4 * 9;
@@ -1584,7 +1562,6 @@ bool MediumGas::GetGasInfo(const std::string& gasname, double& a,
 
 bool MediumGas::GetGasName(const int gasnumber, const int version,
                            std::string& gasname) {
-
   switch (gasnumber) {
     case 1:
       gasname = "CF4";
@@ -1779,7 +1756,6 @@ bool MediumGas::GetGasName(const int gasnumber, const int version,
 }
 
 bool MediumGas::GetGasName(std::string input, std::string& gasname) const {
-
   // Convert to upper-case
   for (unsigned int i = 0; i < input.length(); ++i) {
     input[i] = toupper(input[i]);
@@ -2140,7 +2116,6 @@ bool MediumGas::GetGasName(std::string input, std::string& gasname) const {
 
 bool MediumGas::GetGasNumberGasFile(const std::string& input,
                                     int& number) const {
-
   if (input == "") {
     number = 0;
     return false;
@@ -2429,7 +2404,6 @@ bool MediumGas::GetGasNumberGasFile(const std::string& input,
 
 bool MediumGas::GetPhotoabsorptionCrossSection(const double& e, double& sigma,
                                                const unsigned int& i) {
-
   if (i >= m_nMaxGases) {
     std::cerr << m_className << "::GetPhotoabsorptionCrossSection:\n";
     std::cerr << "    Index (" << i << ") out of range.\n";

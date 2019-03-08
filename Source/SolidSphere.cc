@@ -1,20 +1,18 @@
-#include <iostream>
 #include <cmath>
+#include <iostream>
 
-#include "SolidSphere.hh"
 #include "FundamentalConstants.hh"
 #include "GarfieldConstants.hh"
+#include "SolidSphere.hh"
 
 namespace Garfield {
 
 SolidSphere::SolidSphere(const double cx, const double cy, const double cz,
                          const double rmin, const double rmax)
-    : Solid(cx, cy, cz, "SolidSphere"),
-      m_rMin(rmin), m_rMax(rmax) {}
+    : Solid(cx, cy, cz, "SolidSphere"), m_rMin(rmin), m_rMax(rmax) {}
 
-bool SolidSphere::IsInside(const double x, const double y, 
+bool SolidSphere::IsInside(const double x, const double y,
                            const double z) const {
-
   // Transform the point to local coordinates.
   const double dx = x - m_cX;
   const double dy = y - m_cY;
@@ -22,7 +20,7 @@ bool SolidSphere::IsInside(const double x, const double y,
 
   if (fabs(dx) > m_rMax || fabs(dy) > m_rMax || fabs(dz) > m_rMax) {
     if (m_debug) {
-      std::cout << "SolidSphere::IsInside: (" << x << ", " << y << ", " << z 
+      std::cout << "SolidSphere::IsInside: (" << x << ", " << y << ", " << z
                 << ") is outside.\n";
     }
     return false;
@@ -31,22 +29,22 @@ bool SolidSphere::IsInside(const double x, const double y,
   const double r = sqrt(dx * dx + dy * dy + dz * dz);
   if (r >= m_rMin && r <= m_rMax) {
     if (m_debug) {
-      std::cout << "SolidSphere::IsInside: (" << x << ", " << y << ", " << z 
+      std::cout << "SolidSphere::IsInside: (" << x << ", " << y << ", " << z
                 << ") is inside.\n";
     }
     return true;
   }
 
   if (m_debug) {
-    std::cout << "SolidSphere::IsInside: (" << x << ", " << y << ", " << z 
+    std::cout << "SolidSphere::IsInside: (" << x << ", " << y << ", " << z
               << ") is outside.\n";
   }
   return false;
 }
 
 bool SolidSphere::GetBoundingBox(double& xmin, double& ymin, double& zmin,
-                                 double& xmax, double& ymax, double& zmax) const {
-
+                                 double& xmax, double& ymax,
+                                 double& zmax) const {
   xmin = m_cX - m_rMax;
   xmax = m_cX + m_rMax;
   ymin = m_cY - m_rMax;
@@ -57,7 +55,6 @@ bool SolidSphere::GetBoundingBox(double& xmin, double& ymin, double& zmin,
 }
 
 bool SolidSphere::GetDimensions(double& l1, double& l2, double& l3) const {
-
   l1 = m_rMin;
   l2 = m_rMax;
   l3 = 0.;
@@ -65,7 +62,6 @@ bool SolidSphere::GetDimensions(double& l1, double& l2, double& l3) const {
 }
 
 void SolidSphere::SetInnerRadius(const double rmin) {
-
   if (rmin <= 0.) {
     std::cerr << "SolidSphere::SetInnerRadius: Radius must be > 0.\n";
     return;
@@ -79,7 +75,6 @@ void SolidSphere::SetInnerRadius(const double rmin) {
 }
 
 void SolidSphere::SetOuterRadius(const double rmax) {
-
   if (rmax <= 0.) {
     std::cerr << "SolidSphere::SetOuterRadius: Radius must be > 0.\n";
     return;
@@ -93,7 +88,6 @@ void SolidSphere::SetOuterRadius(const double rmax) {
 }
 
 void SolidSphere::SetMeridians(const unsigned int n) {
-
   if (n < 3) {
     std::cerr << "SolidSphere::SetMeridians: Number must be >= 3.\n";
     return;
@@ -102,7 +96,6 @@ void SolidSphere::SetMeridians(const unsigned int n) {
 }
 
 bool SolidSphere::SolidPanels(std::vector<Panel>& panels) {
-
   const auto id = GetId();
   const unsigned int nPanels = panels.size();
   const double R = m_rMax;
@@ -136,7 +129,7 @@ bool SolidSphere::SolidPanels(std::vector<Panel>& panels) {
         newpanel.xv = {xv0, xv1, xv2};
         newpanel.yv = {yv0, yv1, yv2};
         newpanel.zv = {zv0, zv1, zv2};
-     } else if (j == m_n) {
+      } else if (j == m_n) {
         const double xv0 = m_cX + R * cphi0 * ctheta0;
         const double yv0 = m_cY + R * sphi0 * ctheta0;
         const double zv0 = m_cZ + R * stheta0;
@@ -167,19 +160,21 @@ bool SolidSphere::SolidPanels(std::vector<Panel>& panels) {
         newpanel.zv = {zv0, zv1, zv2, zv3};
       }
       // Inclination angle in theta.
-      const double alpha = atan2((ctheta0 - ctheta1) * sqrt((1. + cos(phi1 - phi0)) / 2), stheta1 - stheta0);
+      const double alpha =
+          atan2((ctheta0 - ctheta1) * sqrt((1. + cos(phi1 - phi0)) / 2),
+                stheta1 - stheta0);
       const double calpha = cos(alpha);
       const double salpha = sin(alpha);
       // Store the panel.
       newpanel.a = cos(0.5 * (phi0 + phi1)) * calpha;
       newpanel.b = sin(0.5 * (phi0 + phi1)) * calpha;
       newpanel.c = salpha;
-      newpanel.volume = id; 
+      newpanel.volume = id;
       panels.push_back(std::move(newpanel));
     }
   }
-  std::cout << "SolidSphere::SolidPanels: "
-            << panels.size() - nPanels << " panels.\n";
+  std::cout << "SolidSphere::SolidPanels: " << panels.size() - nPanels
+            << " panels.\n";
   return true;
 }
 }

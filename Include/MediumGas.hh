@@ -1,9 +1,9 @@
 #ifndef G_MEDIUM_GAS_H
 #define G_MEDIUM_GAS_H
 
-#include <vector>
 #include <array>
 #include <cmath>
+#include <vector>
 
 #include "Medium.hh"
 
@@ -12,7 +12,6 @@ namespace Garfield {
 /// Base class for gas media.
 
 class MediumGas : public Medium {
-
  public:
   /// Constructor
   MediumGas();
@@ -33,7 +32,7 @@ class MediumGas : public Medium {
                       double& f2, std::string& gas3, double& f3,
                       std::string& gas4, double& f4, std::string& gas5,
                       double& f5, std::string& gas6, double& f6);
-  void GetComponent(const unsigned int i, std::string& label, 
+  void GetComponent(const unsigned int i, std::string& label,
                     double& f) override;
 
   void SetAtomicNumber(const double z) override;

@@ -14,10 +14,9 @@ namespace Garfield {
 
 class Medium;
 
-/// Plot transport coefficients as function of electric and magnetic field. 
+/// Plot transport coefficients as function of electric and magnetic field.
 
 class ViewMedium {
-
  public:
   /// Constructor
   ViewMedium();
@@ -35,7 +34,7 @@ class ViewMedium {
   void SetMagneticFieldRange(const double bmin, const double bmax);
   /// Set the limits of the angle between electric and magnetic field.
   void SetBAngleRange(const double amin, const double amax);
-  /// Set the range of the function (velocity etc.) to be plotted. 
+  /// Set the range of the function (velocity etc.) to be plotted.
   void SetFunctionRange(const double vmin, const double vmax);
   /// Use the default function range.
   void SetFunctionRange();
@@ -60,8 +59,8 @@ class ViewMedium {
                               const double a = HalfPi);
   void PlotHoleAttachment(const char xaxis, const double e, const double b,
                           const double a = HalfPi);
-  void PlotElectronLorentzAngle(const char xaxis, const double e, const double b,
-                               const double a = HalfPi);
+  void PlotElectronLorentzAngle(const char xaxis, const double e,
+                                const double b, const double a = HalfPi);
   void PlotElectronCrossSections();
   double EvaluateFunction(double* pos, double* par);
 
@@ -128,10 +127,10 @@ class ViewMedium {
 
   void SetupCanvas();
   void AddFunction(const double xmin, const double xmax, const double ymin,
-                   const double ymax, const bool keep, 
-                   const std::string& xlabel, const std::string& ylabel, 
-                   const int type, const char xaxis,
-                   const double e, const double b, const double a);
+                   const double ymax, const bool keep,
+                   const std::string& xlabel, const std::string& ylabel,
+                   const int type, const char xaxis, const double e,
+                   const double b, const double a);
   int GetColor(const Property property) const;
 };
 }

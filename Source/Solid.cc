@@ -1,16 +1,15 @@
-#include <iostream>
 #include <cmath>
+#include <iostream>
 
-#include "Solid.hh"
 #include "FundamentalConstants.hh"
 #include "GarfieldConstants.hh"
+#include "Solid.hh"
 
 namespace Garfield {
 
 unsigned int Solid::s_id = 0;
 
 void Solid::SetDirection(const double dx, const double dy, const double dz) {
-
   const double d = sqrt(dx * dx + dy * dy + dz * dz);
   if (d < Small) {
     std::cerr << m_className << ": Direction vector has zero norm.\n";
@@ -39,7 +38,6 @@ void Solid::SetDirection(const double dx, const double dy, const double dz) {
 }
 
 double Solid::NotImplemented(const std::string& fcn) const {
-
   std::cerr << m_className << "::" << fcn << ": function not implemented.\n";
   return 0.;
 }

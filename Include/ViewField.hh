@@ -2,8 +2,8 @@
 #define G_VIEW_FIELD
 
 #include <TCanvas.h>
-#include <TF2.h>
 #include <TF1.h>
+#include <TF2.h>
 
 namespace Garfield {
 
@@ -11,16 +11,15 @@ class Sensor;
 class ComponentBase;
 
 /// Visualize the potential or electric field of a component or sensor.
- 
-class ViewField {
 
+class ViewField {
  public:
   /// Constructor
   ViewField();
   /// Destructor
   ~ViewField();
 
-  /// Set the sensor from which to retrieve the field. 
+  /// Set the sensor from which to retrieve the field.
   void SetSensor(Sensor* s);
   /// Set the component from which to retrieve the field.
   void SetComponent(ComponentBase* c);
@@ -35,16 +34,16 @@ class ViewField {
   void SetWeightingFieldRange(const double wmin, const double wmax);
 
   /// Set the viewing area (in local coordinates of the current viewing plane).
-  void SetArea(const double xmin, const double ymin, 
-               const double xmax, const double ymax);
-  /// Set the viewing area based on the bounding box of the sensor/component. 
+  void SetArea(const double xmin, const double ymin, const double xmax,
+               const double ymax);
+  /// Set the viewing area based on the bounding box of the sensor/component.
   void SetArea() { m_hasUserArea = false; }
 
   /** Set the projection (viewing plane).
     * \param fx,fy,fz normal vector
     * \param x0,y0,z0 in-plane point
     */
-  void SetPlane(const double fx, const double fy, const double fz, 
+  void SetPlane(const double fx, const double fy, const double fz,
                 const double x0, const double y0, const double z0);
   /// Set the default viewing plane (\f$x\f$-\f$y\f$ at \f$z = 0\f$).
   void SetDefaultProjection();
@@ -74,7 +73,7 @@ class ViewField {
   /** Make a 2D plot of the electric potential or field.
     * \param option quantity to be plotted (see PlotContour)
     * \param drawopt option string passed to TF2::Draw
-    **/ 
+    **/
   void Plot(const std::string& option = "v",
             const std::string& drawopt = "arr");
   /** Make a 1D plot of the electric potential or field along a line.
@@ -105,8 +104,7 @@ class ViewField {
     * \param option quantity to be plotted (see PlotContour)
     * \param drawopt option string passed to TF2::Draw
     **/
-  void PlotWeightingField(const std::string& label,
-                          const std::string& option, 
+  void PlotWeightingField(const std::string& label, const std::string& option,
                           const std::string& drawopt);
 
   /** Make a 1D plot of the weighting potential or field along a line.
@@ -115,10 +113,11 @@ class ViewField {
     * \param x1,y1,z1 end point
     * \param option quantity to be plotted (see PlotContour)
     **/
-  void PlotProfileWeightingField(const std::string& label,
-                   const double x0, const double y0, const double z0,
-                   const double x1, const double y1, const double z1,
-                   const std::string& option = "v");
+  void PlotProfileWeightingField(const std::string& label, const double x0,
+                                 const double y0, const double z0,
+                                 const double x1, const double y1,
+                                 const double z1,
+                                 const std::string& option = "v");
 
   void EnableAutoRange(const bool on = true) { m_useAutoRange = on; }
 
@@ -144,14 +143,7 @@ class ViewField {
   double EvaluateProfile(double* pos, double* par);
 
  private:
-  enum PlotType {
-    Potential = 0,
-    Magnitude,
-    Ex,
-    Ey,
-    Ez,
-    Unknown
-  };
+  enum PlotType { Potential = 0, Magnitude, Ex, Ey, Ez, Unknown };
 
   std::string m_className = "ViewField";
 
@@ -176,7 +168,7 @@ class ViewField {
   // Plot area
   bool m_hasUserArea = false;
   double m_xmin = -1., m_ymin = -1.;
-  double m_xmax =  1., m_ymax =  1.;
+  double m_xmax = 1., m_ymax = 1.;
 
   // Function range
   double m_vmin = 0., m_vmax = 100.;

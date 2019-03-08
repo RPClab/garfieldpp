@@ -10,7 +10,6 @@ namespace Garfield {
 /// ROOT random number generator.
 
 class RandomEngineRoot : public RandomEngine {
-
  public:
   // Constructor
   RandomEngineRoot();

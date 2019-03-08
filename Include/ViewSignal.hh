@@ -1,12 +1,12 @@
 #ifndef G_VIEW_SIGNAL
 #define G_VIEW_SIGNAL
 
-#include <string>
 #include <memory>
+#include <string>
 
 #include <TCanvas.h>
-#include <TH1D.h>
 #include <TGraph.h>
+#include <TH1D.h>
 
 namespace Garfield {
 
@@ -15,7 +15,6 @@ class Sensor;
 /// Plot the signal computed by a sensor as a ROOT histogram.
 
 class ViewSignal {
-
  public:
   /// Constructor
   ViewSignal();
@@ -40,8 +39,8 @@ class ViewSignal {
                ('t': total, 'e': electron-induced, 'h': ion-induced).
     **/
   TH1D* GetHistogram(const char h = 't') {
-    return h == 'e' ? m_hSignalElectrons.get() : 'i' ? m_hSignalIons.get()
-                                                     : m_hSignal.get();
+    return h == 'e' ? m_hSignalElectrons.get()
+                    : 'i' ? m_hSignalIons.get() : m_hSignal.get();
   }
 
   /// Enable/disable debugging output.

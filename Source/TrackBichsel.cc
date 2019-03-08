@@ -1,29 +1,27 @@
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <cstdlib>
-#include <array>
 #include <algorithm>
+#include <array>
+#include <cstdlib>
+#include <fstream>
+#include <iostream>
+#include <sstream>
 
-#include "Sensor.hh"
-#include "TrackBichsel.hh"
 #include "FundamentalConstants.hh"
 #include "GarfieldConstants.hh"
 #include "Random.hh"
+#include "Sensor.hh"
+#include "TrackBichsel.hh"
 #include "Utilities.hh"
 
 namespace Garfield {
 
-TrackBichsel::TrackBichsel() : Track(),
-      m_speed(SpeedOfLight * m_bg / sqrt(1. + m_bg * m_bg)) {
-
+TrackBichsel::TrackBichsel()
+    : Track(), m_speed(SpeedOfLight * m_bg / sqrt(1. + m_bg * m_bg)) {
   m_className = "TrackBichsel";
 }
 
 bool TrackBichsel::NewTrack(const double x0, const double y0, const double z0,
                             const double t0, const double dx0, const double dy0,
                             const double dz0) {
-
   // Make sure a sensor has been defined.
   if (!m_sensor) {
     std::cerr << m_className << "::NewTrack: Sensor is not defined.\n";
@@ -97,7 +95,6 @@ bool TrackBichsel::NewTrack(const double x0, const double y0, const double z0,
 
 bool TrackBichsel::GetCluster(double& xcls, double& ycls, double& zcls,
                               double& tcls, int& n, double& e, double& extra) {
-
   if (!m_isInitialised || !m_isInMedium) return false;
 
   const double d = -log(RndmUniformPos()) / m_imfp;
@@ -138,7 +135,7 @@ bool TrackBichsel::GetCluster(double& xcls, double& ycls, double& zcls,
   } else if (j >= m_nCdfEntries) {
     e = m_cdf[m_nCdfEntries - 1][m_iCdf];
   } else {
-    e = m_cdf[j - 1][m_iCdf] + 
+    e = m_cdf[j - 1][m_iCdf] +
         (u - j) * (m_cdf[j][m_iCdf] - m_cdf[j - 1][m_iCdf]);
   }
 
@@ -146,21 +143,20 @@ bool TrackBichsel::GetCluster(double& xcls, double& ycls, double& zcls,
 }
 
 double TrackBichsel::GetClusterDensity() {
-
   constexpr unsigned int nEntries = 38;
-  constexpr std::array<double, nEntries> tabBg = {{
-      0.316,   0.398,   0.501,   0.631,    0.794,    1.000,   1.259,   1.585,
-      1.995,   2.512,   3.162,   3.981,    5.012,    6.310,   7.943,   10.000,
-      12.589,  15.849,  19.953,  25.119,   31.623,   39.811,  50.119,  63.096,
-      79.433,  100.000, 125.893, 158.489,  199.526,  251.189, 316.228, 398.107,
-      501.187, 630.958, 794.329, 1000.000, 1258.926, 1584.894}};
-  constexpr std::array<double, nEntries> tabImfp = {{
-      30.32496, 21.14965, 15.06555, 11.05635, 8.43259, 6.72876, 5.63184,
-      4.93252,  4.49174,  4.21786,  4.05090,  3.95186, 3.89531, 3.86471,
-      3.84930,  3.84226,  3.83952,  3.83887,  3.83912, 3.83970, 3.84035,
-      3.84095,  3.84147,  3.84189,  3.84223,  3.84249, 3.84269, 3.84283,
-      3.84293,  3.84300,  3.84304,  3.84308,  3.84310, 3.84311, 3.84312,
-      3.84313,  3.84313,  3.84314}};
+  constexpr std::array<double, nEntries> tabBg = {
+      {0.316,   0.398,   0.501,   0.631,    0.794,    1.000,   1.259,   1.585,
+       1.995,   2.512,   3.162,   3.981,    5.012,    6.310,   7.943,   10.000,
+       12.589,  15.849,  19.953,  25.119,   31.623,   39.811,  50.119,  63.096,
+       79.433,  100.000, 125.893, 158.489,  199.526,  251.189, 316.228, 398.107,
+       501.187, 630.958, 794.329, 1000.000, 1258.926, 1584.894}};
+  constexpr std::array<double, nEntries> tabImfp = {
+      {30.32496, 21.14965, 15.06555, 11.05635, 8.43259, 6.72876, 5.63184,
+       4.93252,  4.49174,  4.21786,  4.05090,  3.95186, 3.89531, 3.86471,
+       3.84930,  3.84226,  3.83952,  3.83887,  3.83912, 3.83970, 3.84035,
+       3.84095,  3.84147,  3.84189,  3.84223,  3.84249, 3.84269, 3.84283,
+       3.84293,  3.84300,  3.84304,  3.84308,  3.84310, 3.84311, 3.84312,
+       3.84313,  3.84313,  3.84314}};
 
   if (m_isChanged) m_bg = GetBetaGamma();
 
@@ -196,27 +192,27 @@ double TrackBichsel::GetClusterDensity() {
 }
 
 double TrackBichsel::GetStoppingPower() {
-
   constexpr unsigned int nEntries = 51;
-  constexpr std::array<double, nEntries> tabBg = {{
-      0.316,     0.398,    0.501,    0.631,     0.794,     1.000,     1.259,
-      1.585,     1.995,    2.512,    3.162,     3.981,     5.012,     6.310,
-      7.943,     10.000,   12.589,   15.849,    19.953,    25.119,    31.623,
-      39.811,    50.119,   63.096,   79.433,    100.000,   125.893,   158.489,
-      199.526,   251.189,  316.228,  398.107,   501.187,   630.958,   794.329,
-      1000.000,  1258.926, 1584.894, 1995.263,  2511.888,  3162.280,  3981.074,
-      5011.875,  6309.578, 7943.287, 10000.010, 12589.260, 15848.940, 19952.640,
-      25118.880, 31622.800}};
-  constexpr std::array<double, nEntries> tabdEdx = {{
-      2443.71800, 1731.65600, 1250.93400, 928.69920, 716.37140, 578.28850,
-      490.83670,  437.33820,  406.58490,  390.95170, 385.29000, 386.12000,
-      391.07730,  398.53930,  407.39420,  416.90860, 426.63010, 436.30240,
-      445.78980,  455.02530,  463.97370,  472.61410, 480.92980, 488.90240,
-      496.51900,  503.77130,  510.65970,  517.19570, 523.39830, 529.29120,
-      534.90670,  540.27590,  545.42880,  550.39890, 555.20800, 559.88820,
-      564.45780,  568.93850,  573.34700,  577.69140, 581.99010, 586.25090,
-      590.47720,  594.68660,  598.86880,  603.03510, 607.18890, 611.33250,
-      615.46810,  619.59740,  623.72150}};
+  constexpr std::array<double, nEntries> tabBg = {
+      {0.316,     0.398,     0.501,    0.631,     0.794,     1.000,
+       1.259,     1.585,     1.995,    2.512,     3.162,     3.981,
+       5.012,     6.310,     7.943,    10.000,    12.589,    15.849,
+       19.953,    25.119,    31.623,   39.811,    50.119,    63.096,
+       79.433,    100.000,   125.893,  158.489,   199.526,   251.189,
+       316.228,   398.107,   501.187,  630.958,   794.329,   1000.000,
+       1258.926,  1584.894,  1995.263, 2511.888,  3162.280,  3981.074,
+       5011.875,  6309.578,  7943.287, 10000.010, 12589.260, 15848.940,
+       19952.640, 25118.880, 31622.800}};
+  constexpr std::array<double, nEntries> tabdEdx = {
+      {2443.71800, 1731.65600, 1250.93400, 928.69920, 716.37140, 578.28850,
+       490.83670,  437.33820,  406.58490,  390.95170, 385.29000, 386.12000,
+       391.07730,  398.53930,  407.39420,  416.90860, 426.63010, 436.30240,
+       445.78980,  455.02530,  463.97370,  472.61410, 480.92980, 488.90240,
+       496.51900,  503.77130,  510.65970,  517.19570, 523.39830, 529.29120,
+       534.90670,  540.27590,  545.42880,  550.39890, 555.20800, 559.88820,
+       564.45780,  568.93850,  573.34700,  577.69140, 581.99010, 586.25090,
+       590.47720,  594.68660,  598.86880,  603.03510, 607.18890, 611.33250,
+       615.46810,  619.59740,  623.72150}};
 
   if (m_isChanged) m_bg = GetBetaGamma();
 
@@ -232,8 +228,8 @@ double TrackBichsel::GetStoppingPower() {
 
   // Locate the requested energy in the table.
   const auto it1 = std::upper_bound(tabBg.cbegin(), tabBg.cend(), m_bg);
-  if (it1 == tabBg.cbegin()) return 1.e4 * tabdEdx.front(); 
-  const auto it0 = std::prev(it1); 
+  if (it1 == tabBg.cbegin()) return 1.e4 * tabdEdx.front();
+  const auto it0 = std::prev(it1);
   const double x0 = *it0;
   const double x1 = *it1;
   if (m_debug) {
@@ -257,7 +253,6 @@ double TrackBichsel::GetStoppingPower() {
 }
 
 bool TrackBichsel::LoadCrossSectionTable(const std::string& filename) {
-
   const int nRows = 10000;
   const int nBlocks = 2;
   const int nColumns = 5;
@@ -355,7 +350,6 @@ bool TrackBichsel::LoadCrossSectionTable(const std::string& filename) {
 }
 
 void TrackBichsel::SelectCrossSectionTable() {
-
   constexpr unsigned int nTables = 10;
   const double tabBg[nTables] = {0.31623,    1.00000,    3.16228,   10.00000,
                                  31.62278,   100.00000,  316.22780, 1000.00000,

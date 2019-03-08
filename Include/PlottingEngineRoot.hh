@@ -1,9 +1,9 @@
 #ifndef G_PLOTTING_ENGINE_ROOT_H
 #define G_PLOTTING_ENGINE_ROOT_H
 
+#include <TF1.h>
 #include <TROOT.h>
 #include <TStyle.h>
-#include <TF1.h>
 
 #include "PlottingEngine.hh"
 
@@ -12,7 +12,6 @@ namespace Garfield {
 /// Definition of styles and color schemes.
 
 class PlottingEngineRoot : public PlottingEngine {
-
  public:
   // Constructor
   PlottingEngineRoot();

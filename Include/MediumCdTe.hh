@@ -8,7 +8,6 @@ namespace Garfield {
 /// Cadmium-Telluride.
 
 class MediumCdTe : public Medium {
-
  public:
   /// Constructor
   MediumCdTe();
@@ -17,8 +16,7 @@ class MediumCdTe : public Medium {
 
   bool IsSemiconductor() const { return true; }
 
-  void GetComponent(const unsigned int i, 
-                    std::string& label, double& f);
+  void GetComponent(const unsigned int i, std::string& label, double& f);
 
   // Trapping cross-section
   void SetTrapCrossSection(const double ecs, const double hcs);
@@ -74,7 +72,6 @@ class MediumCdTe : public Medium {
   // Models
   bool m_hasUserMobility = false;
   bool m_hasUserSaturationVelocity = false;
-
 };
 }
 

@@ -1,8 +1,8 @@
 #ifndef G_NUMERICS_H
 #define G_NUMERICS_H
 
-#include <vector>
 #include <complex>
+#include <vector>
 
 namespace Garfield {
 
@@ -80,19 +80,15 @@ double Divdif(const std::vector<double>& f, const std::vector<double>& a,
               int nn, double x, int mm);
 
 bool Boxin3(const std::vector<std::vector<std::vector<double> > >& value,
-            const std::vector<double>& xAxis, 
-            const std::vector<double>& yAxis,
-            const std::vector<double>& zAxis, 
-            const int nx, const int ny, const int nz, 
-            const double xx, const double yy, const double zz, 
+            const std::vector<double>& xAxis, const std::vector<double>& yAxis,
+            const std::vector<double>& zAxis, const int nx, const int ny,
+            const int nz, const double xx, const double yy, const double zz,
             double& f, const int iOrder);
-
 }
 
 inline double InterpolateBinarySearch(const std::vector<double>& x,
                                       const std::vector<double>& y,
                                       const double x0) {
-
   int iLow = 0;
   int iUp = x.size() - 1;
   while (iUp - iLow > 1) {
@@ -106,7 +102,6 @@ inline double InterpolateBinarySearch(const std::vector<double>& x,
   // Linear interpolation.
   return y[iLow] + (x0 - x[iLow]) * (y[iUp] - y[iLow]) / (x[iUp] - x[iLow]);
 }
-
 }
 
 #endif

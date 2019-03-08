@@ -1,10 +1,10 @@
 // Some code was copied/modified from ViewField.cc
-#include <iostream>
-#include <cmath>
 #include <algorithm>
+#include <cmath>
+#include <iostream>
 
-#include "ComponentFieldMap.hh"
 #include "ComponentCST.hh"
+#include "ComponentFieldMap.hh"
 #include "Plotting.hh"
 #include "Random.hh"
 #include "ViewFEMesh.hh"
@@ -12,7 +12,6 @@
 namespace Garfield {
 
 ViewFEMesh::ViewFEMesh() {
-
   plottingEngine.SetDefaultStyle();
   SetDefaultProjection();
 
@@ -24,12 +23,10 @@ ViewFEMesh::ViewFEMesh() {
 }
 
 ViewFEMesh::~ViewFEMesh() {
-
   if (!m_hasExternalCanvas && m_canvas) delete m_canvas;
 }
 
 void ViewFEMesh::SetComponent(ComponentFieldMap* comp) {
-
   if (!comp) {
     std::cerr << m_className << "::SetComponent: Null pointer.\n";
     return;
@@ -39,7 +36,6 @@ void ViewFEMesh::SetComponent(ComponentFieldMap* comp) {
 }
 
 void ViewFEMesh::SetCanvas(TCanvas* c) {
-
   if (!c) return;
   if (!m_hasExternalCanvas && m_canvas) {
     delete m_canvas;
@@ -53,7 +49,6 @@ TCanvas* ViewFEMesh::GetCanvas() { return m_canvas; }
 
 void ViewFEMesh::SetArea(double xmin, double ymin, double zmin, double xmax,
                          double ymax, double zmax) {
-
   // Check range, assign if non-null
   if (xmin == xmax || ymin == ymax) {
     std::cerr << m_className << "::SetArea: Null area range not permitted.\n";
@@ -74,7 +69,6 @@ void ViewFEMesh::SetArea() { m_hasUserArea = false; }
 // The plotting functionality here is ported from Garfield
 //  with some inclusion of code from ViewCell.cc
 bool ViewFEMesh::Plot() {
-
   if (!m_component) {
     std::cerr << m_className << "::Plot: Component is not defined.\n";
     return false;
@@ -120,7 +114,6 @@ bool ViewFEMesh::Plot() {
 //  to match functionality of Garfield
 void ViewFEMesh::SetPlane(const double fx, const double fy, const double fz,
                           const double x0, const double y0, const double z0) {
-
   // Calculate 2 in-plane vectors for the normal vector
   double fnorm = sqrt(fx * fx + fy * fy + fz * fz);
   double dist = fx * x0 + fy * y0 + fz * z0;
@@ -159,7 +152,6 @@ void ViewFEMesh::SetPlane(const double fx, const double fy, const double fz,
 
 // Set the default projection for the plane: copied from ViewField.cc
 void ViewFEMesh::SetDefaultProjection() {
-
   // Default projection: x-y at z=0
   project[0][0] = 1;
   project[1][0] = 0;
@@ -196,7 +188,6 @@ void ViewFEMesh::SetYaxisTitle(const char* ytitle) {
 
 // Create default axes
 void ViewFEMesh::CreateDefaultAxes() {
-
   // Create a new x and y axis.
   const double dx = std::abs(m_xMax - m_xMin) * 0.1;
   const double dy = std::abs(m_yMax - m_yMin) * 0.1;
@@ -219,7 +210,6 @@ void ViewFEMesh::CreateDefaultAxes() {
 // Use ROOT plotting functions to draw the mesh elements on the canvas.
 // General methodology ported from Garfield
 void ViewFEMesh::DrawElements() {
-
   // Get the map boundaries from the component.
   double mapxmax = m_component->m_mapmax[0];
   double mapxmin = m_component->m_mapmin[0];
@@ -332,7 +322,6 @@ void ViewFEMesh::DrawElements() {
     const auto& n3 = m_component->nodes[element.emap[3]];
     // Loop over the periodicities in x.
     for (int nx = nMinX; nx <= nMaxX; nx++) {
-
       // Determine the x-coordinates of the tetrahedral vertices.
       if (m_component->m_mirrorPeriodic[0] && nx != 2 * (nx / 2)) {
         vx1 = mapxmin + (mapxmax - n0.x) + sx * nx;
@@ -348,7 +337,6 @@ void ViewFEMesh::DrawElements() {
 
       // Loop over the periodicities in y.
       for (int ny = nMinY; ny <= nMaxY; ny++) {
-
         // Determine the y-coordinates of the tetrahedral vertices.
         if (m_component->m_mirrorPeriodic[1] && ny != 2 * (ny / 2)) {
           vy1 = mapymin + (mapymax - n0.y) + sy * ny;
@@ -364,7 +352,6 @@ void ViewFEMesh::DrawElements() {
 
         // Loop over the periodicities in z.
         for (int nz = nMinZ; nz <= nMaxZ; nz++) {
-
           // Determine the z-coordinates of the tetrahedral vertices.
           if (m_component->m_mirrorPeriodic[2] && nz != 2 * (nz / 2)) {
             vz1 = mapzmin + (mapzmax - n0.z) + sz * nz;
@@ -383,10 +370,10 @@ void ViewFEMesh::DrawElements() {
           std::vector<double> vY;
 
           // Value used to determine whether a vertex is in the plane.
-          const double pcf = std::max({std::abs(vx1), std::abs(vy1), std::abs(vz1),
-                                 std::abs(fx), std::abs(fy), std::abs(fz),
-                                 std::abs(dist)});
-          const double tol = 1.e-4 * pcf; 
+          const double pcf = std::max(
+              {std::abs(vx1), std::abs(vy1), std::abs(vz1), std::abs(fx),
+               std::abs(fy), std::abs(fz), std::abs(dist)});
+          const double tol = 1.e-4 * pcf;
           // First isolate the vertices that are in the viewing plane.
           bool in1 = (std::abs(fx * vx1 + fy * vy1 + fz * vz1 - dist) < tol);
           bool in2 = (std::abs(fx * vx2 + fy * vy2 + fz * vz2 - dist) < tol);
@@ -486,10 +473,10 @@ void ViewFEMesh::DrawElements() {
 
           // Add the polygon to the mesh.
           m_mesh.push_back(std::move(poly));
-        }    // end z-periodicity loop
-      }      // end y-periodicity loop
-    }        // end x-periodicity loop
-  }          // end loop over elements
+        }  // end z-periodicity loop
+      }    // end y-periodicity loop
+    }      // end x-periodicity loop
+  }        // end loop over elements
 
   // If we have an associated ViewDrift, plot projections of the drift lines.
   if (m_viewDrift) {
@@ -635,7 +622,8 @@ void ViewFEMesh::DrawCST(ComponentCST* componentCST) {
     // calculate the z position
     unsigned int i, j, z;
     if (!componentCST->Coordinate2Index(0, 0, project[2][2], i, j, z)) {
-      std::cerr << "Could determine the position of the plane in z direction.\n";
+      std::cerr
+          << "Could determine the position of the plane in z direction.\n";
       return;
     }
     std::cout << "    The plane position in z direction is: " << project[2][2]
@@ -919,7 +907,6 @@ void ViewFEMesh::DrawCST(ComponentCST* componentCST) {
 //
 void ViewFEMesh::RemoveCrossings(std::vector<double>& x,
                                  std::vector<double>& y) {
-
   // Determine element dimensions
   double xmin = x[0], xmax = x[0];
   double ymin = y[0], ymax = y[0];
@@ -956,29 +943,24 @@ void ViewFEMesh::RemoveCrossings(std::vector<double>& x,
   // times
   bool crossings = true;
   while (crossings && (attempts < NN)) {
-
     // Assume we are done after this attempt.
     crossings = false;
 
     for (int i = 1; i <= NN; i++) {
       for (int j = i + 2; j <= NN; j++) {
-
         // End the j-loop if we have surpassed N and wrapped around to i
         if ((j + 1) > NN && 1 + (j % NN) >= i) break;
 
         // Otherwise, detect crossings and attempt to eliminate them.
         else {
-
           // Determine if we have a crossing.
           double xc = 0., yc = 0.;
           if (LinesCrossed(x[(i - 1) % NN], y[(i - 1) % NN], x[i % NN],
                            y[i % NN], x[(j - 1) % NN], y[(j - 1) % NN],
                            x[j % NN], y[j % NN], xc, yc)) {
-
             // Swap each point from i towards j with each corresponding point
             //  from j towards i.
             for (int k = 1; k <= (j - i) / 2; k++) {
-
               double xs = x[(i + k - 1) % NN];
               double ys = y[(i + k - 1) % NN];
               x[(i + k - 1) % NN] = x[(j - k) % NN];
@@ -1016,14 +998,11 @@ void ViewFEMesh::RemoveCrossings(std::vector<double>& x,
 bool ViewFEMesh::LinesCrossed(double x1, double y1, double x2, double y2,
                               double u1, double v1, double u2, double v2,
                               double& xc, double& yc) {
-
   // Set the tolerances.
-  double xtol =
-      1.0e-10 *
-      std::max({std::abs(x1), std::abs(x2), std::abs(u1), std::abs(u2)});
-  double ytol =
-      1.0e-10 *
-      std::max({std::abs(y1), std::abs(y2), std::abs(v1), std::abs(v2)});
+  double xtol = 1.0e-10 * std::max({std::abs(x1), std::abs(x2), std::abs(u1),
+                                    std::abs(u2)});
+  double ytol = 1.0e-10 * std::max({std::abs(y1), std::abs(y2), std::abs(v1),
+                                    std::abs(v2)});
   if (xtol <= 0) xtol = 1.0e-10;
   if (ytol <= 0) ytol = 1.0e-10;
 
@@ -1076,7 +1055,6 @@ bool ViewFEMesh::LinesCrossed(double x1, double y1, double x2, double y2,
 //
 bool ViewFEMesh::OnLine(double x1, double y1, double x2, double y2, double u,
                         double v) {
-
   // Set the tolerances
   double xtol = 1.e-10 * std::max({std::abs(x1), std::abs(x2), std::abs(u)});
   double ytol = 1.e-10 * std::max({std::abs(y1), std::abs(y2), std::abs(v)});
@@ -1097,8 +1075,7 @@ bool ViewFEMesh::OnLine(double x1, double y1, double x2, double y2, double u,
   }
   // Choose (x1,y1) as starting point if closer to (u,v)
   if (std::abs(u - x1) + std::abs(v - y1) <
-           std::abs(u - x2) + std::abs(v - y2)) {
-
+      std::abs(u - x2) + std::abs(v - y2)) {
     // Compute the component of the line from (x1,y1) to (u,v)
     //  along the line from (x1,y1) to (x2,y2)
     double dpar = ((u - x1) * (x2 - x1) + (v - y1) * (y2 - y1)) /
@@ -1118,7 +1095,6 @@ bool ViewFEMesh::OnLine(double x1, double y1, double x2, double y2, double u,
   }
   // Choose (x2,y2) as starting point if closer to (u,v)
   else {
-
     // Compute the component of the line from (x2,y2) to (u,v)
     //  along the line from (x2,y2) to (x1,y1)
     double dpar = ((u - x2) * (x1 - x2) + (v - y2) * (y1 - y2)) /
@@ -1150,7 +1126,6 @@ bool ViewFEMesh::OnLine(double x1, double y1, double x2, double y2, double u,
 // xMat: the resulting planar coordinates of the intersection point
 bool ViewFEMesh::PlaneCut(double x1, double y1, double z1, double x2, double y2,
                           double z2, TMatrixD& xMat) {
-
   // Set up the matrix for cutting edges not in the plane
   TArrayD dataCut(9);
   TMatrixD cutMat(3, 3);
@@ -1200,7 +1175,6 @@ bool ViewFEMesh::PlaneCut(double x1, double y1, double z1, double x2, double y2,
 // xMat: the resulting planar coordinates in single-column (vector) form
 bool ViewFEMesh::PlaneCoords(double x, double y, double z,
                              const TMatrixD& projMat, TMatrixD& xMat) {
-
   // Set up the coordinate vector
   TArrayD dataCoords(3);
   TMatrixD coordMat(3, 1);
@@ -1222,7 +1196,6 @@ bool ViewFEMesh::PlaneCoords(double x, double y, double z,
 // edge: a variable set to true if the point is located on the polygon edge
 bool ViewFEMesh::IsInPolygon(double x, double y, std::vector<double>& px,
                              std::vector<double>& py, bool& edge) {
-
   // Get the number and coordinates of the polygon vertices.
   int pN = (int)px.size();
 
@@ -1270,7 +1243,6 @@ bool ViewFEMesh::IsInPolygon(double x, double y, std::vector<double>& px,
   int ncross = 0;
 
   while (!done && niter < 100) {
-
     // Assume we will finish on this loop.
     done = true;
 
@@ -1278,11 +1250,9 @@ bool ViewFEMesh::IsInPolygon(double x, double y, std::vector<double>& px,
     //  extending from (x,y) to (xinf,yinf).
     ncross = 0;
     for (int i = 0; (done && i < pN); i++) {
-
       // Determine whether the point lies on the edge.
       if (OnLine(px[i % pN], py[i % pN], px[(i + 1) % pN], py[(i + 1) % pN], x,
                  y)) {
-
         edge = true;
         return false;
       }
@@ -1296,7 +1266,6 @@ bool ViewFEMesh::IsInPolygon(double x, double y, std::vector<double>& px,
       // Ensure this vertex is not crossed by the line from (x,y)
       //  to (xinf,yinf); if so recompute (xinf,yinf) and start over.
       if (OnLine(x, y, xinf, yinf, px[i], py[i])) {
-
         // Recompute (xinf,yinf).
         xinf = px_min - RndmUniform() * std::abs(px_max - xinf);
         yinf = py_min - RndmUniform() * std::abs(py_max - yinf);
@@ -1327,7 +1296,6 @@ bool ViewFEMesh::IsInPolygon(double x, double y, std::vector<double>& px,
 // cy: to contain the y-vertices of the clipped polygon
 void ViewFEMesh::ClipToView(std::vector<double>& px, std::vector<double>& py,
                             std::vector<double>& cx, std::vector<double>& cy) {
-
   // Get the number and coordinates of the polygon vertices.
   int pN = (int)px.size();
 
@@ -1353,18 +1321,15 @@ void ViewFEMesh::ClipToView(std::vector<double>& px, std::vector<double>& py,
 
   // Loop over the polygon vertices.
   for (int i = 0; i < pN; i++) {
-
     // Flag for skipping check for edge intersection.
     bool skip = false;
 
     // Loop over the view vertices.
     for (int j = 0; j < vN; j++) {
-
       // Determine whether this vertex lies on a view edge:
       //  if so add the vertex to the final polygon.
       if (OnLine(vx[j % vN], vy[j % vN], vx[(j + 1) % vN], vy[(j + 1) % vN],
                  px[i], py[i])) {
-
         // Add the vertex.
         cx.push_back(px[i]);
         cy.push_back(py[i]);
@@ -1377,7 +1342,6 @@ void ViewFEMesh::ClipToView(std::vector<double>& px, std::vector<double>& py,
       //  if so add the corner to the final polygon.
       if (OnLine(px[i % pN], py[i % pN], px[(i + 1) % pN], py[(i + 1) % pN],
                  vx[j], vy[j])) {
-
         // Add the vertex.
         cx.push_back(vx[j]);
         cy.push_back(vy[j]);
@@ -1390,17 +1354,14 @@ void ViewFEMesh::ClipToView(std::vector<double>& px, std::vector<double>& py,
     // If we have not skipped the edge intersection check, look for an
     // intersection between this edge and the view edges.
     if (!skip) {
-
       // Loop over the view vertices.
       for (int j = 0; j < vN; j++) {
-
         // Check for a crossing with this edge;
         //  if one exists, add the crossing point.
         double xc = 0., yc = 0.;
         if (LinesCrossed(vx[j % vN], vy[j % vN], vx[(j + 1) % vN],
                          vy[(j + 1) % vN], px[i % pN], py[i % pN],
                          px[(i + 1) % pN], py[(i + 1) % pN], xc, yc)) {
-
           // Add a vertex.
           cx.push_back(xc);
           cy.push_back(yc);
@@ -1411,12 +1372,10 @@ void ViewFEMesh::ClipToView(std::vector<double>& px, std::vector<double>& py,
 
   // Find all view field vertices inside the polygon.
   for (int j = 0; j < vN; j++) {
-
     // Test whether this vertex is inside the polygon.
     //  If so, add it to the final polygon.
     bool edge = false;
     if (IsInPolygon(vx[j], vy[j], px, py, edge)) {
-
       // Add the view vertex.
       cx.push_back(vx[j]);
       cy.push_back(vy[j]);
@@ -1425,12 +1384,10 @@ void ViewFEMesh::ClipToView(std::vector<double>& px, std::vector<double>& py,
 
   // Find all polygon vertices inside the box.
   for (int i = 0; i < pN; i++) {
-
     // Test whether this vertex is inside the view.
     //  If so, add it to the final polygon.
     bool edge = false;
     if (IsInPolygon(px[i], py[i], vx, vy, edge)) {
-
       // Add the polygon vertex.
       cx.push_back(px[i]);
       cy.push_back(py[i]);

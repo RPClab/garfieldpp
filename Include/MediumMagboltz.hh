@@ -3,8 +3,8 @@
 
 #include <array>
 
-#include "MediumGas.hh"
 #include "MagboltzInterface.hh"
+#include "MediumGas.hh"
 
 namespace Garfield {
 
@@ -12,7 +12,6 @@ namespace Garfield {
 ///  - http://magboltz.web.cern.ch/magboltz/
 
 class MediumMagboltz : public MediumGas {
-
  public:
   /// Constructor
   MediumMagboltz();
@@ -62,7 +61,7 @@ class MediumMagboltz : public MediumGas {
     * \param r transfer probability [0, 1]
     * \param lambda parameter for sampling the distance of the Penning electron
              with respect to the excitation.
-    */ 
+    */
   void EnablePenningTransfer(const double r, const double lambda);
   /// Switch on simulation of Penning transfers by means of
   /// transfer probabilities, for all excitations of a given component.
@@ -79,8 +78,8 @@ class MediumMagboltz : public MediumGas {
   /// Multiply all excitation cross-sections by a uniform scaling factor.
   void SetExcitationScaling(const double r, std::string gasname);
 
-  /// Initialise the table of scattering rates (called internally when a 
-  /// collision rate is requested and the gas mixture or other parameters 
+  /// Initialise the table of scattering rates (called internally when a
+  /// collision rate is requested and the gas mixture or other parameters
   /// have changed).
   bool Initialise(const bool verbose = false);
 
@@ -95,14 +94,14 @@ class MediumMagboltz : public MediumGas {
                                   const int band);
   /// Sample the collision type.
   bool GetElectronCollision(const double e, int& type, int& level, double& e1,
-                            double& dx, double& dy, double& dz, 
+                            double& dx, double& dy, double& dz,
                             std::vector<std::pair<int, double> >& secondaries,
                             int& ndxc, int& band) override;
   void ComputeDeexcitation(int iLevel, int& fLevel);
-  unsigned int GetNumberOfDeexcitationProducts() const override { 
+  unsigned int GetNumberOfDeexcitationProducts() const override {
     return m_dxcProducts.size();
   }
-  bool GetDeexcitationProduct(const unsigned int i, double& t, double& s, 
+  bool GetDeexcitationProduct(const unsigned int i, double& t, double& s,
                               int& type, double& energy) const override;
 
   double GetPhotonCollisionRate(const double e) override;
@@ -114,10 +113,12 @@ class MediumMagboltz : public MediumGas {
   /// Get the total number of electron collisions.
   unsigned int GetNumberOfElectronCollisions() const;
   /// Get the number of collisions broken down by cross-section type.
-  unsigned int GetNumberOfElectronCollisions(unsigned int& nElastic, 
-    unsigned int& nIonising, unsigned int& nAttachment, 
-    unsigned int& nInelastic, unsigned int& nExcitation,
-    unsigned int& nSuperelastic) const;
+  unsigned int GetNumberOfElectronCollisions(unsigned int& nElastic,
+                                             unsigned int& nIonising,
+                                             unsigned int& nAttachment,
+                                             unsigned int& nInelastic,
+                                             unsigned int& nExcitation,
+                                             unsigned int& nSuperelastic) const;
   /// Get the number of cross-section terms.
   unsigned int GetNumberOfLevels();
   /// Get detailed information about a given cross-section term i
@@ -132,10 +133,11 @@ class MediumMagboltz : public MediumGas {
   /// Get the total number of photon collisions.
   unsigned int GetNumberOfPhotonCollisions() const;
   /// Get number of photon collisions by collision type.
-  unsigned int GetNumberOfPhotonCollisions(unsigned int& nElastic, 
-    unsigned int& nIonising, unsigned int& nInelastic) const;
+  unsigned int GetNumberOfPhotonCollisions(unsigned int& nElastic,
+                                           unsigned int& nIonising,
+                                           unsigned int& nInelastic) const;
 
-  /// Take the thermal motion of the gas at the selected temperature 
+  /// Take the thermal motion of the gas at the selected temperature
   /// into account in the calculations done Magboltz.
   /// By the default, this feature is off (static gas at 0 K).
   void EnableThermalMotion(const bool on = true) { m_useGasMotion = on; }
@@ -144,13 +146,13 @@ class MediumMagboltz : public MediumGas {
     * \param[in] e electric field
     * \param[in] b magnetic field
     * \param[in] btheta angle between electric and magnetic field
-    * \param[in] ncoll number of collisions (in multiples of 10<sup>7</sup>) 
+    * \param[in] ncoll number of collisions (in multiples of 10<sup>7</sup>)
                    to be simulated
     * \param[in] verbose verbosity flag
     * \param[out] vx,vy,vz drift velocity vector
     * \param[out] dl,dt diffusion cofficients
-    * \param[out] alpha Townsend cofficient 
-    * \param[out] eta attachment cofficient 
+    * \param[out] alpha Townsend cofficient
+    * \param[out] eta attachment cofficient
     * \param[out] lor Lorentz angle
     * \param[out] vxerr,vyerr,vzerr errors on drift velocity
     * \param[out] dlerr,dterr errors on diffusion coefficients
@@ -159,16 +161,14 @@ class MediumMagboltz : public MediumGas {
     */
   void RunMagboltz(const double e, const double b, const double btheta,
                    const int ncoll, bool verbose, double& vx, double& vy,
-                   double& vz, double& dl, double& dt, 
-                   double& alpha, double& eta, double& lor,
-                   double& vxerr, double& vyerr, double& vzerr,
-                   double& dlerr, double& dterr, 
+                   double& vz, double& dl, double& dt, double& alpha,
+                   double& eta, double& lor, double& vxerr, double& vyerr,
+                   double& vzerr, double& dlerr, double& dterr,
                    double& alphaerr, double& etaerr, double& lorerr,
-                   double& alphatof,
-                   std::array<double, 6>& difftens);
+                   double& alphatof, std::array<double, 6>& difftens);
 
-  /// Generate a new gas table (can later be saved to file) by running 
-  /// Magboltz for all electric fields, magnetic fields, and 
+  /// Generate a new gas table (can later be saved to file) by running
+  /// Magboltz for all electric fields, magnetic fields, and
   /// angles in the currently set grid.
   void GenerateGasTable(const int numCollisions = 10,
                         const bool verbose = true);
@@ -200,7 +200,7 @@ class MediumMagboltz : public MediumGas {
   std::array<double, m_nMaxGases> m_rgas;
   // Opal-Beaty-Peterson splitting parameter [eV]
   std::array<double, Magboltz::nMaxLevels> m_wOpalBeaty;
-  /// Green-Sawada splitting parameters [eV] 
+  /// Green-Sawada splitting parameters [eV]
   /// (&Gamma;s, &Gamma;b, Ts, Ta, Tb).
   std::array<std::array<double, 5>, m_nMaxGases> m_parGreenSawada;
   std::array<bool, m_nMaxGases> m_hasGreenSawada;
@@ -331,21 +331,22 @@ class MediumMagboltz : public MediumGas {
   bool GetGasNumberMagboltz(const std::string& input, int& number) const;
   bool Mixer(const bool verbose = false);
   void SetupGreenSawada();
-  void SetScatteringParameters(const int model, const double parIn, 
-                               double& cut, double& parOut) const;
+  void SetScatteringParameters(const int model, const double parIn, double& cut,
+                               double& parOut) const;
   void ComputeAngularCut(const double parIn, double& cut, double& parOut) const;
   void ComputeDeexcitationTable(const bool verbose);
-  void AddPenningDeexcitation(Deexcitation& dxc, const double rate, 
+  void AddPenningDeexcitation(Deexcitation& dxc, const double rate,
                               const double pPenning) {
     dxc.p.push_back(rate * pPenning);
     dxc.p.push_back(rate * (1. - pPenning));
     dxc.type.push_back(DxcTypeCollIon);
     dxc.type.push_back(DxcTypeCollNonIon);
   }
-  double RateConstantWK(const double energy, const double osc, 
-    const double pacs, const int igas1, const int igas2) const;
+  double RateConstantWK(const double energy, const double osc,
+                        const double pacs, const int igas1,
+                        const int igas2) const;
   double RateConstantHardSphere(const double r1, const double r2,
-    const int igas1, const int igas2) const;
+                                const int igas1, const int igas2) const;
   void ComputeDeexcitationInternal(int iLevel, int& fLevel);
   bool ComputePhotonCollisionTable(const bool verbose);
 };

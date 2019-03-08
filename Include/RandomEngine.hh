@@ -6,7 +6,6 @@ namespace Garfield {
 /// Abstract base class for random number generators.
 
 class RandomEngine {
-
  public:
   /// Constructor
   RandomEngine() {}

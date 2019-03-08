@@ -1,9 +1,9 @@
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <string>
 #include <algorithm>
 #include <cmath>
+#include <fstream>
+#include <iostream>
+#include <sstream>
+#include <string>
 
 #include "ComponentTcad2d.hh"
 #include "Utilities.hh"
@@ -11,7 +11,6 @@
 namespace Garfield {
 
 ComponentTcad2d::ComponentTcad2d() : ComponentBase() {
-
   m_className = "ComponentTcad2d";
 
   m_regions.reserve(10);
@@ -19,12 +18,9 @@ ComponentTcad2d::ComponentTcad2d() : ComponentBase() {
   m_elements.reserve(10000);
 }
 
-
-bool ComponentTcad2d::SetDonor(const unsigned int donorNumber, 
+bool ComponentTcad2d::SetDonor(const unsigned int donorNumber,
                                const double eXsec, const double hXsec,
                                const double conc) {
-
-
   if (donorNumber >= m_donors.size()) {
     std::cerr << m_className << "::SetDonor: Index out of range.\n";
     return false;
@@ -37,10 +33,9 @@ bool ComponentTcad2d::SetDonor(const unsigned int donorNumber,
   return true;
 }
 
-bool ComponentTcad2d::SetAcceptor(const unsigned int acceptorNumber, 
+bool ComponentTcad2d::SetAcceptor(const unsigned int acceptorNumber,
                                   const double eXsec, const double hXsec,
                                   const double conc) {
-
   if (acceptorNumber >= m_acceptors.size()) {
     std::cerr << m_className << "::SetAcceptor: Index out of range.\n";
     return false;
@@ -53,7 +48,7 @@ bool ComponentTcad2d::SetAcceptor(const unsigned int acceptorNumber,
   return true;
 }
 
-bool ComponentTcad2d::ElectronAttachment(const double x, const double y, 
+bool ComponentTcad2d::ElectronAttachment(const double x, const double y,
                                          const double z, double& eta) {
   eta = 0.;
   if (!m_validTraps) {
@@ -69,26 +64,25 @@ bool ComponentTcad2d::ElectronAttachment(const double x, const double y,
     return true;
   }
 
-  const unsigned int nAcceptors = m_acceptors.size(); 
+  const unsigned int nAcceptors = m_acceptors.size();
   for (unsigned int i = 0; i < nAcceptors; ++i) {
     const Defect& acceptor = m_acceptors[i];
     double f = 0.;
     GetAcceptorOccupation(x, y, z, i, f);
-	  eta += acceptor.conc * acceptor.xsece * (1. - f);
+    eta += acceptor.conc * acceptor.xsece * (1. - f);
   }
   const unsigned int nDonors = m_donors.size();
   for (unsigned int i = 0; i < nDonors; ++i) {
     const Defect& donor = m_donors[i];
     double f = 0.;
     GetDonorOccupation(x, y, z, i, f);
-	  eta += donor.conc * donor.xsece * f;
+    eta += donor.conc * donor.xsece * f;
   }
   return true;
 }
 
-bool ComponentTcad2d::HoleAttachment(const double x, const double y, 
+bool ComponentTcad2d::HoleAttachment(const double x, const double y,
                                      const double z, double& eta) {
-
   eta = 0.;
   if (!m_validTraps) {
     std::cerr << m_className << "::HoleAttachment:\n"
@@ -103,26 +97,26 @@ bool ComponentTcad2d::HoleAttachment(const double x, const double y,
     return true;
   }
 
-  const unsigned int nAcceptors = m_acceptors.size(); 
+  const unsigned int nAcceptors = m_acceptors.size();
   for (unsigned int i = 0; i < nAcceptors; ++i) {
     const Defect& acceptor = m_acceptors[i];
     double f = 0.;
     GetAcceptorOccupation(x, y, z, i, f);
-	  eta += acceptor.conc * acceptor.xsech * f;
+    eta += acceptor.conc * acceptor.xsech * f;
   }
   const unsigned int nDonors = m_donors.size();
   for (unsigned int i = 0; i < nDonors; ++i) {
     const Defect& donor = m_donors[i];
     double f = 0.;
     GetDonorOccupation(x, y, z, i, f);
-	  eta += donor.conc * donor.xsech * (1. - f);
+    eta += donor.conc * donor.xsech * (1. - f);
   }
   return true;
 }
 
-void ComponentTcad2d::WeightingField(const double x, const double y, const double z,
-                                     double& wx, double& wy, double& wz, 
-				                             const std::string& /*label*/) {
+void ComponentTcad2d::WeightingField(const double x, const double y,
+                                     const double z, double& wx, double& wy,
+                                     double& wz, const std::string& /*label*/) {
   int status = 0;
   Medium* med = nullptr;
   double v = 0.;
@@ -133,7 +127,6 @@ void ComponentTcad2d::ElectricField(const double xin, const double yin,
                                     const double zin, double& ex, double& ey,
                                     double& ez, double& p, Medium*& m,
                                     int& status) {
-
   // Initialise.
   ex = ey = ez = p = 0.;
   m = nullptr;
@@ -187,8 +180,9 @@ void ComponentTcad2d::ElectricField(const double xin, const double yin,
     const unsigned int nNeighbours = last.neighbours.size();
     for (unsigned int i = 0; i < nNeighbours; ++i) {
       const Element& element = m_elements[last.neighbours[i]];
-      if (x < element.xmin || x > element.xmax || 
-          y < element.ymin || y > element.ymax) continue; 
+      if (x < element.xmin || x > element.xmax || y < element.ymin ||
+          y > element.ymax)
+        continue;
       if (!CheckElement(x, y, element, w)) continue;
       const unsigned int nVertices = element.type + 1;
       for (unsigned int j = 0; j < nVertices; ++j) {
@@ -211,8 +205,9 @@ void ComponentTcad2d::ElectricField(const double xin, const double yin,
   const unsigned int nElements = m_elements.size();
   for (unsigned int i = 0; i < nElements; ++i) {
     const Element& element = m_elements[i];
-    if (x < element.xmin || x > element.xmax ||
-        y < element.ymin || y > element.ymax) continue;
+    if (x < element.xmin || x > element.xmax || y < element.ymin ||
+        y > element.ymax)
+      continue;
     if (!CheckElement(x, y, element, w)) continue;
     const unsigned int nVertices = element.type + 1;
     for (unsigned int j = 0; j < nVertices; ++j) {
@@ -237,10 +232,8 @@ void ComponentTcad2d::ElectricField(const double xin, const double yin,
 }
 
 void ComponentTcad2d::ElectronVelocity(const double xin, const double yin,
-                                       const double zin, 
-                                       double& vx, double& vy, double& vz, 
-                                       Medium*& m, int& status) {
-
+                                       const double zin, double& vx, double& vy,
+                                       double& vz, Medium*& m, int& status) {
   // Initialise.
   vx = vy = vz = 0.;
   m = nullptr;
@@ -291,8 +284,9 @@ void ComponentTcad2d::ElectronVelocity(const double xin, const double yin,
     const unsigned int nNeighbours = last.neighbours.size();
     for (unsigned int i = 0; i < nNeighbours; ++i) {
       const Element& element = m_elements[last.neighbours[i]];
-      if (x < element.xmin || x > element.xmax || 
-          y < element.ymin || y > element.ymax) continue; 
+      if (x < element.xmin || x > element.xmax || y < element.ymin ||
+          y > element.ymax)
+        continue;
       if (!CheckElement(x, y, element, w)) continue;
       const unsigned int nVertices = element.type + 1;
       for (unsigned int j = 0; j < nVertices; ++j) {
@@ -314,8 +308,9 @@ void ComponentTcad2d::ElectronVelocity(const double xin, const double yin,
   const unsigned int nElements = m_elements.size();
   for (unsigned int i = 0; i < nElements; ++i) {
     const Element& element = m_elements[i];
-    if (x < element.xmin || x > element.xmax ||
-        y < element.ymin || y > element.ymax) continue;
+    if (x < element.xmin || x > element.xmax || y < element.ymin ||
+        y > element.ymax)
+      continue;
     if (!CheckElement(x, y, element, w)) continue;
     const unsigned int nVertices = element.type + 1;
     for (unsigned int j = 0; j < nVertices; ++j) {
@@ -339,10 +334,8 @@ void ComponentTcad2d::ElectronVelocity(const double xin, const double yin,
 }
 
 void ComponentTcad2d::HoleVelocity(const double xin, const double yin,
-                                   const double zin, 
-                                   double& vx, double& vy, double& vz,
-                                   Medium*& m, int& status) {
-
+                                   const double zin, double& vx, double& vy,
+                                   double& vz, Medium*& m, int& status) {
   // Initialise.
   vx = vy = vz = 0.;
   m = nullptr;
@@ -395,8 +388,9 @@ void ComponentTcad2d::HoleVelocity(const double xin, const double yin,
     const unsigned int nNeighbours = last.neighbours.size();
     for (unsigned int i = 0; i < nNeighbours; ++i) {
       const Element& element = m_elements[last.neighbours[i]];
-      if (x < element.xmin || x > element.xmax || 
-          y < element.ymin || y > element.ymax) continue; 
+      if (x < element.xmin || x > element.xmax || y < element.ymin ||
+          y > element.ymax)
+        continue;
       if (!CheckElement(x, y, element, w)) continue;
       const unsigned int nVertices = element.type + 1;
       for (unsigned int j = 0; j < nVertices; ++j) {
@@ -418,8 +412,9 @@ void ComponentTcad2d::HoleVelocity(const double xin, const double yin,
   const unsigned int nElements = m_elements.size();
   for (unsigned int i = 0; i < nElements; ++i) {
     const Element& element = m_elements[i];
-    if (x < element.xmin || x > element.xmax ||
-        y < element.ymin || y > element.ymax) continue;
+    if (x < element.xmin || x > element.xmax || y < element.ymin ||
+        y > element.ymax)
+      continue;
     if (!CheckElement(x, y, element, w)) continue;
     const unsigned int nVertices = element.type + 1;
     for (unsigned int j = 0; j < nVertices; ++j) {
@@ -445,7 +440,6 @@ void ComponentTcad2d::HoleVelocity(const double xin, const double yin,
 
 Medium* ComponentTcad2d::GetMedium(const double xin, const double yin,
                                    const double zin) {
-
   // Make sure the field map has been loaded.
   if (!m_ready) {
     std::cerr << m_className << "::GetMedium:\n"
@@ -478,8 +472,9 @@ Medium* ComponentTcad2d::GetMedium(const double xin, const double yin,
     const unsigned int nNeighbours = last.neighbours.size();
     for (unsigned int i = 0; i < nNeighbours; ++i) {
       const Element& element = m_elements[last.neighbours[i]];
-      if (x < element.xmin || x > element.xmax ||
-          y < element.ymin || y > element.ymax) continue; 
+      if (x < element.xmin || x > element.xmax || y < element.ymin ||
+          y > element.ymax)
+        continue;
       if (!CheckElement(x, y, element, w)) continue;
       m_lastElement = last.neighbours[i];
       return m_regions[element.region].medium;
@@ -491,21 +486,21 @@ Medium* ComponentTcad2d::GetMedium(const double xin, const double yin,
   const unsigned int nElements = m_elements.size();
   for (unsigned int i = 0; i < nElements; ++i) {
     const Element& element = m_elements[i];
-    if (x < element.xmin || x > element.xmax ||
-        y < element.ymin || y > element.ymax) continue; 
+    if (x < element.xmin || x > element.xmax || y < element.ymin ||
+        y > element.ymax)
+      continue;
     if (!CheckElement(x, y, element, w)) continue;
     m_lastElement = i;
     return m_regions[element.region].medium;
   }
 
   // Point is outside the mesh.
-  return nullptr; 
+  return nullptr;
 }
 
-bool ComponentTcad2d::GetElectronLifetime(const double xin, const double yin, 
+bool ComponentTcad2d::GetElectronLifetime(const double xin, const double yin,
                                           const double zin, double& tau) {
-
-  tau  = 0.;
+  tau = 0.;
   // Make sure the field map has been loaded.
   if (!m_ready) {
     std::cerr << m_className << "::GetElectronLifetime:\n"
@@ -542,8 +537,9 @@ bool ComponentTcad2d::GetElectronLifetime(const double xin, const double yin,
     const unsigned int nNeighbours = last.neighbours.size();
     for (unsigned int i = 0; i < nNeighbours; ++i) {
       const Element& element = m_elements[last.neighbours[i]];
-      if (x < element.xmin || x > element.xmax || 
-          y < element.ymin || y > element.ymax) continue; 
+      if (x < element.xmin || x > element.xmax || y < element.ymin ||
+          y > element.ymax)
+        continue;
       if (!CheckElement(x, y, element, w)) continue;
       const unsigned int nVertices = element.type + 1;
       for (unsigned int j = 0; j < nVertices; ++j) {
@@ -560,8 +556,9 @@ bool ComponentTcad2d::GetElectronLifetime(const double xin, const double yin,
   const unsigned int nElements = m_elements.size();
   for (unsigned int i = 0; i < nElements; ++i) {
     const Element& element = m_elements[i];
-    if (x < element.xmin || x > element.xmax ||
-        y < element.ymin || y > element.ymax) continue;
+    if (x < element.xmin || x > element.xmax || y < element.ymin ||
+        y > element.ymax)
+      continue;
     if (!CheckElement(x, y, element, w)) continue;
     const unsigned int nVertices = element.type + 1;
     for (unsigned int j = 0; j < nVertices; ++j) {
@@ -578,12 +575,10 @@ bool ComponentTcad2d::GetElectronLifetime(const double xin, const double yin,
               << "    Point (" << x << ", " << y << ") is outside the mesh.\n";
   }
   return false;
-
 }
-bool ComponentTcad2d::GetHoleLifetime(const double xin, const double yin, 
+bool ComponentTcad2d::GetHoleLifetime(const double xin, const double yin,
                                       const double zin, double& tau) {
-
-  tau  = 0.;
+  tau = 0.;
   // Make sure the field map has been loaded.
   if (!m_ready) {
     std::cerr << m_className << "::GetHoleLifetime:\n"
@@ -620,8 +615,9 @@ bool ComponentTcad2d::GetHoleLifetime(const double xin, const double yin,
     const unsigned int nNeighbours = last.neighbours.size();
     for (unsigned int i = 0; i < nNeighbours; ++i) {
       const Element& element = m_elements[last.neighbours[i]];
-      if (x < element.xmin || x > element.xmax || 
-          y < element.ymin || y > element.ymax) continue; 
+      if (x < element.xmin || x > element.xmax || y < element.ymin ||
+          y > element.ymax)
+        continue;
       if (!CheckElement(x, y, element, w)) continue;
       const unsigned int nVertices = element.type + 1;
       for (unsigned int j = 0; j < nVertices; ++j) {
@@ -638,8 +634,9 @@ bool ComponentTcad2d::GetHoleLifetime(const double xin, const double yin,
   const unsigned int nElements = m_elements.size();
   for (unsigned int i = 0; i < nElements; ++i) {
     const Element& element = m_elements[i];
-    if (x < element.xmin || x > element.xmax ||
-        y < element.ymin || y > element.ymax) continue;
+    if (x < element.xmin || x > element.xmax || y < element.ymin ||
+        y > element.ymax)
+      continue;
     if (!CheckElement(x, y, element, w)) continue;
     const unsigned int nVertices = element.type + 1;
     for (unsigned int j = 0; j < nVertices; ++j) {
@@ -656,13 +653,11 @@ bool ComponentTcad2d::GetHoleLifetime(const double xin, const double yin,
               << "    Point (" << x << ", " << y << ") is outside the mesh.\n";
   }
   return false;
-
 }
 
 bool ComponentTcad2d::GetMobility(const double xin, const double yin,
-                                  const double zin, 
-                                  double& emob, double& hmob) {
-
+                                  const double zin, double& emob,
+                                  double& hmob) {
   emob = hmob = 0.;
 
   // Make sure the field map has been loaded.
@@ -704,8 +699,9 @@ bool ComponentTcad2d::GetMobility(const double xin, const double yin,
     const unsigned int nNeighbours = last.neighbours.size();
     for (unsigned int i = 0; i < nNeighbours; ++i) {
       const Element& element = m_elements[last.neighbours[i]];
-      if (x < element.xmin || x > element.xmax || 
-          y < element.ymin || y > element.ymax) continue; 
+      if (x < element.xmin || x > element.xmax || y < element.ymin ||
+          y > element.ymax)
+        continue;
       if (!CheckElement(x, y, element, w)) continue;
       const unsigned int nVertices = element.type + 1;
       for (unsigned int j = 0; j < nVertices; ++j) {
@@ -723,8 +719,9 @@ bool ComponentTcad2d::GetMobility(const double xin, const double yin,
   const unsigned int nElements = m_elements.size();
   for (unsigned int i = 0; i < nElements; ++i) {
     const Element& element = m_elements[i];
-    if (x < element.xmin || x > element.xmax ||
-        y < element.ymin || y > element.ymax) continue;
+    if (x < element.xmin || x > element.xmax || y < element.ymin ||
+        y > element.ymax)
+      continue;
     if (!CheckElement(x, y, element, w)) continue;
     const unsigned int nVertices = element.type + 1;
     for (unsigned int j = 0; j < nVertices; ++j) {
@@ -745,7 +742,7 @@ bool ComponentTcad2d::GetMobility(const double xin, const double yin,
 }
 
 bool ComponentTcad2d::GetDonorOccupation(const double xin, const double yin,
-                                         const double zin, 
+                                         const double zin,
                                          const unsigned int donorNumber,
                                          double& f) {
   f = 0.;
@@ -793,8 +790,9 @@ bool ComponentTcad2d::GetDonorOccupation(const double xin, const double yin,
     const unsigned int nNeighbours = last.neighbours.size();
     for (unsigned int i = 0; i < nNeighbours; ++i) {
       const Element& element = m_elements[last.neighbours[i]];
-      if (x < element.xmin || x > element.xmax || 
-          y < element.ymin || y > element.ymax) continue; 
+      if (x < element.xmin || x > element.xmax || y < element.ymin ||
+          y > element.ymax)
+        continue;
       if (!CheckElement(x, y, element, w)) continue;
       const unsigned int nVertices = element.type + 1;
       for (unsigned int j = 0; j < nVertices; ++j) {
@@ -811,8 +809,9 @@ bool ComponentTcad2d::GetDonorOccupation(const double xin, const double yin,
   const unsigned int nElements = m_elements.size();
   for (unsigned int i = 0; i < nElements; ++i) {
     const Element& element = m_elements[i];
-    if (x < element.xmin || x > element.xmax ||
-        y < element.ymin || y > element.ymax) continue;
+    if (x < element.xmin || x > element.xmax || y < element.ymin ||
+        y > element.ymax)
+      continue;
     if (!CheckElement(x, y, element, w)) continue;
     const unsigned int nVertices = element.type + 1;
     for (unsigned int j = 0; j < nVertices; ++j) {
@@ -832,11 +831,11 @@ bool ComponentTcad2d::GetDonorOccupation(const double xin, const double yin,
 }
 
 bool ComponentTcad2d::GetAcceptorOccupation(const double xin, const double yin,
-                                            const double zin, 
+                                            const double zin,
                                             const unsigned int acceptorNumber,
                                             double& f) {
   f = 0.;
-  if (acceptorNumber >= m_acceptors.size()) { 
+  if (acceptorNumber >= m_acceptors.size()) {
     std::cerr << m_className << "::GetAcceptorOccupation:\n"
               << "    Acceptor " << acceptorNumber << " does not exist.\n";
     return false;
@@ -861,7 +860,6 @@ bool ComponentTcad2d::GetAcceptorOccupation(const double xin, const double yin,
     return false;
   }
 
-
   double w[nMaxVertices] = {0};
   if (m_lastElement >= 0) {
     // Check if the point is still located in the previously found element.
@@ -881,8 +879,9 @@ bool ComponentTcad2d::GetAcceptorOccupation(const double xin, const double yin,
     const unsigned int nNeighbours = last.neighbours.size();
     for (unsigned int i = 0; i < nNeighbours; ++i) {
       const Element& element = m_elements[last.neighbours[i]];
-      if (x < element.xmin || x > element.xmax || 
-          y < element.ymin || y > element.ymax) continue; 
+      if (x < element.xmin || x > element.xmax || y < element.ymin ||
+          y > element.ymax)
+        continue;
       if (!CheckElement(x, y, element, w)) continue;
       const unsigned int nVertices = element.type + 1;
       for (unsigned int j = 0; j < nVertices; ++j) {
@@ -899,8 +898,9 @@ bool ComponentTcad2d::GetAcceptorOccupation(const double xin, const double yin,
   const unsigned int nElements = m_elements.size();
   for (unsigned int i = 0; i < nElements; ++i) {
     const Element& element = m_elements[i];
-    if (x < element.xmin || x > element.xmax ||
-        y < element.ymin || y > element.ymax) continue;
+    if (x < element.xmin || x > element.xmax || y < element.ymin ||
+        y > element.ymax)
+      continue;
     if (!CheckElement(x, y, element, w)) continue;
     const unsigned int nVertices = element.type + 1;
     for (unsigned int j = 0; j < nVertices; ++j) {
@@ -921,7 +921,6 @@ bool ComponentTcad2d::GetAcceptorOccupation(const double xin, const double yin,
 
 bool ComponentTcad2d::Initialise(const std::string& gridfilename,
                                  const std::string& datafilename) {
-
   m_ready = false;
 
   m_hasPotential = m_hasField = false;
@@ -937,7 +936,7 @@ bool ComponentTcad2d::Initialise(const std::string& gridfilename,
     return false;
   }
 
-  // Import electric field, potential, mobilities and 
+  // Import electric field, potential, mobilities and
   // trap occupation values from .dat file.
   if (!LoadData(datafilename)) {
     std::cerr << m_className << "::Initialise:\n"
@@ -960,22 +959,22 @@ bool ComponentTcad2d::Initialise(const std::string& gridfilename,
     m_pMax = std::max(m_pMax, std::max(v0.p, v1.p));
     if (element.type > 1) {
       const Vertex& v2 = m_vertices[element.vertex[2]];
-      xmin = std::min(xmin, v2.x); 
-      xmax = std::max(xmax, v2.x); 
-      ymin = std::min(ymin, v2.y); 
+      xmin = std::min(xmin, v2.x);
+      xmax = std::max(xmax, v2.x);
+      ymin = std::min(ymin, v2.y);
       ymax = std::max(ymax, v2.y);
       m_pMin = std::min(m_pMin, v2.p);
       m_pMax = std::max(m_pMax, v2.p);
     }
     if (element.type > 2) {
       const Vertex& v3 = m_vertices[element.vertex[3]];
-      xmin = std::min(xmin, v3.x); 
-      xmax = std::max(xmax, v3.x); 
-      ymin = std::min(ymin, v3.y); 
+      xmin = std::min(xmin, v3.x);
+      xmax = std::max(xmax, v3.x);
+      ymin = std::min(ymin, v3.y);
       ymax = std::max(ymax, v3.y);
       m_pMin = std::min(m_pMin, v3.p);
       m_pMax = std::max(m_pMax, v3.p);
-    } 
+    }
     const double tol = 1.e-6;
     element.xmin = xmin - tol;
     element.xmax = xmax + tol;
@@ -1144,13 +1143,12 @@ bool ComponentTcad2d::Initialise(const std::string& gridfilename,
   m_ready = true;
   UpdatePeriodicity();
   std::cout << m_className << "::Initialise:\n"
-            << "    Initialisation finished.\n"; 
+            << "    Initialisation finished.\n";
   return true;
 }
 
 bool ComponentTcad2d::GetBoundingBox(double& xmin, double& ymin, double& zmin,
                                      double& xmax, double& ymax, double& zmax) {
-
   if (!m_ready) return false;
   if (m_periodic[0] || m_mirrorPeriodic[0]) {
     xmin = -INFINITY;
@@ -1176,7 +1174,6 @@ bool ComponentTcad2d::GetBoundingBox(double& xmin, double& ymin, double& zmin,
 }
 
 void ComponentTcad2d::SetRangeZ(const double zmin, const double zmax) {
-
   if (fabs(zmax - zmin) <= 0.) {
     std::cerr << m_className << "::SetRangeZ:\n"
               << "    Zero range is not permitted.\n";
@@ -1188,7 +1185,6 @@ void ComponentTcad2d::SetRangeZ(const double zmin, const double zmax) {
 }
 
 bool ComponentTcad2d::GetVoltageRange(double& vmin, double& vmax) {
-
   if (!m_ready) return false;
   vmin = m_pMin;
   vmax = m_pMax;
@@ -1196,7 +1192,6 @@ bool ComponentTcad2d::GetVoltageRange(double& vmin, double& vmax) {
 }
 
 void ComponentTcad2d::PrintRegions() const {
-
   // Do not proceed if not properly initialised.
   if (!m_ready) {
     std::cerr << m_className << "::PrintRegions:\n"
@@ -1229,9 +1224,8 @@ void ComponentTcad2d::PrintRegions() const {
   }
 }
 
-void ComponentTcad2d::GetRegion(const unsigned int i, 
-                                std::string& name, bool& active) const {
-
+void ComponentTcad2d::GetRegion(const unsigned int i, std::string& name,
+                                bool& active) const {
   if (i >= m_regions.size()) {
     std::cerr << m_className << "::GetRegion:\n"
               << "    Region " << i << " does not exist.\n";
@@ -1242,7 +1236,6 @@ void ComponentTcad2d::GetRegion(const unsigned int i,
 }
 
 void ComponentTcad2d::SetDriftRegion(const unsigned int i) {
-
   if (i >= m_regions.size()) {
     std::cerr << m_className << "::SetDriftRegion:\n"
               << "    Region " << i << " does not exist.\n";
@@ -1252,7 +1245,6 @@ void ComponentTcad2d::SetDriftRegion(const unsigned int i) {
 }
 
 void ComponentTcad2d::UnsetDriftRegion(const unsigned int i) {
-
   if (i >= m_regions.size()) {
     std::cerr << m_className << "::UnsetDriftRegion:\n"
               << "    Region " << i << " does not exist.\n";
@@ -1262,7 +1254,6 @@ void ComponentTcad2d::UnsetDriftRegion(const unsigned int i) {
 }
 
 void ComponentTcad2d::SetMedium(const unsigned int i, Medium* medium) {
-
   if (i >= m_regions.size()) {
     std::cerr << m_className << "::SetMedium:\n"
               << "    Region " << i << " does not exist.\n";
@@ -1278,7 +1269,6 @@ void ComponentTcad2d::SetMedium(const unsigned int i, Medium* medium) {
 }
 
 Medium* ComponentTcad2d::GetMedium(const unsigned int i) const {
-
   if (i >= m_regions.size()) {
     std::cerr << m_className << "::GetMedium:\n"
               << "    Region " << i << " does not exist.\n";
@@ -1288,9 +1278,8 @@ Medium* ComponentTcad2d::GetMedium(const unsigned int i) const {
   return m_regions[i].medium;
 }
 
-bool ComponentTcad2d::GetElement(const unsigned int i, double& vol, double& dmin,
-                                 double& dmax, int& type) const {
-
+bool ComponentTcad2d::GetElement(const unsigned int i, double& vol,
+                                 double& dmin, double& dmax, int& type) const {
   if (i >= m_elements.size()) {
     std::cerr << m_className << "::GetElement: Index out of range.\n";
     return false;
@@ -1308,8 +1297,8 @@ bool ComponentTcad2d::GetElement(const unsigned int i, double& vol, double& dmin
     const Vertex& v0 = m_vertices[element.vertex[0]];
     const Vertex& v1 = m_vertices[element.vertex[1]];
     const Vertex& v2 = m_vertices[element.vertex[2]];
-    vol = 0.5 * fabs((v2.x - v0.x) * (v1.y - v0.y) - 
-                     (v2.y - v0.y) * (v1.x - v0.x));
+    vol = 0.5 *
+          fabs((v2.x - v0.x) * (v1.y - v0.y) - (v2.y - v0.y) * (v1.x - v0.x));
     const double a = sqrt(pow(v1.x - v0.x, 2) + pow(v1.y - v0.y, 2));
     const double b = sqrt(pow(v2.x - v0.x, 2) + pow(v2.y - v0.y, 2));
     const double c = sqrt(pow(v1.x - v2.x, 2) + pow(v1.y - v2.y, 2));
@@ -1332,11 +1321,10 @@ bool ComponentTcad2d::GetElement(const unsigned int i, double& vol, double& dmin
   return true;
 }
 
-bool ComponentTcad2d::GetElement(const unsigned int i, double& vol, 
+bool ComponentTcad2d::GetElement(const unsigned int i, double& vol,
                                  double& dmin, double& dmax, int& type,
-                                 int& node1, int& node2,
-                                 int& node3, int& node4, int& reg) const {
-
+                                 int& node1, int& node2, int& node3, int& node4,
+                                 int& reg) const {
   if (!GetElement(i, vol, dmin, dmax, type)) return false;
   const Element& element = m_elements[i];
   node1 = element.vertex[0];
@@ -1347,10 +1335,8 @@ bool ComponentTcad2d::GetElement(const unsigned int i, double& vol,
   return true;
 }
 
-bool ComponentTcad2d::GetNode(const unsigned int i, 
-                              double& x, double& y, double& v,
-                              double& ex, double& ey) const {
-
+bool ComponentTcad2d::GetNode(const unsigned int i, double& x, double& y,
+                              double& v, double& ex, double& ey) const {
   if (i >= m_vertices.size()) {
     std::cerr << m_className << "::GetNode: Index out of range.\n";
     return false;
@@ -1365,7 +1351,6 @@ bool ComponentTcad2d::GetNode(const unsigned int i,
 }
 
 bool ComponentTcad2d::LoadData(const std::string& datafilename) {
-
   std::ifstream datafile;
   datafile.open(datafilename.c_str(), std::ios::in);
   if (!datafile) {
@@ -1412,17 +1397,17 @@ bool ComponentTcad2d::LoadData(const std::string& datafilename) {
     data.str(line);
     data >> dataset;
     if (dataset == "ElectrostaticPotential") {
-      if (!ReadDataset(datafile, dataset)) return false; 
+      if (!ReadDataset(datafile, dataset)) return false;
       m_hasPotential = true;
     } else if (dataset == "ElectricField") {
       if (!ReadDataset(datafile, dataset)) return false;
       m_hasField = true;
     } else if (dataset == "eDriftVelocity") {
       if (!ReadDataset(datafile, dataset)) return false;
-      m_hasElectronVelocity= true;
+      m_hasElectronVelocity = true;
     } else if (dataset == "hDriftVelocity") {
       if (!ReadDataset(datafile, dataset)) return false;
-      m_hasHoleVelocity= true;
+      m_hasHoleVelocity = true;
     } else if (dataset == "eMobility") {
       if (!ReadDataset(datafile, dataset)) return false;
       m_hasElectronMobility = true;
@@ -1435,15 +1420,15 @@ bool ComponentTcad2d::LoadData(const std::string& datafilename) {
     } else if (dataset == "hLifetime") {
       if (!ReadDataset(datafile, dataset)) return false;
       m_hasHoleLifetime = true;
-    } else if (dataset.substr(0,14) == "TrapOccupation" && 
-               dataset.substr(17,2) == "Do") {
+    } else if (dataset.substr(0, 14) == "TrapOccupation" &&
+               dataset.substr(17, 2) == "Do") {
       if (!ReadDataset(datafile, dataset)) return false;
       Defect donor;
       donor.xsece = -1.;
       donor.xsech = -1.;
       donor.conc = -1.;
       m_donors.push_back(donor);
-    } else if (dataset.substr(0,14) == "TrapOccupation" && 
+    } else if (dataset.substr(0, 14) == "TrapOccupation" &&
                dataset.substr(17, 2) == "Ac") {
       if (!ReadDataset(datafile, dataset)) return false;
       Defect acceptor;
@@ -1466,9 +1451,8 @@ bool ComponentTcad2d::LoadData(const std::string& datafilename) {
   return true;
 }
 
-bool ComponentTcad2d::ReadDataset(std::ifstream& datafile, 
+bool ComponentTcad2d::ReadDataset(std::ifstream& datafile,
                                   const std::string& dataset) {
-
   enum DataSet {
     ElectrostaticPotential,
     EField,
@@ -1499,21 +1483,20 @@ bool ComponentTcad2d::ReadDataset(std::ifstream& datafile,
     ds = eLifetime;
   } else if (dataset == "hLifetime") {
     ds = hLifetime;
-  } else if (dataset.substr(0,14) == "TrapOccupation") { 
-    if (dataset.substr(17,2) == "Do") {
+  } else if (dataset.substr(0, 14) == "TrapOccupation") {
+    if (dataset.substr(17, 2) == "Do") {
       ds = DonorTrapOccupation;
-    } else if (dataset.substr(17,2) == "Ac") {
+    } else if (dataset.substr(17, 2) == "Ac") {
       ds = AcceptorTrapOccupation;
     }
   } else {
     std::cerr << m_className << "::ReadDataset:\n"
               << "    Unexpected dataset " << dataset << ".\n";
     return false;
-  } 
+  }
 
   bool isVector = false;
-  if (ds == EField || 
-      ds == eDriftVelocity || ds == hDriftVelocity) {
+  if (ds == EField || ds == eDriftVelocity || ds == hDriftVelocity) {
     isVector = true;
   }
 
@@ -1596,7 +1579,7 @@ bool ComponentTcad2d::ReadDataset(std::ifstream& datafile,
     // and the number of values.
     if (ivertex >= nVertices) {
       std::cerr << m_className << "::ReadDataset:\n"
-                << "    Dataset " << dataset 
+                << "    Dataset " << dataset
                 << " has more values than vertices in region " << name << "\n";
       datafile.close();
       Cleanup();
@@ -1612,7 +1595,7 @@ bool ComponentTcad2d::ReadDataset(std::ifstream& datafile,
         break;
       case eDriftVelocity:
         // Scale from cm/s to cm/ns.
-        m_vertices[ivertex].eVx = val1 * 1.e-9; 
+        m_vertices[ivertex].eVx = val1 * 1.e-9;
         m_vertices[ivertex].eVy = val2 * 1.e-9;
         break;
       case hDriftVelocity:
@@ -1652,11 +1635,9 @@ bool ComponentTcad2d::ReadDataset(std::ifstream& datafile,
     ++ivertex;
   }
   return true;
-
 }
 
 bool ComponentTcad2d::LoadGrid(const std::string& gridfilename) {
-
   // Open the file containing the mesh description.
   std::ifstream gridfile;
   gridfile.open(gridfilename.c_str(), std::ios::in);
@@ -1706,8 +1687,8 @@ bool ComponentTcad2d::LoadGrid(const std::string& gridfilename) {
   } else if (gridfile.fail()) {
     // Error reading from the file.
     std::cerr << m_className << "::LoadGrid:\n"
-              << "    Error reading file " << gridfilename << " (line " 
-              << iLine << ").\n";
+              << "    Error reading file " << gridfilename << " (line " << iLine
+              << ").\n";
     Cleanup();
     gridfile.close();
     return false;
@@ -1766,8 +1747,8 @@ bool ComponentTcad2d::LoadGrid(const std::string& gridfilename) {
   } else if (gridfile.fail()) {
     // Error reading from the file.
     std::cerr << m_className << "::LoadGrid:\n"
-              << "    Error reading file " << gridfilename << " (line " 
-              << iLine << ").\n";
+              << "    Error reading file " << gridfilename << " (line " << iLine
+              << ").\n";
     Cleanup();
     gridfile.close();
     return false;
@@ -1781,7 +1762,7 @@ bool ComponentTcad2d::LoadGrid(const std::string& gridfilename) {
     ++iLine;
     ltrim(line);
     // Find section 'Vertices'.
-    if (line.substr(0, 8) != "Vertices") continue; 
+    if (line.substr(0, 8) != "Vertices") continue;
     // Get number of vertices (given in brackets).
     const std::string::size_type bra = line.find('(');
     const std::string::size_type ket = line.find(')');
@@ -1869,8 +1850,8 @@ bool ComponentTcad2d::LoadGrid(const std::string& gridfilename) {
     return false;
   } else if (gridfile.fail()) {
     std::cerr << m_className << "::LoadGrid:\n"
-              << "    Error reading file " << gridfilename << " (line " 
-              << iLine << ").\n";
+              << "    Error reading file " << gridfilename << " (line " << iLine
+              << ").\n";
     Cleanup();
     gridfile.close();
     return false;
@@ -1878,8 +1859,8 @@ bool ComponentTcad2d::LoadGrid(const std::string& gridfilename) {
 
   for (int i = 0; i < nEdges; ++i) {
     // Make sure the indices of the edge endpoints are not out of range.
-    if (edgeP1[i] < 0 || edgeP1[i] >= (int)nVertices || 
-        edgeP2[i] < 0 || edgeP2[i] >= (int)nVertices) {
+    if (edgeP1[i] < 0 || edgeP1[i] >= (int)nVertices || edgeP2[i] < 0 ||
+        edgeP2[i] >= (int)nVertices) {
       std::cerr << m_className << "::LoadGrid:\n"
                 << "    Vertex index of edge " << i << " out of range.\n";
       Cleanup();
@@ -1939,8 +1920,8 @@ bool ComponentTcad2d::LoadGrid(const std::string& gridfilename) {
           // Make sure the indices are not out of range.
           if (edge0 >= nEdges || edge1 >= nEdges) {
             std::cerr << m_className << "::LoadGrid:\n"
-                      << "    Error reading file " << gridfilename
-                      << " (line " << iLine << ").\n"
+                      << "    Error reading file " << gridfilename << " (line "
+                      << iLine << ").\n"
                       << "    Edge index out of range.\n";
             Cleanup();
             gridfile.close();
@@ -1968,8 +1949,8 @@ bool ComponentTcad2d::LoadGrid(const std::string& gridfilename) {
           if (edge2 < 0) edge2 = -edge2 - 1;
           if (edge0 >= nEdges || edge1 >= nEdges || edge2 >= nEdges) {
             std::cerr << m_className << "::LoadGrid:\n"
-                      << "    Error reading file " << gridfilename
-                      << " (line " << iLine << ").\n"
+                      << "    Error reading file " << gridfilename << " (line "
+                      << iLine << ").\n"
                       << "    Edge index out of range.\n";
             Cleanup();
             gridfile.close();
@@ -1985,9 +1966,9 @@ bool ComponentTcad2d::LoadGrid(const std::string& gridfilename) {
           }
           // Rearrange vertices such that point 0 is on the left.
           while (m_vertices[m_elements[j].vertex[0]].x >
-                 m_vertices[m_elements[j].vertex[1]].x ||
+                     m_vertices[m_elements[j].vertex[1]].x ||
                  m_vertices[m_elements[j].vertex[0]].x >
-                 m_vertices[m_elements[j].vertex[2]].x) {
+                     m_vertices[m_elements[j].vertex[2]].x) {
             const int tmp = m_elements[j].vertex[0];
             m_elements[j].vertex[0] = m_elements[j].vertex[1];
             m_elements[j].vertex[1] = m_elements[j].vertex[2];
@@ -1998,13 +1979,12 @@ bool ComponentTcad2d::LoadGrid(const std::string& gridfilename) {
           // Rectangle
           gridfile >> edge0 >> edge1 >> edge2 >> edge3;
           // Make sure the indices are not out of range.
-          if (edge0 >= nEdges || -edge0 - 1 >= nEdges || 
-              edge1 >= nEdges || -edge1 - 1 >= nEdges || 
-              edge2 >= nEdges || -edge2 - 1 >= nEdges || 
+          if (edge0 >= nEdges || -edge0 - 1 >= nEdges || edge1 >= nEdges ||
+              -edge1 - 1 >= nEdges || edge2 >= nEdges || -edge2 - 1 >= nEdges ||
               edge3 >= nEdges || -edge3 - 1 >= nEdges) {
             std::cerr << m_className << "::LoadGrid:\n"
-                      << "    Error reading file " << gridfilename
-                      << " (line " << iLine << ").\n"
+                      << "    Error reading file " << gridfilename << " (line "
+                      << iLine << ").\n"
                       << "    Edge index out of range.\n";
             Cleanup();
             gridfile.close();
@@ -2029,11 +2009,11 @@ bool ComponentTcad2d::LoadGrid(const std::string& gridfilename) {
 
           // Rearrange vertices such that point 0 is on the left.
           while (m_vertices[m_elements[j].vertex[0]].x >
-                 m_vertices[m_elements[j].vertex[1]].x ||
+                     m_vertices[m_elements[j].vertex[1]].x ||
                  m_vertices[m_elements[j].vertex[0]].x >
-                 m_vertices[m_elements[j].vertex[2]].x ||
+                     m_vertices[m_elements[j].vertex[2]].x ||
                  m_vertices[m_elements[j].vertex[0]].x >
-                 m_vertices[m_elements[j].vertex[3]].x) {
+                     m_vertices[m_elements[j].vertex[3]].x) {
             const int tmp = m_elements[j].vertex[0];
             m_elements[j].vertex[0] = m_elements[j].vertex[1];
             m_elements[j].vertex[1] = m_elements[j].vertex[2];
@@ -2143,11 +2123,11 @@ bool ComponentTcad2d::LoadGrid(const std::string& gridfilename) {
 }
 
 void ComponentTcad2d::FindNeighbours() {
-
   const unsigned int nElements = m_elements.size();
-  std::vector<std::vector<bool> > adjacent(nElements, std::vector<bool>(nElements, false));
+  std::vector<std::vector<bool> > adjacent(nElements,
+                                           std::vector<bool>(nElements, false));
 
-  const double tol = 5.e-4; 
+  const double tol = 5.e-4;
   for (unsigned int i = 0; i < nElements; ++i) {
     const Element& ei = m_elements[i];
     for (unsigned int j = 0; j < nElements; ++j) {
@@ -2180,7 +2160,6 @@ void ComponentTcad2d::FindNeighbours() {
 }
 
 void ComponentTcad2d::Cleanup() {
-
   // Vertices
   m_vertices.clear();
 
@@ -2192,9 +2171,8 @@ void ComponentTcad2d::Cleanup() {
 }
 
 bool ComponentTcad2d::CheckElement(const double x, const double y,
-                                   const Element& element, 
+                                   const Element& element,
                                    double w[nMaxVertices]) const {
-  
   switch (element.type) {
     case 1:
       return CheckLine(x, y, element, w);
@@ -2212,11 +2190,10 @@ bool ComponentTcad2d::CheckElement(const double x, const double y,
   }
   return false;
 }
-  
+
 bool ComponentTcad2d::CheckRectangle(const double x, const double y,
                                      const Element& element,
                                      double w[nMaxVertices]) const {
-
   const Vertex& v0 = m_vertices[element.vertex[0]];
   const Vertex& v1 = m_vertices[element.vertex[1]];
   const Vertex& v3 = m_vertices[element.vertex[3]];
@@ -2236,7 +2213,6 @@ bool ComponentTcad2d::CheckRectangle(const double x, const double y,
 bool ComponentTcad2d::CheckTriangle(const double x, const double y,
                                     const Element& element,
                                     double w[nMaxVertices]) const {
-
   const Vertex& v0 = m_vertices[element.vertex[0]];
   const Vertex& v1 = m_vertices[element.vertex[1]];
   const Vertex& v2 = m_vertices[element.vertex[2]];
@@ -2264,10 +2240,9 @@ bool ComponentTcad2d::CheckTriangle(const double x, const double y,
   return true;
 }
 
-bool ComponentTcad2d::CheckLine(const double x, const double y, 
+bool ComponentTcad2d::CheckLine(const double x, const double y,
                                 const Element& element,
                                 double w[nMaxVertices]) const {
-
   const Vertex& v0 = m_vertices[element.vertex[0]];
   const Vertex& v1 = m_vertices[element.vertex[1]];
   if (x > v1.x) return false;
@@ -2287,14 +2262,12 @@ bool ComponentTcad2d::CheckLine(const double x, const double y,
 }
 
 void ComponentTcad2d::Reset() {
-
   Cleanup();
   m_hasRangeZ = false;
   m_ready = false;
 }
 
 void ComponentTcad2d::UpdatePeriodicity() {
-
   if (!m_ready) {
     std::cerr << m_className << "::UpdatePeriodicity:\n"
               << "    Field map not available.\n";
@@ -2316,7 +2289,8 @@ void ComponentTcad2d::UpdatePeriodicity() {
     m_axiallyPeriodic.fill(false);
   }
 
-  if (m_rotationSymmetric[0] || m_rotationSymmetric[1] || m_rotationSymmetric[2]) {
+  if (m_rotationSymmetric[0] || m_rotationSymmetric[1] ||
+      m_rotationSymmetric[2]) {
     std::cerr << m_className << "::UpdatePeriodicity:\n"
               << "    Rotation symmetry is not supported. Reset.\n";
     m_rotationSymmetric.fill(false);
@@ -2324,7 +2298,6 @@ void ComponentTcad2d::UpdatePeriodicity() {
 }
 
 int ComponentTcad2d::FindRegion(const std::string& name) const {
-
   const unsigned int nRegions = m_regions.size();
   for (unsigned int j = 0; j < nRegions; ++j) {
     if (name == m_regions[j].name) return j;
@@ -2332,9 +2305,8 @@ int ComponentTcad2d::FindRegion(const std::string& name) const {
   return -1;
 }
 
-void ComponentTcad2d::MapCoordinates(double& x, double& y, 
-                                     bool& xmirr, bool& ymirr) const {
-
+void ComponentTcad2d::MapCoordinates(double& x, double& y, bool& xmirr,
+                                     bool& ymirr) const {
   // In case of periodicity, reduce to the cell volume.
   xmirr = false;
   const double cellsx = m_xMaxBB - m_xMinBB;
@@ -2369,7 +2341,6 @@ void ComponentTcad2d::MapCoordinates(double& x, double& y,
 }
 
 bool ComponentTcad2d::CheckTraps() const {
-
   for (const auto& trap : m_donors) {
     if (trap.xsece < 0. || trap.xsech < 0. || trap.conc < 0.) return false;
   }
@@ -2379,5 +2350,4 @@ bool ComponentTcad2d::CheckTraps() const {
   }
   return true;
 }
-
 }

@@ -1,9 +1,9 @@
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <string>
 #include <algorithm>
 #include <cmath>
+#include <fstream>
+#include <iostream>
+#include <sstream>
+#include <string>
 
 #include "ComponentVoxel.hh"
 #include "Utilities.hh"
@@ -11,7 +11,6 @@
 namespace Garfield {
 
 ComponentVoxel::ComponentVoxel() : ComponentBase() {
-
   m_className = "ComponentVoxel";
 }
 
@@ -19,7 +18,6 @@ void ComponentVoxel::ElectricField(const double x, const double y,
                                    const double z, double& ex, double& ey,
                                    double& ez, double& p, Medium*& m,
                                    int& status) {
-
   m = nullptr;
   status = 0;
 
@@ -50,7 +48,6 @@ void ComponentVoxel::ElectricField(const double x, const double y,
 void ComponentVoxel::ElectricField(const double x, const double y,
                                    const double z, double& ex, double& ey,
                                    double& ez, Medium*& m, int& status) {
-
   double v = 0.;
   ElectricField(x, y, z, ex, ey, ez, v, m, status);
 }
@@ -68,7 +65,7 @@ void ComponentVoxel::WeightingField(const double x, const double y,
 }
 
 double ComponentVoxel::WeightingPotential(const double x, const double y,
-                                          const double z, 
+                                          const double z,
                                           const std::string& /*label*/) {
   int status = 0;
   Medium* med = nullptr;
@@ -89,10 +86,8 @@ void ComponentVoxel::SetWeightingFieldOffset(const double x, const double y,
 }
 
 void ComponentVoxel::MagneticField(const double x, const double y,
-                                   const double z,
-                                   double& bx, double& by, double& bz,
-                                   int& status) {
-
+                                   const double z, double& bx, double& by,
+                                   double& bz, int& status) {
   status = 0;
   if (!m_hasBfield) {
     return ComponentBase::MagneticField(x, y, z, bx, by, bz, status);
@@ -103,12 +98,10 @@ void ComponentVoxel::MagneticField(const double x, const double y,
   if (!GetField(x, y, z, m_bfields, bx, by, bz, p, region)) {
     status = -11;
   }
-
 }
 
 Medium* ComponentVoxel::GetMedium(const double x, const double y,
                                   const double z) {
-
   // Make sure the field map has been loaded.
   if (!m_ready) {
     std::cerr << m_className << "::GetMedium:\n"
@@ -127,11 +120,10 @@ Medium* ComponentVoxel::GetMedium(const double x, const double y,
 }
 
 void ComponentVoxel::SetMesh(const unsigned int nx, const unsigned int ny,
-                             const unsigned int nz, 
-                             const double xmin, const double xmax,
-                             const double ymin, const double ymax,
-                             const double zmin, const double zmax) {
-
+                             const unsigned int nz, const double xmin,
+                             const double xmax, const double ymin,
+                             const double ymax, const double zmin,
+                             const double zmax) {
   Reset();
   if (nx == 0 || ny == 0 || nz == 0) {
     std::cerr << m_className << "::SetMesh:\n"
@@ -163,14 +155,12 @@ void ComponentVoxel::SetMesh(const unsigned int nx, const unsigned int ny,
   m_hasMesh = true;
 }
 
-bool ComponentVoxel::LoadElectricField(const std::string& filename, 
+bool ComponentVoxel::LoadElectricField(const std::string& filename,
                                        const std::string& format,
-                                       const bool withPotential, 
+                                       const bool withPotential,
                                        const bool withRegion,
-                                       const double scaleX,
-                                       const double scaleE,
+                                       const double scaleX, const double scaleE,
                                        const double scaleP) {
-  
   m_ready = false;
   m_efields.clear();
   m_hasPotential = m_hasEfield = false;
@@ -204,15 +194,14 @@ bool ComponentVoxel::LoadElectricField(const std::string& filename,
     m_pMin = 1.;
     m_pMax = -1.;
   }
-  return LoadData(filename, format, withPotential, withRegion, 
-                  scaleX, scaleE, scaleP, 'e');
+  return LoadData(filename, format, withPotential, withRegion, scaleX, scaleE,
+                  scaleP, 'e');
 }
 
-bool ComponentVoxel::LoadMagneticField(const std::string& filename, 
+bool ComponentVoxel::LoadMagneticField(const std::string& filename,
                                        const std::string& format,
                                        const double scaleX,
                                        const double scaleB) {
-  
   m_hasBfield = false;
   if (!m_hasMesh) {
     std::cerr << m_className << "::LoadMagneticField:\n"
@@ -242,7 +231,6 @@ bool ComponentVoxel::LoadData(const std::string& filename, std::string format,
                               const bool withPotential, const bool withRegion,
                               const double scaleX, const double scaleF,
                               const double scaleP, const char field) {
-
   if (!m_hasMesh) {
     std::cerr << m_className << "::LoadData: Mesh has not been set.\n";
     return false;
@@ -250,7 +238,8 @@ bool ComponentVoxel::LoadData(const std::string& filename, std::string format,
 
   unsigned int nValues = 0;
   // Keep track of which elements have been read.
-  std::vector<std::vector<std::vector<bool> > > isSet(m_nX, 
+  std::vector<std::vector<std::vector<bool> > > isSet(
+      m_nX,
       std::vector<std::vector<bool> >(m_nY, std::vector<bool>(m_nZ, false)));
 
   std::ifstream infile;
@@ -510,7 +499,6 @@ bool ComponentVoxel::LoadData(const std::string& filename, std::string format,
 
 bool ComponentVoxel::GetBoundingBox(double& xmin, double& ymin, double& zmin,
                                     double& xmax, double& ymax, double& zmax) {
-
   if (!m_ready) return false;
   if (m_periodic[0] || m_mirrorPeriodic[0]) {
     xmin = -INFINITY;
@@ -539,7 +527,6 @@ bool ComponentVoxel::GetBoundingBox(double& xmin, double& ymin, double& zmin,
 }
 
 bool ComponentVoxel::GetVoltageRange(double& vmin, double& vmax) {
-
   if (!m_ready) return false;
   vmin = m_pMin;
   vmax = m_pMax;
@@ -549,7 +536,6 @@ bool ComponentVoxel::GetVoltageRange(double& vmin, double& vmax) {
 bool ComponentVoxel::GetElectricFieldRange(double& exmin, double& exmax,
                                            double& eymin, double& eymax,
                                            double& ezmin, double& ezmax) {
-
   if (!m_ready) {
     std::cerr << m_className << "::GetElectricFieldRange:\n";
     std::cerr << "    Field map not available.\n";
@@ -576,7 +562,6 @@ bool ComponentVoxel::GetElectricFieldRange(double& exmin, double& exmax,
 }
 
 void ComponentVoxel::PrintRegions() const {
-
   // Do not proceed if not properly initialised.
   if (!m_ready) {
     std::cerr << m_className << "::PrintRegions:\n"
@@ -599,17 +584,15 @@ void ComponentVoxel::PrintRegions() const {
 }
 
 void ComponentVoxel::SetMedium(const unsigned int i, Medium* m) {
-
   if (!m) {
     std::cerr << m_className << "::SetMedium: Null pointer.\n";
     if (m_media.empty()) return;
   }
-  if (i >= m_media.size()) m_media.resize(i + 1, nullptr); 
+  if (i >= m_media.size()) m_media.resize(i + 1, nullptr);
   m_media[i] = m;
 }
 
 Medium* ComponentVoxel::GetMedium(const unsigned int i) const {
-
   if (i > m_media.size()) {
     std::cerr << m_className << "::GetMedium: Index out of range.\n";
     return nullptr;
@@ -617,35 +600,34 @@ Medium* ComponentVoxel::GetMedium(const unsigned int i) const {
   return m_media[i];
 }
 
-bool ComponentVoxel::GetField(const double xi, const double yi, 
-    const double zi, 
-    const std::vector<std::vector<std::vector<Element> > >& field,
-    double& fx, double& fy, double& fz, double& p, int& region) {
-
+bool ComponentVoxel::GetField(
+    const double xi, const double yi, const double zi,
+    const std::vector<std::vector<std::vector<Element> > >& field, double& fx,
+    double& fy, double& fz, double& p, int& region) {
   if (!m_hasMesh) {
     std::cerr << m_className << "::GetField: Mesh is not set.\n";
     return false;
   }
 
-  // Reduce the point to the basic cell (in case of periodicity) and 
+  // Reduce the point to the basic cell (in case of periodicity) and
   // check if it is inside the mesh.
   bool xMirrored = false;
-  const double x = Reduce(xi, m_xMin, m_xMax, m_periodic[0], 
-                          m_mirrorPeriodic[0], xMirrored);
+  const double x =
+      Reduce(xi, m_xMin, m_xMax, m_periodic[0], m_mirrorPeriodic[0], xMirrored);
   if (x < m_xMin || x > m_xMax) return false;
   bool yMirrored = false;
-  const double y = Reduce(yi, m_yMin, m_yMax, m_periodic[1], 
-                          m_mirrorPeriodic[1], yMirrored);
+  const double y =
+      Reduce(yi, m_yMin, m_yMax, m_periodic[1], m_mirrorPeriodic[1], yMirrored);
   if (y < m_yMin || y > m_yMax) return false;
   bool zMirrored = false;
-  const double z = Reduce(zi, m_zMin, m_zMax, m_periodic[2], 
-                          m_mirrorPeriodic[2], zMirrored);
+  const double z =
+      Reduce(zi, m_zMin, m_zMax, m_periodic[2], m_mirrorPeriodic[2], zMirrored);
   if (z < m_zMin || z > m_zMax) return false;
 
   // Get the indices.
-  const double sx = (x - m_xMin) / m_dx; 
-  const double sy = (y - m_yMin) / m_dy; 
-  const double sz = (z - m_zMin) / m_dz; 
+  const double sx = (x - m_xMin) / m_dx;
+  const double sy = (y - m_yMin) / m_dy;
+  const double sz = (z - m_zMin) / m_dz;
   unsigned int i = static_cast<unsigned int>(sx);
   unsigned int j = static_cast<unsigned int>(sy);
   unsigned int k = static_cast<unsigned int>(sz);
@@ -686,7 +668,7 @@ bool ComponentVoxel::GetField(const double xi, const double yi,
     if (k0 < 0) k0 = perz ? m_nZ - 1 : 0;
     if (i1 >= m_nX) i1 = perx ? 0 : m_nX - 1;
     if (j1 >= m_nY) j1 = pery ? 0 : m_nY - 1;
-    if (k1 >= m_nZ) k1 = perz ? 0 : m_nZ - 1; 
+    if (k1 >= m_nZ) k1 = perz ? 0 : m_nZ - 1;
     const Element& n000 = field[i0][j0][k0];
     const Element& n100 = field[i1][j0][k0];
     const Element& n010 = field[i0][j1][k0];
@@ -695,28 +677,34 @@ bool ComponentVoxel::GetField(const double xi, const double yi,
     const Element& n101 = field[i1][j0][k1];
     const Element& n011 = field[i0][j1][k1];
     const Element& n111 = field[i1][j1][k1];
-   
-    const double ux = 1. - vx; 
-    const double uy = 1. - vy; 
-    const double uz = 1. - vz; 
-    fx = ((n000.fx * ux + n100.fx * vx) * uy + 
-          (n010.fx * ux + n110.fx * vx) * vy) * uz +
-         ((n001.fx * ux + n101.fx * vx) * uy + 
-          (n011.fx * ux + n111.fx * vx) * vy) * vz;
-    fy = ((n000.fy * ux + n100.fy * vx) * uy + 
-          (n010.fy * ux + n110.fy * vx) * vy) * uz +
-         ((n001.fy * ux + n101.fy * vx) * uy + 
-          (n011.fy * ux + n111.fy * vx) * vy) * vz;
-    fz = ((n000.fz * ux + n100.fz * vx) * uy + 
-          (n010.fz * ux + n110.fz * vx) * vy) * uz +
-         ((n001.fz * ux + n101.fz * vx) * uy + 
-          (n011.fz * ux + n111.fz * vx) * vy) * vz;
-    p = ((n000.v * ux + n100.v * vx) * uy + 
-         (n010.v * ux + n110.v * vx) * vy) * uz +
-        ((n001.v * ux + n101.v * vx) * uy + 
-         (n011.v * ux + n111.v * vx) * vy) * vz;
+
+    const double ux = 1. - vx;
+    const double uy = 1. - vy;
+    const double uz = 1. - vz;
+    fx = ((n000.fx * ux + n100.fx * vx) * uy +
+          (n010.fx * ux + n110.fx * vx) * vy) *
+             uz +
+         ((n001.fx * ux + n101.fx * vx) * uy +
+          (n011.fx * ux + n111.fx * vx) * vy) *
+             vz;
+    fy = ((n000.fy * ux + n100.fy * vx) * uy +
+          (n010.fy * ux + n110.fy * vx) * vy) *
+             uz +
+         ((n001.fy * ux + n101.fy * vx) * uy +
+          (n011.fy * ux + n111.fy * vx) * vy) *
+             vz;
+    fz = ((n000.fz * ux + n100.fz * vx) * uy +
+          (n010.fz * ux + n110.fz * vx) * vy) *
+             uz +
+         ((n001.fz * ux + n101.fz * vx) * uy +
+          (n011.fz * ux + n111.fz * vx) * vy) *
+             vz;
+    p = ((n000.v * ux + n100.v * vx) * uy + (n010.v * ux + n110.v * vx) * vy) *
+            uz +
+        ((n001.v * ux + n101.v * vx) * uy + (n011.v * ux + n111.v * vx) * vy) *
+            vz;
   } else {
-    const Element& element = field[i][j][k]; 
+    const Element& element = field[i][j][k];
     fx = element.fx;
     fy = element.fy;
     fz = element.fz;
@@ -733,22 +721,21 @@ bool ComponentVoxel::GetElement(const double xi, const double yi,
                                 unsigned int& j, unsigned int& k,
                                 bool& xMirrored, bool& yMirrored,
                                 bool& zMirrored) const {
-
   if (!m_hasMesh) {
     std::cerr << m_className << "::GetElement: Mesh is not set.\n";
     return false;
   }
 
-  // Reduce the point to the basic cell (in case of periodicity) and 
+  // Reduce the point to the basic cell (in case of periodicity) and
   // check if it is inside the mesh.
-  const double x = Reduce(xi, m_xMin, m_xMax, m_periodic[0], 
-                          m_mirrorPeriodic[0], xMirrored);
+  const double x =
+      Reduce(xi, m_xMin, m_xMax, m_periodic[0], m_mirrorPeriodic[0], xMirrored);
   if (x < m_xMin || x > m_xMax) return false;
-  const double y = Reduce(yi, m_yMin, m_yMax, m_periodic[1], 
-                          m_mirrorPeriodic[1], yMirrored);
+  const double y =
+      Reduce(yi, m_yMin, m_yMax, m_periodic[1], m_mirrorPeriodic[1], yMirrored);
   if (y < m_yMin || y > m_yMax) return false;
-  const double z = Reduce(zi, m_zMin, m_zMax, m_periodic[2], 
-                          m_mirrorPeriodic[2], zMirrored);
+  const double z =
+      Reduce(zi, m_zMin, m_zMax, m_periodic[2], m_mirrorPeriodic[2], zMirrored);
   if (z < m_zMin || z > m_zMax) return false;
 
   // Get the indices.
@@ -767,7 +754,6 @@ bool ComponentVoxel::GetElement(const double xi, const double yi,
 bool ComponentVoxel::GetElement(const unsigned int i, const unsigned int j,
                                 const unsigned int k, double& v, double& ex,
                                 double& ey, double& ez) const {
-
   v = ex = ey = ez = 0.;
   if (!m_ready) {
     if (!m_hasMesh) {
@@ -781,7 +767,7 @@ bool ComponentVoxel::GetElement(const unsigned int i, const unsigned int j,
     std::cerr << m_className << "::GetElement: Index out of range.\n";
     return false;
   }
-  const Element& element = m_efields[i][j][k]; 
+  const Element& element = m_efields[i][j][k];
   v = element.v;
   ex = element.fx;
   ey = element.fy;
@@ -790,7 +776,6 @@ bool ComponentVoxel::GetElement(const unsigned int i, const unsigned int j,
 }
 
 void ComponentVoxel::Reset() {
-
   m_efields.clear();
   m_bfields.clear();
   m_regions.clear();
@@ -808,7 +793,6 @@ void ComponentVoxel::Reset() {
 }
 
 void ComponentVoxel::UpdatePeriodicity() {
-
   if (!m_ready) {
     std::cerr << m_className << "::UpdatePeriodicity:\n"
               << "    Field map not available.\n";
@@ -830,7 +814,7 @@ void ComponentVoxel::UpdatePeriodicity() {
     m_axiallyPeriodic.fill(false);
   }
 
-  if (m_rotationSymmetric[0] || m_rotationSymmetric[1] || 
+  if (m_rotationSymmetric[0] || m_rotationSymmetric[1] ||
       m_rotationSymmetric[2]) {
     std::cerr << m_className << "::UpdatePeriodicity:\n"
               << "    Rotation symmetry is not supported. Reset.\n";
@@ -838,11 +822,9 @@ void ComponentVoxel::UpdatePeriodicity() {
   }
 }
 
-double ComponentVoxel::Reduce(const double xin, 
-                              const double xmin, const double xmax, 
-                              const bool simplePeriodic, 
+double ComponentVoxel::Reduce(const double xin, const double xmin,
+                              const double xmax, const bool simplePeriodic,
                               const bool mirrorPeriodic, bool& mirrored) const {
-
   // In case of periodicity, reduce the coordinate to the basic cell.
   double x = xin;
   const double lx = xmax - xmin;
@@ -861,5 +843,4 @@ double ComponentVoxel::Reduce(const double xin,
   }
   return x;
 }
-
 }

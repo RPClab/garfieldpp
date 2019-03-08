@@ -8,7 +8,6 @@ namespace Garfield {
 /// Component with constant electric field.
 
 class ComponentConstant : public ComponentBase {
-
  public:
   // Constructor
   ComponentConstant();

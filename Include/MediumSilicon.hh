@@ -7,7 +7,6 @@ namespace Garfield {
 /// %Solid crystalline silicon
 
 class MediumSilicon : public Medium {
-
  public:
   /// Constructor
   MediumSilicon();
@@ -67,8 +66,7 @@ class MediumSilicon : public Medium {
   void SetImpactIonisationModelVanOverstraetenDeMan();
   void SetImpactIonisationModelGrant();
 
-
-  // Scaling 
+  // Scaling
   void SetDiffusionScaling(const double d) { m_diffScale = d; }
 
   // Microscopic transport properties
@@ -81,8 +79,8 @@ class MediumSilicon : public Medium {
   // when loaded into memory.
   void EnableScatteringRateOutput(const bool on = true) { m_cfOutput = on; }
   void EnableNonParabolicity(const bool on = true) { m_nonParabolic = on; }
-  void EnableFullBandDensityOfStates(const bool on = true) { 
-    m_fullBandDos = on; 
+  void EnableFullBandDensityOfStates(const bool on = true) {
+    m_fullBandDos = on;
   }
   void EnableAnisotropy(const bool on = true) { m_anisotropic = on; }
 
@@ -101,7 +99,7 @@ class MediumSilicon : public Medium {
   double GetElectronCollisionRate(const double e, const int band) override;
   // Sample the collision type
   bool GetElectronCollision(const double e, int& type, int& level, double& e1,
-                            double& dx, double& dy, double& dz, 
+                            double& dx, double& dy, double& dz,
                             std::vector<std::pair<int, double> >& secondaries,
                             int& ndxc, int& band) override;
 
@@ -121,7 +119,7 @@ class MediumSilicon : public Medium {
   unsigned int GetNumberOfElectronBands() const;
   int GetElectronBandPopulation(const int band);
 
-  bool GetOpticalDataRange(double& emin, double& emax, 
+  bool GetOpticalDataRange(double& emin, double& emax,
                            const unsigned int i = 0) override;
   bool GetDielectricFunction(const double e, double& eps1, double& eps2,
                              const unsigned int i = 0) override;
@@ -129,30 +127,11 @@ class MediumSilicon : public Medium {
   void ComputeSecondaries(const double e0, double& ee, double& eh);
 
  private:
-  enum class LatticeMobility {
-    Sentaurus = 0,
-    Minimos,
-    Reggiani 
-  };
-  enum class DopingMobility {
-    Minimos = 0,
-    Masetti
-  };
-  enum class SaturationVelocity {
-    Minimos = 0,
-    Canali,
-    Reggiani
-  };
-  enum class HighFieldMobility {
-    Minimos = 0,
-    Canali,
-    Reggiani,
-    Constant
-  };
-  enum class ImpactIonisation {
-    VanOverstraeten = 0,
-    Grant
-  };
+  enum class LatticeMobility { Sentaurus = 0, Minimos, Reggiani };
+  enum class DopingMobility { Minimos = 0, Masetti };
+  enum class SaturationVelocity { Minimos = 0, Canali, Reggiani };
+  enum class HighFieldMobility { Minimos = 0, Canali, Reggiani, Constant };
+  enum class ImpactIonisation { VanOverstraeten = 0, Grant };
 
   // Diffusion scaling factor
   double m_diffScale = 1.;

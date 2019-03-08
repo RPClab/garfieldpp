@@ -8,7 +8,6 @@ namespace Garfield {
 /// Component for interpolating field maps stored in a regular mesh.
 
 class ComponentVoxel : public ComponentBase {
-
  public:
   /// Constructor
   ComponentVoxel();
@@ -24,11 +23,11 @@ class ComponentVoxel : public ComponentBase {
   void WeightingField(const double x, const double y, const double z,
                       double& wx, double& wy, double& wz,
                       const std::string& label) override;
-  double WeightingPotential(const double x, const double y,
-                            const double z, const std::string& label) override;
+  double WeightingPotential(const double x, const double y, const double z,
+                            const std::string& label) override;
 
-  void MagneticField(const double x, const double y, const double z,
-                     double& bx, double& by, double& bz, int& status) override;
+  void MagneticField(const double x, const double y, const double z, double& bx,
+                     double& by, double& bz, int& status) override;
 
   /// Interpolate between field values at the element centres.
   void EnableInterpolation(const bool on = true) { m_interpolate = on; }
@@ -76,7 +75,7 @@ class ComponentVoxel : public ComponentBase {
                          const bool withPotential, const bool withRegion,
                          const double scaleX = 1., const double scaleE = 1.,
                          const double scaleP = 1.);
-  /// Import magnetic field values from a file. 
+  /// Import magnetic field values from a file.
   bool LoadMagneticField(const std::string& filename, const std::string& format,
                          const double scaleX = 1., const double scaleB = 1.);
 
@@ -130,7 +129,7 @@ class ComponentVoxel : public ComponentBase {
   double m_pMin = 0., m_pMax = 0.;
 
   /// Read data from file.
-  bool LoadData(const std::string& filename, std::string format, 
+  bool LoadData(const std::string& filename, std::string format,
                 const bool withPotential, const bool withRegion,
                 const double scaleX, const double scaleF, const double scaleP,
                 const char field);
@@ -140,12 +139,12 @@ class ComponentVoxel : public ComponentBase {
 
   /// Look up/interpolate the field at a given point.
   bool GetField(const double x, const double y, const double z,
-    const std::vector<std::vector<std::vector<Element> > >& field,
-    double& fx, double& fy, double& fz, double& p, int& region);
+                const std::vector<std::vector<std::vector<Element> > >& field,
+                double& fx, double& fy, double& fz, double& p, int& region);
   /// Reduce a coordinate to the basic cell (in case of periodicity).
   double Reduce(const double xin, const double xmin, const double xmax,
                 const bool simplePeriodic, const bool mirrorPeriodic,
-                bool& isMirrored) const; 
+                bool& isMirrored) const;
 };
 }
 #endif

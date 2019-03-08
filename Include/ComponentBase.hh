@@ -11,7 +11,6 @@ namespace Garfield {
 /// Abstract base class for components.
 
 class ComponentBase {
-
  public:
   /// Constructor
   ComponentBase();
@@ -252,7 +251,7 @@ class ComponentBase {
   /// Rotation symmetry around x-axis, y-axis, z-axis.
   std::array<bool, 3> m_rotationSymmetric = {{false, false, false}};
 
-  double m_bx0 = 0., m_by0 = 0., m_bz0 = 0.; //< Constant magnetic field.
+  double m_bx0 = 0., m_by0 = 0., m_bz0 = 0.;  //< Constant magnetic field.
 
   /// Switch on/off debugging messages
   bool m_debug = false;

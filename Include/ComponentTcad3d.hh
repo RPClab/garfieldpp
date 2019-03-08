@@ -8,7 +8,6 @@ namespace Garfield {
 /// Interpolation in a three-dimensional field map created by Sentaurus Device.
 
 class ComponentTcad3d : public ComponentBase {
-
  public:
   /// Constructor
   ComponentTcad3d();
@@ -35,7 +34,7 @@ class ComponentTcad3d : public ComponentBase {
   void PrintRegions();
   /// Get the number of regions in the device.
   unsigned int GetNumberOfRegions() const { return m_regions.size(); }
-  void GetRegion(const unsigned int ireg, std::string& name, 
+  void GetRegion(const unsigned int ireg, std::string& name,
                  bool& active) const;
   void SetDriftRegion(const unsigned int ireg);
   void UnsetDriftRegion(const unsigned int ireg);
@@ -100,7 +99,7 @@ class ComponentTcad3d : public ComponentBase {
     // Bounding box
     double xmin, xmax;
     double ymin, ymax;
-    double zmin, zmax; 
+    double zmin, zmax;
   };
   std::vector<Element> m_elements;
 
@@ -127,7 +126,6 @@ class ComponentTcad3d : public ComponentBase {
 
   bool CheckElement(const double x, const double y, const double z,
                     const Element& element, double w[nMaxVertices]) const {
-
     bool inside = false;
     switch (element.type) {
       case 2:
@@ -154,8 +152,8 @@ class ComponentTcad3d : public ComponentBase {
   bool ReadDataset(std::ifstream& datafile, const std::string& dataset);
   void Cleanup();
 
-  void MapCoordinates(double& x, double& y, double& z,
-                      bool& xmirr, bool& ymirr, bool& zmirr) const;
+  void MapCoordinates(double& x, double& y, double& z, bool& xmirr, bool& ymirr,
+                      bool& zmirr) const;
   int FindRegion(const std::string& name) const;
 };
 }

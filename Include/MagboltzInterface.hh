@@ -10,11 +10,11 @@ namespace Garfield {
 namespace Magboltz {
 
 constexpr unsigned int nEnergySteps = 4000;
-constexpr unsigned int nMaxIonisationTerms = 30; 
+constexpr unsigned int nMaxIonisationTerms = 30;
 constexpr unsigned int nMaxInelasticTerms = 250;
 constexpr unsigned int nMaxAttachmentTerms = 8;
 constexpr unsigned int nMaxNullTerms = 10;
-constexpr unsigned int nMaxLevelsPerComponent = 300; 
+constexpr unsigned int nMaxLevelsPerComponent = 300;
 constexpr unsigned int nCharDescr = 50;
 constexpr unsigned int nMaxLevels = 960;
 
@@ -76,11 +76,9 @@ extern struct {
   double qt2[nEnergySteps];
   double qt3[nEnergySteps];
   double qt4[nEnergySteps];
-} mix2_; 
+} mix2_;
 
-extern struct {
-  double den[nEnergySteps];
-} dens_;
+extern struct { double den[nEnergySteps]; } dens_;
 
 extern struct {
   double time[300];
@@ -119,9 +117,7 @@ extern struct {
 } large_;
 
 // Definition of the gas mixture
-extern struct {
-  long long ngasn[6];
-} gasn_;
+extern struct { long long ngasn[6]; } gasn_;
 
 extern struct {
   double an1, an2, an3, an4, an5, an6, an;
@@ -130,12 +126,8 @@ extern struct {
 
 // Calculation results
 // Drift velocity
-extern struct {
-  double wx, wy, wz;
-} vel_;
-extern struct {
-  double dwx, dwy, dwz;
-} velerr_;
+extern struct { double wx, wy, wz; } vel_;
+extern struct { double dwx, dwy, dwz; } velerr_;
 
 // Diffusion
 extern struct {
@@ -146,20 +138,12 @@ extern struct {
   double dxxer, dyyer, dzzer;
   double dyzer, dxyer, dxzer;
 } diferb_;
-extern struct {
-  double difln, diftr;
-} difvel_;
-extern struct {
-  double dfler, dfter;
-} diferl_;
+extern struct { double difln, diftr; } difvel_;
+extern struct { double dfler, dfter; } diferl_;
 
 // Townsend and attachment coefficient
-extern struct {
-  double alpha, att;
-} ctowns_;
-extern struct {
-  double alper, atter;
-} ctwner_;
+extern struct { double alpha, att; } ctowns_;
+extern struct { double alper, atter; } ctwner_;
 extern struct {
   double ralpha, ralper;
   double tofene, tofener, tofwv, tofwver;
@@ -179,7 +163,6 @@ void gasmix_(long long* ngs, double* q, double* qin, long long* nin, double* e,
              char scrptn[nMaxNullTerms][nCharDescr]);
 
 void magboltz_();
-
 }
 }
 }

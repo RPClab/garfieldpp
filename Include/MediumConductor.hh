@@ -8,7 +8,6 @@ namespace Garfield {
 /// Conducting medium.
 
 class MediumConductor : public Medium {
-
  public:
   /// Constructor
   MediumConductor() : Medium() {

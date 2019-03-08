@@ -1,27 +1,22 @@
+#include <cmath>
 #include <iostream>
 #include <string>
-#include <cmath>
 
 #include <TAxis.h>
 
-#include "Plotting.hh"
 #include "Medium.hh"
+#include "Plotting.hh"
 #include "ViewMedium.hh"
 
 namespace Garfield {
 
-ViewMedium::ViewMedium() {
-
-  plottingEngine.SetDefaultStyle();
-}
+ViewMedium::ViewMedium() { plottingEngine.SetDefaultStyle(); }
 
 ViewMedium::~ViewMedium() {
-
   if (!m_hasExternalCanvas && m_canvas) delete m_canvas;
 }
 
 void ViewMedium::SetCanvas(TCanvas* c) {
-
   if (!c) {
     std::cerr << m_className << "::SetCanvas: Null pointer.\n";
     return;
@@ -35,7 +30,6 @@ void ViewMedium::SetCanvas(TCanvas* c) {
 }
 
 void ViewMedium::SetMedium(Medium* m) {
-
   if (!m) {
     std::cerr << m_className << "::SetMedium: Null pointer.\n";
     return;
@@ -45,7 +39,6 @@ void ViewMedium::SetMedium(Medium* m) {
 }
 
 void ViewMedium::SetElectricFieldRange(const double emin, const double emax) {
-
   if (emin >= emax || emin < 0.) {
     std::cerr << m_className << "::SetElectricFieldRange: Incorrect range.\n";
     return;
@@ -56,7 +49,6 @@ void ViewMedium::SetElectricFieldRange(const double emin, const double emax) {
 }
 
 void ViewMedium::SetMagneticFieldRange(const double bmin, const double bmax) {
-
   if (bmin >= bmax || bmin < 0.) {
     std::cerr << m_className << "::SetMagneticFieldRange: Incorrect range.\n";
     return;
@@ -67,7 +59,6 @@ void ViewMedium::SetMagneticFieldRange(const double bmin, const double bmax) {
 }
 
 void ViewMedium::SetBAngleRange(const double amin, const double amax) {
-
   if (amin >= amax || amin < 0.) {
     std::cerr << m_className << "::SetBAngleRange: Incorrect range.\n";
     return;
@@ -78,7 +69,6 @@ void ViewMedium::SetBAngleRange(const double amin, const double amax) {
 }
 
 void ViewMedium::SetFunctionRange(const double vmin, const double vmax) {
-
   if (vmin >= vmax || vmin < 0.) {
     std::cerr << m_className << "::SetFunctionRange: Incorrect range.\n";
     return;
@@ -92,7 +82,6 @@ void ViewMedium::SetFunctionRange() { m_vMin = m_vMax = 0.; }
 
 void ViewMedium::PlotElectronVelocity(const char xaxis, const double e,
                                       const double b, const double a) {
-
   SetupCanvas();
   double min = 0., max = 0.;
   std::string title = "";
@@ -123,7 +112,6 @@ void ViewMedium::PlotElectronVelocity(const char xaxis, const double e,
 
 void ViewMedium::PlotHoleVelocity(const char xaxis, const double e,
                                   const double b, const double a) {
-
   SetupCanvas();
   double min = 0., max = 0.;
   std::string title = "";
@@ -141,20 +129,19 @@ void ViewMedium::PlotHoleVelocity(const char xaxis, const double e,
     max = m_aMax;
   }
   bool keep = false;
-  AddFunction(min, max, m_vMin, m_vMax, keep, title, m_labelv,
-              HoleVelocityE, xaxis, e, b, a);
+  AddFunction(min, max, m_vMin, m_vMax, keep, title, m_labelv, HoleVelocityE,
+              xaxis, e, b, a);
   keep = true;
-  AddFunction(min, max, m_vMin, m_vMax, keep, title, m_labelv,
-              HoleVelocityB, xaxis, e, b, a);
+  AddFunction(min, max, m_vMin, m_vMax, keep, title, m_labelv, HoleVelocityB,
+              xaxis, e, b, a);
   keep = true;
-  AddFunction(min, max, m_vMin, m_vMax, keep, title, m_labelv,
-              HoleVelocityExB, xaxis, e, b, a);
+  AddFunction(min, max, m_vMin, m_vMax, keep, title, m_labelv, HoleVelocityExB,
+              xaxis, e, b, a);
   m_canvas->Update();
 }
 
 void ViewMedium::PlotIonVelocity(const char xaxis, const double e,
                                  const double b, const double a) {
-
   SetupCanvas();
   bool keep = false;
   AddFunction(m_eMin, m_eMax, m_vMin, m_vMax, keep, m_labele, m_labelv,
@@ -164,7 +151,6 @@ void ViewMedium::PlotIonVelocity(const char xaxis, const double e,
 
 void ViewMedium::PlotElectronDiffusion(const char xaxis, const double e,
                                        const double b, const double a) {
-
   SetupCanvas();
   bool keep = false;
   AddFunction(m_eMin, m_eMax, m_vMin, m_vMax, keep, m_labele, m_labeld,
@@ -178,7 +164,6 @@ void ViewMedium::PlotElectronDiffusion(const char xaxis, const double e,
 
 void ViewMedium::PlotHoleDiffusion(const char xaxis, const double e,
                                    const double b, const double a) {
-
   SetupCanvas();
   bool keep = false;
   AddFunction(m_eMin, m_eMax, m_vMin, m_vMax, keep, m_labele, m_labeld,
@@ -191,7 +176,6 @@ void ViewMedium::PlotHoleDiffusion(const char xaxis, const double e,
 
 void ViewMedium::PlotIonDiffusion(const char xaxis, const double e,
                                   const double b, const double a) {
-
   SetupCanvas();
   bool keep = false;
   AddFunction(m_eMin, m_eMax, m_vMin, m_vMax, keep, m_labele, m_labeld,
@@ -204,7 +188,6 @@ void ViewMedium::PlotIonDiffusion(const char xaxis, const double e,
 
 void ViewMedium::PlotElectronTownsend(const char xaxis, const double e,
                                       const double b, const double a) {
-
   bool keep = false;
   SetupCanvas();
   AddFunction(m_eMin, m_eMax, 0., 0., keep, m_labele,
@@ -214,7 +197,6 @@ void ViewMedium::PlotElectronTownsend(const char xaxis, const double e,
 
 void ViewMedium::PlotHoleTownsend(const char xaxis, const double e,
                                   const double b, const double a) {
-
   bool keep = false;
   SetupCanvas();
   AddFunction(m_eMin, m_eMax, 0., 0., keep, m_labele,
@@ -224,18 +206,16 @@ void ViewMedium::PlotHoleTownsend(const char xaxis, const double e,
 
 void ViewMedium::PlotElectronAttachment(const char xaxis, const double e,
                                         const double b, const double a) {
-
   bool keep = false;
   SetupCanvas();
   AddFunction(m_eMin, m_eMax, 0., 0., keep, m_labele,
-              "Attachment coefficient [1/cm]", 
-              ElectronAttachment, xaxis, e, b, a);
+              "Attachment coefficient [1/cm]", ElectronAttachment, xaxis, e, b,
+              a);
   m_canvas->Update();
 }
 
 void ViewMedium::PlotHoleAttachment(const char xaxis, const double e,
                                     const double b, const double a) {
-
   bool keep = false;
   SetupCanvas();
   AddFunction(m_eMin, m_eMax, 0., 0., keep, m_labele,
@@ -245,24 +225,20 @@ void ViewMedium::PlotHoleAttachment(const char xaxis, const double e,
 
 void ViewMedium::PlotElectronLorentzAngle(const char xaxis, const double e,
                                           const double b, const double a) {
-
   bool keep = false;
   SetupCanvas();
-  AddFunction(m_eMin, m_eMax, 0., 0., keep, m_labele,
-              "Lorentz angle", 
+  AddFunction(m_eMin, m_eMax, 0., 0., keep, m_labele, "Lorentz angle",
               ElectronLorentzAngle, xaxis, e, b, a);
   m_canvas->Update();
 }
 
 void ViewMedium::PlotElectronCrossSections() {
-
   std::cerr << m_className << "::PlotElectronCrossSections:\n";
   std::cerr << "    Function not yet implemented.\n";
   SetupCanvas();
 }
 
 void ViewMedium::SetupCanvas() {
-
   if (!m_canvas) {
     m_canvas = new TCanvas();
     m_canvas->SetTitle("Medium View");
@@ -278,7 +254,6 @@ void ViewMedium::AddFunction(const double xmin, const double xmax,
                              const std::string& ylabel, const int type,
                              const char xaxis, const double e, const double b,
                              const double a) {
-
   // Make sure the medium is set.
   if (!m_medium) {
     std::cerr << m_className << "::AddFunction: Medium is not defined.\n";
@@ -309,7 +284,7 @@ void ViewMedium::AddFunction(const double xmin, const double xmax,
   // Create a TF1 and add it to the list of functions.
   m_functions.push_back(TF1(fname.c_str(), this, &ViewMedium::EvaluateFunction,
                             xmin, xmax, 2, "ViewMedium", "EvaluateFunction"));
-  m_functions.back().SetNpx(1000);    
+  m_functions.back().SetNpx(1000);
   const std::string title = m_medium->GetName() + ";" + xlabel + ";" + ylabel;
   m_functions.back().SetRange(xmin, xmax);
   if ((fabs(ymax - ymin) > 0.)) {
@@ -599,17 +574,17 @@ double ViewMedium::EvaluateFunction(double* pos, double* par) {
 
   switch (type) {
     case ElectronVelocityE:
-      if (xaxis == 'e') {  
+      if (xaxis == 'e') {
         // plot with respect to E field
         if (!m_medium->ElectronVelocity(x, 0, 0, m_bfield * cos(m_angle),
                                         m_bfield * sin(m_angle), 0, a, b, c))
           return 0.;
-      } else if (xaxis == 'b') {  
+      } else if (xaxis == 'b') {
         // plot wrt B field
         if (!m_medium->ElectronVelocity(m_efield, 0, 0, x * cos(m_angle),
                                         x * sin(m_angle), 0, a, b, c))
           return 0.;
-      } else if (xaxis == 'a') {  
+      } else if (xaxis == 'a') {
         // plot wrt angle
         if (!m_medium->ElectronVelocity(m_efield, 0, 0, m_bfield * cos(x),
                                         m_bfield * sin(x), 0, a, b, c))
@@ -670,18 +645,18 @@ double ViewMedium::EvaluateFunction(double* pos, double* par) {
       y = a;
       break;
     case ElectronVelocityB:
-      if (xaxis == 'e') {  
+      if (xaxis == 'e') {
         // plot with respect to E field
         if (!m_medium->ElectronVelocity(x * cos(m_angle), x * sin(m_angle), 0,
                                         m_bfield, 0, 0, value, alongy, alongz))
           return 0.;
-      } else if (xaxis == 'b') {  
+      } else if (xaxis == 'b') {
         // plot wrt B field
         if (!m_medium->ElectronVelocity(m_efield * cos(m_angle),
                                         m_efield * sin(m_angle), 0, x, 0, 0,
                                         value, alongy, alongz))
           return 0.;
-      } else if (xaxis == 'a') {  
+      } else if (xaxis == 'a') {
         // plot wrt angle
         if (!m_medium->ElectronVelocity(m_efield * cos(x), m_efield * sin(x), 0,
                                         m_bfield, 0, 0, value, alongy, alongz))
@@ -690,18 +665,18 @@ double ViewMedium::EvaluateFunction(double* pos, double* par) {
       y = fabs(value);
       break;
     case ElectronVelocityExB:
-      if (xaxis == 'e') {  
+      if (xaxis == 'e') {
         // plot with respect to E field
         if (!m_medium->ElectronVelocity(x * cos(m_angle), x * sin(m_angle), 0,
                                         m_bfield, 0, 0, alongx, alongy, value))
           return 0.;
-      } else if (xaxis == 'b') {  
+      } else if (xaxis == 'b') {
         // plot wrt B field
         if (!m_medium->ElectronVelocity(m_efield * cos(m_angle),
                                         m_efield * sin(m_angle), 0, x, 0, 0,
                                         alongx, alongy, value))
           return 0.;
-      } else if (xaxis == 'a') {  
+      } else if (xaxis == 'a') {
         // plot wrt angle
         if (!m_medium->ElectronVelocity(m_efield * cos(x), m_efield * sin(x), 0,
                                         m_bfield, 0, 0, alongx, alongy, value))
@@ -710,18 +685,18 @@ double ViewMedium::EvaluateFunction(double* pos, double* par) {
       y = fabs(value);
       break;
     case HoleVelocityB:
-      if (xaxis == 'e') {  
+      if (xaxis == 'e') {
         // plot with respect to E field
         if (!m_medium->HoleVelocity(x * cos(m_angle), x * sin(m_angle), 0,
                                     m_bfield, 0, 0, value, alongy, alongz))
           return 0.;
-      } else if (xaxis == 'b') {  
+      } else if (xaxis == 'b') {
         // plot wrt B field
         if (!m_medium->HoleVelocity(m_efield * cos(m_angle),
                                     m_efield * sin(m_angle), 0, x, 0, 0, value,
                                     alongy, alongz))
           return 0.;
-      } else if (xaxis == 'a') {  
+      } else if (xaxis == 'a') {
         // plot wrt angle
         if (!m_medium->HoleVelocity(m_efield * cos(x), m_efield * sin(x), 0,
                                     m_bfield, 0, 0, value, alongy, alongz))
@@ -730,18 +705,18 @@ double ViewMedium::EvaluateFunction(double* pos, double* par) {
       y = fabs(value);
       break;
     case HoleVelocityExB:
-      if (xaxis == 'e') {  
+      if (xaxis == 'e') {
         // plot with respect to E field
         if (!m_medium->HoleVelocity(x * cos(m_angle), x * sin(m_angle), 0,
                                     m_bfield, 0, 0, alongx, alongy, value))
           return 0.;
-      } else if (xaxis == 'b') {  
+      } else if (xaxis == 'b') {
         // plot wrt B field
         if (!m_medium->HoleVelocity(m_efield * cos(m_angle),
                                     m_efield * sin(m_angle), 0, x, 0, 0, alongx,
                                     alongy, value))
           return 0.;
-      } else if (xaxis == 'a') {  
+      } else if (xaxis == 'a') {
         // plot wrt angle
         if (!m_medium->HoleVelocity(m_efield * cos(x), m_efield * sin(x), 0,
                                     m_bfield, 0, 0, alongx, alongy, value))
@@ -760,11 +735,10 @@ double ViewMedium::EvaluateFunction(double* pos, double* par) {
 }
 
 int ViewMedium::GetColor(const Property prop) const {
-
   if (prop == ElectronLongitudinalDiffusion || prop == ElectronAttachment ||
       prop == ElectronLorentzAngle) {
     return plottingEngine.GetRootColorLine1();
-  } else if (prop == HoleLongitudinalDiffusion || prop == HoleAttachment || 
+  } else if (prop == HoleLongitudinalDiffusion || prop == HoleAttachment ||
              prop == IonLongitudinalDiffusion) {
     return plottingEngine.GetRootColorLine2();
   } else if (prop < HoleVelocityE) {
@@ -775,7 +749,7 @@ int ViewMedium::GetColor(const Property prop) const {
     return kRed;
   } else if (prop < IonVelocity) {
     return plottingEngine.GetRootColorHole();
-  } 
+  }
   return plottingEngine.GetRootColorIon();
 }
 }

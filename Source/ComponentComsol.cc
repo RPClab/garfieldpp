@@ -1,25 +1,23 @@
 // Copied and modified ComponentAnsys123.cc
 
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <stdlib.h>
 #include <math.h>
+#include <stdlib.h>
+#include <fstream>
+#include <iostream>
 #include <map>
+#include <sstream>
 
 #include "ComponentComsol.hh"
 
 namespace Garfield {
 
 ComponentComsol::ComponentComsol() : ComponentFieldMap() {
-
   m_className = "ComponentComsol";
 }
 
 ComponentComsol::ComponentComsol(std::string mesh, std::string mplist,
                                  std::string field)
     : ComponentFieldMap() {
-
   m_className = "ComponentComsol";
   Initialise(mesh, mplist, field);
 }
@@ -37,7 +35,6 @@ int readInt(std::string s) {
 
 bool ComponentComsol::Initialise(std::string mesh, std::string mplist,
                                  std::string field) {
-
   m_ready = false;
   m_warning = false;
   m_nWarnings = 0;
@@ -336,7 +333,6 @@ bool ComponentComsol::SetWeightingField(std::string field, std::string label) {
 void ComponentComsol::ElectricField(const double x, const double y,
                                     const double z, double& ex, double& ey,
                                     double& ez, Medium*& m, int& status) {
-
   double v = 0.;
   ElectricField(x, y, z, ex, ey, ez, v, m, status);
 }
@@ -345,7 +341,6 @@ void ComponentComsol::ElectricField(const double xin, const double yin,
                                     const double zin, double& ex, double& ey,
                                     double& ez, double& volt, Medium*& m,
                                     int& status) {
-
   // Copy the coordinates
   double x = xin, y = yin, z = zin;
 
@@ -449,7 +444,6 @@ void ComponentComsol::ElectricField(const double xin, const double yin,
 void ComponentComsol::WeightingField(const double xin, const double yin,
                                      const double zin, double& wx, double& wy,
                                      double& wz, const std::string& label) {
-
   // Initial values
   wx = wy = wz = 0;
 
@@ -546,7 +540,6 @@ void ComponentComsol::WeightingField(const double xin, const double yin,
 double ComponentComsol::WeightingPotential(const double xin, const double yin,
                                            const double zin,
                                            const std::string& label) {
-
   // Do not proceed if not properly initialised.
   if (!m_ready) return 0.;
 
@@ -583,7 +576,8 @@ double ComponentComsol::WeightingPotential(const double xin, const double yin,
 
   const Element& element = elements[imap];
   if (m_debug) {
-    PrintElement("WeightingPotential", x, y, z, t1, t2, t3, t4, element, 10, iw);
+    PrintElement("WeightingPotential", x, y, z, t1, t2, t3, t4, element, 10,
+                 iw);
   }
   const Node& n0 = nodes[element.emap[0]];
   const Node& n1 = nodes[element.emap[1]];
@@ -605,7 +599,6 @@ double ComponentComsol::WeightingPotential(const double xin, const double yin,
 
 Medium* ComponentComsol::GetMedium(const double xin, const double yin,
                                    const double zin) {
-
   // Copy the coordinates
   double x = xin, y = yin, z = zin;
 
@@ -650,7 +643,6 @@ Medium* ComponentComsol::GetMedium(const double xin, const double yin,
 }
 
 double ComponentComsol::GetElementVolume(const unsigned int i) {
-
   if (i >= elements.size()) return 0.;
   const Element& element = elements[i];
   const Node& n0 = nodes[element.emap[0]];
@@ -673,7 +665,6 @@ double ComponentComsol::GetElementVolume(const unsigned int i) {
 
 void ComponentComsol::GetAspectRatio(const unsigned int i, double& dmin,
                                      double& dmax) {
-
   if (i >= elements.size()) {
     dmin = dmax = 0.;
     return;

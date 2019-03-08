@@ -18,7 +18,7 @@ void ComponentNeBem3dMap::ElectricField(const double x, const double y,
                                         const double z, double& ex, double& ey,
                                         double& ez, double& p, Medium*& m,
                                         int& status) {
-  if (m_debug) std::cout << m_className  << ": In ElectricField\n";
+  if (m_debug) std::cout << m_className << ": In ElectricField\n";
 
   m = nullptr;
   // Make sure the field map has been loaded.
@@ -58,7 +58,7 @@ void ComponentNeBem3dMap::ElectricField(const double x, const double y,
     }
     if (adj) {
       std::cout << "x, y, z: " << x << ", " << y << ", " << z << "\n"
-                << "adjusted indices:\n " 
+                << "adjusted indices:\n "
                 << "i, j, k: " << i << ", " << j << ", " << k << std::endl;
     }
   }  // adjustment block

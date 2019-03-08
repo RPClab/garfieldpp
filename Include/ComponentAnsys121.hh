@@ -8,7 +8,6 @@ namespace Garfield {
 /// Component for importing and interpolating two-dimensional ANSYS field maps.
 
 class ComponentAnsys121 : public ComponentFieldMap {
-
  public:
   /// Constructor
   ComponentAnsys121();
@@ -41,7 +40,8 @@ class ComponentAnsys121 : public ComponentFieldMap {
   void UpdatePeriodicity() override;
 
   double GetElementVolume(const unsigned int i) override;
-  void GetAspectRatio(const unsigned int i, double& dmin, double& dmax) override;
+  void GetAspectRatio(const unsigned int i, double& dmin,
+                      double& dmax) override;
 };
 }
 

@@ -8,7 +8,6 @@ namespace Garfield {
 /// Plastic medium.
 
 class MediumPlastic : public Medium {
-
  public:
   // Constructor
   MediumPlastic() : Medium() {

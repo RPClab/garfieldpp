@@ -55,7 +55,6 @@ Organization: Texas A&M University at Qatar
 
 */
 class TetrahedralTree {
-
  private:
   // Physical position/size. This implicitly defines the bounding
   // box of this node
@@ -121,7 +120,7 @@ class TetrahedralTree {
   // Get a block containing the input point
   const TetrahedralTree* GetBlockFromPoint(const Vec3& point);
 
-  // A helper function used by the function above. 
+  // A helper function used by the function above.
   // Called recursively on the child nodes.
   const TetrahedralTree* GetBlockFromPointHelper(const Vec3& point);
 };

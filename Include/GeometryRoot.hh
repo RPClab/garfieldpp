@@ -13,7 +13,6 @@ namespace Garfield {
 /// Use a geometry defined using the ROOT TGeo package.
 
 class GeometryRoot : public GeometryBase {
-
  public:
   /// Constructor
   GeometryRoot();
@@ -24,8 +23,7 @@ class GeometryRoot : public GeometryBase {
   void SetGeometry(TGeoManager* geoman);
 
   // Get the medium at a given point (x, y, z)
-  Medium* GetMedium(const double x, const double y, 
-                    const double z) const;
+  Medium* GetMedium(const double x, const double y, const double z) const;
 
   /// Get the number of materials defined in the ROOT geometry.
   unsigned int GetNumberOfMaterials();
@@ -38,7 +36,6 @@ class GeometryRoot : public GeometryBase {
   void SetMedium(const char* mat, Medium* med);
 
   bool IsInside(const double x, const double y, const double z) const {
-
     if (m_geoManager) {
       m_geoManager->SetCurrentPoint(x, y, z);
       return !m_geoManager->IsOutside();

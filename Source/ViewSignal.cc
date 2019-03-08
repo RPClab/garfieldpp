@@ -11,12 +11,10 @@ namespace Garfield {
 ViewSignal::ViewSignal() { plottingEngine.SetDefaultStyle(); }
 
 ViewSignal::~ViewSignal() {
-
   if (!m_hasExternalCanvas && m_canvas) delete m_canvas;
 }
 
 void ViewSignal::SetSensor(Sensor* s) {
-
   if (!s) {
     std::cerr << m_className << "::SetSensor: Null pointer.\n";
     return;
@@ -25,7 +23,6 @@ void ViewSignal::SetSensor(Sensor* s) {
 }
 
 void ViewSignal::SetCanvas(TCanvas* c) {
-
   if (!c) return;
   if (!m_hasExternalCanvas && m_canvas) {
     delete m_canvas;
@@ -37,7 +34,6 @@ void ViewSignal::SetCanvas(TCanvas* c) {
 
 void ViewSignal::PlotSignal(const std::string& label, const bool total,
                             const bool electron, const bool ion) {
-
   if (!m_sensor) {
     std::cerr << m_className << "::PlotSignal: Sensor is not defined.\n";
     return;
@@ -117,7 +113,6 @@ void ViewSignal::PlotSignal(const std::string& label, const bool total,
 }
 
 std::string ViewSignal::FindHistogramName(const std::string& base) const {
-
   std::string hname = base + "_0";
   int idx = 0;
   while (gDirectory->GetList()->FindObject(hname.c_str())) {

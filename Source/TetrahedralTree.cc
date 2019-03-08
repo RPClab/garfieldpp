@@ -13,7 +13,6 @@ Organization: Texas A&M University at Qatar
 */
 TetrahedralTree::TetrahedralTree(const Vec3& origin, const Vec3& halfDimension)
     : m_origin(origin), m_halfDimension(halfDimension) {
-
   min.x = origin.x - halfDimension.x;
   min.y = origin.y - halfDimension.y;
   min.z = origin.z - halfDimension.z;
@@ -94,8 +93,8 @@ void TetrahedralTree::InsertMeshNode(Vec3 point, int nodeIndex) {
       }
 
       // insert the new node in the appropriate octant
-      children[GetOctantContainingPoint(point)]
-          ->InsertMeshNode(point, nodeIndex);
+      children[GetOctantContainingPoint(point)]->InsertMeshNode(point,
+                                                                nodeIndex);
     }
   } else {
     // We are at an interior node. Insert recursively into the
@@ -107,7 +106,6 @@ void TetrahedralTree::InsertMeshNode(Vec3 point, int nodeIndex) {
 
 void TetrahedralTree::InsertTetrahedron(const double elemBoundingBox[6],
                                         const int elemIndex) {
-
   if (IsLeafNode()) {
     // add the element to the list of this octant
     tetList.push_back(elemIndex);
@@ -127,7 +125,6 @@ void TetrahedralTree::InsertTetrahedron(const double elemBoundingBox[6],
 // block) that contains the
 // point passed as input.
 std::vector<int> TetrahedralTree::GetTetListInBlock(const Vec3& point) {
-
   const TetrahedralTree* octreeNode = GetBlockFromPoint(point);
 
   if (octreeNode) {

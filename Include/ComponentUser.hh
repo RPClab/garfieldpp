@@ -8,7 +8,6 @@ namespace Garfield {
 /// Simple component with electric field given by a user function.
 
 class ComponentUser : public ComponentBase {
-
  public:
   /// Constructor
   ComponentUser();
@@ -21,8 +20,8 @@ class ComponentUser : public ComponentBase {
                      double& ey, double& ez, double& v, Medium*& m,
                      int& status) override;
   bool GetVoltageRange(double& vmin, double& vmax) override;
-  void MagneticField(const double x, const double y, const double z,
-                     double& bx, double& by, double& bz, int& status) override;
+  void MagneticField(const double x, const double y, const double z, double& bx,
+                     double& by, double& bz, int& status) override;
   void WeightingField(const double x, const double y, const double z,
                       double& wx, double& wy, double& wz,
                       const std::string& label) override;
@@ -52,7 +51,8 @@ class ComponentUser : public ComponentBase {
                    double&) = nullptr;
 
   /// Potential function
-  void (*m_potential)(const double, const double, const double, double&) = nullptr;
+  void (*m_potential)(const double, const double, const double,
+                      double&) = nullptr;
 
   /// Weighting field function
   void (*m_wfield)(const double, const double, const double, double&, double&,

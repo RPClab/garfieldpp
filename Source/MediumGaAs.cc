@@ -1,18 +1,17 @@
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <cmath>
 #include <algorithm>
+#include <cmath>
+#include <fstream>
+#include <iostream>
+#include <sstream>
 
+#include "FundamentalConstants.hh"
+#include "GarfieldConstants.hh"
 #include "MediumGaAs.hh"
 #include "Random.hh"
-#include "GarfieldConstants.hh"
-#include "FundamentalConstants.hh"
 
 namespace Garfield {
 
 MediumGaAs::MediumGaAs() : Medium() {
-
   m_className = "MediumGaAs";
   m_name = "GaAs";
 
@@ -30,8 +29,8 @@ MediumGaAs::MediumGaAs() : Medium() {
   m_fano = 0.1;
 }
 
-void MediumGaAs::GetComponent(const unsigned int i, std::string& label, double& f) {
-
+void MediumGaAs::GetComponent(const unsigned int i, std::string& label,
+                              double& f) {
   if (i == 0) {
     label = "Ga";
     f = 0.5;
@@ -42,7 +41,6 @@ void MediumGaAs::GetComponent(const unsigned int i, std::string& label, double& 
 }
 
 void MediumGaAs::SetTrapCrossSection(const double ecs, const double hcs) {
-
   if (ecs < 0.) {
     std::cerr << m_className << "::SetTrapCrossSection:\n";
     std::cerr << "    Capture cross-section [cm2] must positive.\n";
@@ -62,7 +60,6 @@ void MediumGaAs::SetTrapCrossSection(const double ecs, const double hcs) {
 }
 
 void MediumGaAs::SetTrapDensity(const double n) {
-
   if (n < 0.) {
     std::cerr << m_className << "::SetTrapDensity:\n";
     std::cerr << "    Trap density [cm-3] must be greater than zero.\n";
@@ -76,7 +73,6 @@ void MediumGaAs::SetTrapDensity(const double n) {
 }
 
 void MediumGaAs::SetTrappingTime(const double etau, const double htau) {
-
   if (etau <= 0.) {
     std::cerr << m_className << "::SetTrappingTime:\n";
     std::cerr << "    Trapping time [ns-1] must be positive.\n";
@@ -99,7 +95,6 @@ bool MediumGaAs::ElectronVelocity(const double ex, const double ey,
                                   const double ez, const double bx,
                                   const double by, const double bz, double& vx,
                                   double& vy, double& vz) {
-
   vx = vy = vz = 0.;
   if (!m_eVelocityE.empty()) {
     // Interpolation in user table.
@@ -130,7 +125,6 @@ bool MediumGaAs::ElectronTownsend(const double ex, const double ey,
                                   const double ez, const double bx,
                                   const double by, const double bz,
                                   double& alpha) {
-
   alpha = 0.;
   if (!m_eTownsend.empty()) {
     // Interpolation in user table.
@@ -143,7 +137,6 @@ bool MediumGaAs::ElectronAttachment(const double ex, const double ey,
                                     const double ez, const double bx,
                                     const double by, const double bz,
                                     double& eta) {
-
   eta = 0.;
   if (!m_eAttachment.empty()) {
     // Interpolation in user table.
@@ -173,7 +166,6 @@ bool MediumGaAs::ElectronAttachment(const double ex, const double ey,
 bool MediumGaAs::HoleVelocity(const double ex, const double ey, const double ez,
                               const double bx, const double by, const double bz,
                               double& vx, double& vy, double& vz) {
-
   vx = vy = vz = 0.;
   if (!m_hVelocityE.empty()) {
     // Interpolation in user table.
@@ -202,7 +194,6 @@ bool MediumGaAs::HoleVelocity(const double ex, const double ey, const double ez,
 bool MediumGaAs::HoleTownsend(const double ex, const double ey, const double ez,
                               const double bx, const double by, const double bz,
                               double& alpha) {
-
   alpha = 0.;
   if (!m_hTownsend.empty()) {
     // Interpolation in user table.
@@ -214,7 +205,6 @@ bool MediumGaAs::HoleTownsend(const double ex, const double ey, const double ez,
 bool MediumGaAs::HoleAttachment(const double ex, const double ey,
                                 const double ez, const double bx,
                                 const double by, const double bz, double& eta) {
-
   eta = 0.;
   if (!m_hAttachment.empty()) {
     // Interpolation in user table.
@@ -240,7 +230,6 @@ bool MediumGaAs::HoleAttachment(const double ex, const double ey,
 }
 
 void MediumGaAs::SetLowFieldMobility(const double mue, const double muh) {
-
   if (mue <= 0. || muh <= 0.) {
     std::cerr << m_className << "::SetLowFieldMobility:\n";
     std::cerr << "    Mobility must be greater than zero.\n";
@@ -252,5 +241,4 @@ void MediumGaAs::SetLowFieldMobility(const double mue, const double muh) {
   m_hasUserMobility = true;
   m_isChanged = true;
 }
-
 }
