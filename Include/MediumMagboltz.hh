@@ -4,6 +4,7 @@
 #include <array>
 
 #include "MediumGas.hh"
+#include "MagboltzInterface.hh"
 
 namespace Garfield {
 
@@ -163,7 +164,8 @@ class MediumMagboltz : public MediumGas {
                    double& vxerr, double& vyerr, double& vzerr,
                    double& dlerr, double& dterr, 
                    double& alphaerr, double& etaerr, double& lorerr,
-                   double& alphatof);
+                   double& alphatof,
+                   std::array<double, 6>& difftens);
 
   /// Generate a new gas table (can later be saved to file) by running 
   /// Magboltz for all electric fields, magnetic fields, and 
@@ -174,7 +176,6 @@ class MediumMagboltz : public MediumGas {
  private:
   static constexpr int nEnergyStepsLog = 200;
   static constexpr int nEnergyStepsGamma = 5000;
-  static constexpr int nMaxLevels = 960;
   static constexpr int nCsTypes = 7;
   static constexpr int nCsTypesGamma = 4;
 
@@ -198,16 +199,16 @@ class MediumMagboltz : public MediumGas {
   // Recoil energy parameter
   std::array<double, m_nMaxGases> m_rgas;
   // Opal-Beaty-Peterson splitting parameter [eV]
-  std::array<double, nMaxLevels> m_wOpalBeaty;
+  std::array<double, Magboltz::nMaxLevels> m_wOpalBeaty;
   /// Green-Sawada splitting parameters [eV] 
   /// (&Gamma;s, &Gamma;b, Ts, Ta, Tb).
   std::array<std::array<double, 5>, m_nMaxGases> m_parGreenSawada;
   std::array<bool, m_nMaxGases> m_hasGreenSawada;
 
   // Energy loss
-  std::array<double, nMaxLevels> m_energyLoss;
+  std::array<double, Magboltz::nMaxLevels> m_energyLoss;
   // Cross-section type
-  std::array<int, nMaxLevels> m_csType;
+  std::array<int, Magboltz::nMaxLevels> m_csType;
 
   // Parameters for calculation of scattering angles
   bool m_useAnisotropic = true;
@@ -215,7 +216,7 @@ class MediumMagboltz : public MediumGas {
   std::vector<std::vector<double> > m_scatCut;
   std::vector<std::vector<double> > m_scatParLog;
   std::vector<std::vector<double> > m_scatCutLog;
-  std::array<int, nMaxLevels> m_scatModel;
+  std::array<int, Magboltz::nMaxLevels> m_scatModel;
 
   // Level description
   std::vector<std::string> m_description;
@@ -242,9 +243,9 @@ class MediumMagboltz : public MediumGas {
 
   // Penning transfer
   // Penning transfer probability (by level)
-  std::array<double, nMaxLevels> m_rPenning;
+  std::array<double, Magboltz::nMaxLevels> m_rPenning;
   // Mean distance of Penning ionisation (by level)
-  std::array<double, nMaxLevels> m_lambdaPenning;
+  std::array<double, Magboltz::nMaxLevels> m_lambdaPenning;
   // Number of Penning ionisations
   unsigned int m_nPenning = 0;
 
@@ -285,7 +286,7 @@ class MediumMagboltz : public MediumGas {
   };
   std::vector<Deexcitation> m_deexcitations;
   // Mapping between deexcitations and cross-section terms.
-  std::array<int, nMaxLevels> m_iDeexcitation;
+  std::array<int, Magboltz::nMaxLevels> m_iDeexcitation;
 
   // List of de-excitation products
   struct dxcProd {

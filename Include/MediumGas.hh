@@ -45,11 +45,15 @@ class MediumGas : public Medium {
   void SetMassDensity(const double rho) override;
   double GetMassDensity() const override;
 
+  /// Read table of gas properties (transport parameters) from file.
   bool LoadGasFile(const std::string& filename);
+  /// Save the present table of gas properties (transport parameters) to a file.
   bool WriteGasFile(const std::string& filename);
 
+  /// Print information about the present gas mixture and available data.
   void PrintGas();
 
+  /// Read a table of ion mobilities as function of electric field from file.
   bool LoadIonMobility(const std::string& filename);
 
   void SetExtrapolationMethodExcitationRates(const std::string& extrLow,
@@ -87,13 +91,13 @@ class MediumGas : public Medium {
                                       const unsigned int& i);
 
  protected:
-  static const unsigned int m_nMaxGases = 6;
+  static constexpr unsigned int m_nMaxGases = 6;
 
   // Gas mixture
-  std::string m_gas[m_nMaxGases];
-  double m_fraction[m_nMaxGases];
-  double m_atWeight[m_nMaxGases];
-  double m_atNum[m_nMaxGases];
+  std::array<std::string, m_nMaxGases> m_gas;
+  std::array<double, m_nMaxGases> m_fraction;
+  std::array<double, m_nMaxGases> m_atWeight;
+  std::array<double, m_nMaxGases> m_atNum;
 
   // Penning transfer
   // Flag enabling/disabling Penning transfer
@@ -120,20 +124,20 @@ class MediumGas : public Medium {
   std::vector<std::vector<std::vector<std::vector<double> > > > m_ionRates;
 
   // Store excitation and ionization information
-  struct ExcListElement {
+  struct ExcLevel {
     std::string label;
     double energy;
     double prob;
     double rms;
     double dt;
   };
-  std::vector<ExcListElement> m_excitationList;
+  std::vector<ExcLevel> m_excLevels;
 
-  struct IonListElement {
+  struct IonLevel {
     std::string label;
     double energy;
   };
-  std::vector<IonListElement> m_ionisationList;
+  std::vector<IonLevel> m_ionLevels;
 
   // Extrapolation/interpolation for excitation and ionisation rates.
   std::pair<unsigned int, unsigned int> m_extrExcRates = {0, 1};

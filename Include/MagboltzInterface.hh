@@ -16,6 +16,7 @@ constexpr unsigned int nMaxAttachmentTerms = 8;
 constexpr unsigned int nMaxNullTerms = 10;
 constexpr unsigned int nMaxLevelsPerComponent = 300; 
 constexpr unsigned int nCharDescr = 50;
+constexpr unsigned int nMaxLevels = 960;
 
 extern "C" {
 
@@ -80,6 +81,42 @@ extern struct {
 extern struct {
   double den[nEnergySteps];
 } dens_;
+
+extern struct {
+  double time[300];
+  long long icoll[30];
+  double spec[nEnergySteps];
+  double tmax1;
+  double ave;
+  double den;
+  double xid;
+  double x;
+  double y;
+  double z;
+  double st;
+  long long nnull;
+  double icoln[nMaxLevels];
+  long long icolnn[60];
+} outpt_;
+
+extern struct {
+  char dscrpt[nMaxLevels][nCharDescr];
+  char dscrptn[60][nCharDescr];
+} scrip_;
+
+extern struct {
+  double cf[nMaxLevels][nEnergySteps];
+  double ein[nMaxLevels];
+  double tcf[nEnergySteps];
+  long long iarry[nMaxLevels];
+  double rgas[nEnergySteps];
+  double ipn[nEnergySteps];
+  double wpl[nEnergySteps];
+  long long last;
+  long long isize;
+  double penfra[nMaxLevels][3];
+  double tcfmax[8];
+} large_;
 
 // Definition of the gas mixture
 extern struct {

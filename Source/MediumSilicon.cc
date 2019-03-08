@@ -1930,22 +1930,12 @@ bool MediumSilicon::LoadOpticalData(const std::string& filename) {
 bool MediumSilicon::ElectronScatteringRates() {
 
   // Reset the scattering rates
-  m_cfTotElectronsX.resize(nEnergyStepsXL);
-  m_cfTotElectronsL.resize(nEnergyStepsXL);
-  m_cfTotElectronsG.resize(nEnergyStepsG);
-  m_cfElectronsX.resize(nEnergyStepsXL);
-  m_cfElectronsL.resize(nEnergyStepsXL);
-  m_cfElectronsG.resize(nEnergyStepsG);
-  for (int i = nEnergyStepsXL; i--;) {
-    m_cfTotElectronsX[i] = 0.;
-    m_cfTotElectronsL[i] = 0.;
-    m_cfElectronsX[i].clear();
-    m_cfElectronsL[i].clear();
-  }
-  for (int i = nEnergyStepsG; i--;) {
-    m_cfTotElectronsG[i] = 0.;
-    m_cfElectronsG[i].clear();
-  }
+  m_cfTotElectronsX.assign(nEnergyStepsXL, 0.);
+  m_cfTotElectronsL.assign(nEnergyStepsXL, 0.);
+  m_cfTotElectronsG.assign(nEnergyStepsG, 0.);
+  m_cfElectronsX.assign(nEnergyStepsXL, std::vector<double>());
+  m_cfElectronsL.assign(nEnergyStepsXL, std::vector<double>());
+  m_cfElectronsG.assign(nEnergyStepsG, std::vector<double>());
   m_energyLossElectronsX.clear();
   m_energyLossElectronsL.clear();
   m_energyLossElectronsG.clear();
@@ -2095,12 +2085,12 @@ bool MediumSilicon::ElectronAcousticScatteringRates() {
 
   // Acoustic phonon intraband scattering
   // Acoustic deformation potential [eV]
-  const double defpot = 9.;
+  constexpr double defpot2 = 9. * 9.;
   // Longitudinal velocity of sound [cm/ns]
-  const double u = 9.04e-4;
+  constexpr double u = 9.04e-4;
   // Prefactor for acoustic deformation potential scattering
-  const double cIntra = TwoPi * SpeedOfLight * SpeedOfLight * kbt * defpot *
-                        defpot / (Hbar * u * u * rho);
+  const double cIntra = TwoPi * SpeedOfLight * SpeedOfLight * kbt * defpot2 / 
+                        (Hbar * u * u * rho);
 
   // Fill the scattering rate tables.
   double en = Small;
@@ -2152,9 +2142,9 @@ bool MediumSilicon::ElectronOpticalScatteringRates() {
   const double kbt = BoltzmannConstant * m_temperature;
 
   // Coupling constant [eV/cm]
-  const double dtk = 2.2e8;
+  constexpr double dtk = 2.2e8;
   // Phonon energy [eV]
-  const double eph = 63.0e-3;
+  constexpr double eph = 63.0e-3;
   // Phonon cccupation numbers
   const double nocc = 1. / (exp(eph / kbt) - 1);
   // Prefactors
@@ -2233,16 +2223,16 @@ bool MediumSilicon::ElectronIntervalleyScatteringRatesXX() {
   // Lattice temperature [eV]
   const double kbt = BoltzmannConstant * m_temperature;
 
-  const unsigned int nPhonons = 6;
+  constexpr unsigned int nPhonons = 6;
   // f-type scattering: transition between orthogonal axes (multiplicity 4)
   // g-type scattering: transition between opposite axes (multiplicity 1)
   // Sequence of transitions in the table:
   // TA (g) - LA (g) - LO (g) - TA (f) - LA (f) - TO (f)
   // Coupling constants [eV/cm]
-  const double dtk[nPhonons] = {0.5e8, 0.8e8, 1.1e9, 0.3e8, 2.0e8, 2.0e8};
+  constexpr double dtk[nPhonons] = {0.5e8, 0.8e8, 1.1e9, 0.3e8, 2.0e8, 2.0e8};
   // Phonon energies [eV]
-  const double eph[nPhonons] = {12.06e-3, 18.53e-3, 62.04e-3,
-                                18.86e-3, 47.39e-3, 59.03e-3};
+  constexpr double eph[nPhonons] = {12.06e-3, 18.53e-3, 62.04e-3,
+                                    18.86e-3, 47.39e-3, 59.03e-3};
   // Phonon cccupation numbers
   double nocc[nPhonons];
   // Prefactors
@@ -2303,15 +2293,15 @@ bool MediumSilicon::ElectronIntervalleyScatteringRatesXL() {
   // Lattice temperature [eV]
   const double kbt = BoltzmannConstant * m_temperature;
 
-  const unsigned int nPhonons = 4;
+  constexpr unsigned int nPhonons = 4;
 
   // Coupling constants [eV/cm]
-  const double dtk[nPhonons] = {2.e8, 2.e8, 2.e8, 2.e8};
+  constexpr double dtk[nPhonons] = {2.e8, 2.e8, 2.e8, 2.e8};
   // Phonon energies [eV]
-  const double eph[nPhonons] = {58.e-3, 55.e-3, 41.e-3, 17.e-3};
+  constexpr double eph[nPhonons] = {58.e-3, 55.e-3, 41.e-3, 17.e-3};
   // Number of equivalent valleys
-  const unsigned int zX = 6;
-  const unsigned int zL = 8;
+  constexpr unsigned int zX = 6;
+  constexpr unsigned int zL = 8;
 
   // Phonon cccupation numbers
   double nocc[nPhonons] = {0.};
@@ -2575,9 +2565,9 @@ bool MediumSilicon::ElectronIonisationRatesXL() {
   // - DAMOCLES web page: www.research.ibm.com/DAMOCLES
 
   // Coefficients [ns-1]
-  const double p[3] = {6.25e1, 3.e3, 6.8e5};
+  constexpr double p[3] = {6.25e1, 3.e3, 6.8e5};
   // Threshold energies [eV]
-  const double eth[3] = {1.2, 1.8, 3.45};
+  constexpr double eth[3] = {1.2, 1.8, 3.45};
 
   double en = 0.;
   for (int i = 0; i < nEnergyStepsXL; ++i) {
@@ -2615,9 +2605,9 @@ bool MediumSilicon::ElectronIonisationRatesG() {
   //   Surf. Interface Anal. (2010)
 
   // Coefficients [ns-1]
-  const double p[3] = {6.25e1, 3.e3, 6.8e5};
+  constexpr double p[3] = {6.25e1, 3.e3, 6.8e5};
   // Threshold energies [eV]
-  const double eth[3] = {1.2, 1.8, 3.45};
+  constexpr double eth[3] = {1.2, 1.8, 3.45};
 
   double en = 0.;
   for (int i = 0; i < nEnergyStepsG; ++i) {
@@ -2716,12 +2706,8 @@ bool MediumSilicon::ElectronImpurityScatteringRates() {
 bool MediumSilicon::HoleScatteringRates() {
 
   // Reset the scattering rates
-  m_cfTotHoles.resize(nEnergyStepsV);
-  m_cfHoles.resize(nEnergyStepsV);
-  for (int i = nEnergyStepsV; i--;) {
-    m_cfTotHoles[i] = 0.;
-    m_cfHoles[i].clear();
-  }
+  m_cfTotHoles.assign(nEnergyStepsV, 0.);
+  m_cfHoles.assign(nEnergyStepsV, std::vector<double>());
   m_energyLossHoles.clear();
   m_scatTypeHoles.clear();
   m_cfNullHoles = 0.;
@@ -2790,12 +2776,12 @@ bool MediumSilicon::HoleAcousticScatteringRates() {
   // Acoustic phonon intraband scattering
   // Acoustic deformation potential [eV]
   // DAMOCLES: 4.6 eV; Lundstrom: 5 eV
-  const double defpot = 4.6;
+  constexpr double defpot2 = 4.6 * 4.6;
   // Longitudinal velocity of sound [cm/ns]
-  const double u = 9.04e-4;
+  constexpr double u = 9.04e-4;
   // Prefactor for acoustic deformation potential scattering
-  const double cIntra = TwoPi * SpeedOfLight * SpeedOfLight * kbt * defpot *
-                        defpot / (Hbar * u * u * rho);
+  const double cIntra = TwoPi * SpeedOfLight * SpeedOfLight * kbt * defpot2 / 
+                        (Hbar * u * u * rho);
 
   // Fill the scattering rate tables.
   double en = Small;
@@ -2828,9 +2814,9 @@ bool MediumSilicon::HoleOpticalScatteringRates() {
 
   // Coupling constant [eV/cm]
   // DAMOCLES: 6.6, Lundstrom: 6.0
-  const double dtk = 6.6e8;
+  constexpr double dtk = 6.6e8;
   // Phonon energy [eV]
-  const double eph = 63.0e-3;
+  constexpr double eph = 63.0e-3;
   // Phonon cccupation numbers
   const double nocc = 1. / (exp(eph / kbt) - 1);
   // Prefactors
@@ -2870,11 +2856,11 @@ bool MediumSilicon::HoleIonisationRates() {
   //  - DAMOCLES web page: www.research.ibm.com/DAMOCLES
 
   // Coefficients [ns-1]
-  const double p[2] = {2., 1.e3};
+  constexpr double p[2] = {2., 1.e3};
   // Threshold energies [eV]
-  const double eth[2] = {1.1, 1.45};
+  constexpr double eth[2] = {1.1, 1.45};
   // Exponents
-  const double b[2] = {6., 4.};
+  constexpr double b[2] = {6., 4.};
 
   double en = 0.;
   for (int i = 0; i < nEnergyStepsV; ++i) {

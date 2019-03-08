@@ -72,12 +72,12 @@ MediumMagboltz::MediumMagboltz()
   // Disable Penning transfer.
   Magboltz::inpt_.ipen = 0;
 
-  m_description.assign(nMaxLevels, std::string(Magboltz::nCharDescr, ' '));
+  m_description.assign(Magboltz::nMaxLevels, std::string(Magboltz::nCharDescr, ' '));
 
   m_cfTot.assign(Magboltz::nEnergySteps, 0.);
   m_cfTotLog.assign(nEnergyStepsLog, 0.);
-  m_cf.assign(Magboltz::nEnergySteps, std::vector<double>(nMaxLevels, 0.));
-  m_cfLog.assign(nEnergyStepsLog, std::vector<double>(nMaxLevels, 0.));
+  m_cf.assign(Magboltz::nEnergySteps, std::vector<double>(Magboltz::nMaxLevels, 0.));
+  m_cfLog.assign(nEnergyStepsLog, std::vector<double>(Magboltz::nMaxLevels, 0.));
 
   m_isChanged = true;
 
@@ -1427,14 +1427,14 @@ bool MediumMagboltz::Mixer(const bool verbose) {
   m_cfTot.assign(Magboltz::nEnergySteps, 0.);
   m_cfTotLog.assign(nEnergyStepsLog, 0.);
 
-  m_cf.assign(Magboltz::nEnergySteps, std::vector<double>(nMaxLevels, 0.));
-  m_cfLog.assign(nEnergyStepsLog, std::vector<double>(nMaxLevels, 0.));
+  m_cf.assign(Magboltz::nEnergySteps, std::vector<double>(Magboltz::nMaxLevels, 0.));
+  m_cfLog.assign(nEnergyStepsLog, std::vector<double>(Magboltz::nMaxLevels, 0.));
 
-  m_scatPar.assign(Magboltz::nEnergySteps, std::vector<double>(nMaxLevels, 0.5));
-  m_scatCut.assign(Magboltz::nEnergySteps, std::vector<double>(nMaxLevels, 1.));
+  m_scatPar.assign(Magboltz::nEnergySteps, std::vector<double>(Magboltz::nMaxLevels, 0.5));
+  m_scatCut.assign(Magboltz::nEnergySteps, std::vector<double>(Magboltz::nMaxLevels, 1.));
 
-  m_scatParLog.assign(nEnergyStepsLog, std::vector<double>(nMaxLevels, 0.5));
-  m_scatCutLog.assign(nEnergyStepsLog, std::vector<double>(nMaxLevels, 1.));
+  m_scatParLog.assign(nEnergyStepsLog, std::vector<double>(Magboltz::nMaxLevels, 0.5));
+  m_scatCutLog.assign(nEnergyStepsLog, std::vector<double>(Magboltz::nMaxLevels, 1.));
 
   // Cross-sections
   // 0: total, 1: elastic,
@@ -1557,9 +1557,9 @@ bool MediumMagboltz::Mixer(const bool verbose) {
     }
     int np0 = m_nTerms;
     // Make sure there is still sufficient space.
-    if (np0 + nIn + nIon + nAtt + nNull >= nMaxLevels) {
+    if (np0 + nIn + nIon + nAtt + nNull >= Magboltz::nMaxLevels) {
       std::cerr << m_className << "::Mixer:\n"
-                << "    Max. number of levels (" << nMaxLevels
+                << "    Max. number of levels (" << Magboltz::nMaxLevels
                 << ") exceeded.\n";
       return false;
     }
@@ -3409,7 +3409,8 @@ void MediumMagboltz::RunMagboltz(const double e, const double bmag,
                                  double& vxerr, double& vyerr, double& vzerr, 
                                  double& dlerr, double& dterr, 
                                  double& alphaerr, double& etaerr, 
-                                 double& lorerr, double& alphatof) {
+                                 double& lorerr, double& alphatof,
+                                 std::array<double, 6>& difftens) {
 
   // Initialize the values.
   vx = vy = vz = 0.;
@@ -3484,12 +3485,13 @@ void MediumMagboltz::RunMagboltz(const double e, const double bmag,
   dl = sqrt(0.2 * Magboltz::diflab_.difzz / vz) * 1.e-4;
   dlerr = Magboltz::diferl_.dfler;
   // Diffusion tensor.
-  // SBOL(1)=2D-6*DIFZZ*TORR/VBOL
-  // SBOL(2)=2D-6*DIFXX*TORR/VBOL
-  // SBOL(3)=2D-6*DIFYY*TORR/VBOL
-  // SBOL(4)=2D-6*DIFXZ*TORR/VBOL
-  // SBOL(5)=2D-6*DIFYZ*TORR/VBOL
-  // SBOL(6)=2D-6*DIFXY*TORR/VBOL
+  difftens[0] = 0.2e-4 * Magboltz::diflab_.difzz / vz;
+  difftens[1] = 0.2e-4 * Magboltz::diflab_.difxx / vz;
+  difftens[2] = 0.2e-4 * Magboltz::diflab_.difyy / vz;
+  difftens[3] = 0.2e-4 * Magboltz::diflab_.difxz / vz;
+  difftens[4] = 0.2e-4 * Magboltz::diflab_.difyz / vz;
+  difftens[5] = 0.2e-4 * Magboltz::diflab_.difxy / vz;
+  // Townsend and attachment coefficients.
   alpha = Magboltz::ctowns_.alpha;
   alphaerr = Magboltz::ctwner_.alper;
   eta = Magboltz::ctowns_.att;
@@ -3528,19 +3530,15 @@ void MediumMagboltz::GenerateGasTable(const int numColl, const bool verbose) {
   InitTable(nEfields, nBfields, nAngles, m_eTownsend, -30.);
   InitTable(nEfields, nBfields, nAngles, m_eTownsendNoPenning, -30.);
   InitTable(nEfields, nBfields, nAngles, m_eAttachment, -30.);
+  InitTensor(nEfields, nBfields, nAngles, 6, m_eDiffTens, 0.);
 
   m_excRates.clear();
-  m_excitationList.clear();
   m_ionRates.clear();
-  m_ionisationList.clear();
-
-  // gasBits = "TFTTFTFTTTFFFFFF";
-  // The version number is 11 because there are slight
-  // differences between the way these gas files are written
-  // and the ones from Garfield. This is mainly in the way
-  // the gas tables are stored.
-  // versionNumber = 11;
-
+  m_excLevels.clear();
+  m_ionLevels.clear();
+  std::vector<unsigned int> excLevelIndex;
+  std::vector<unsigned int> ionLevelIndex;
+ 
   double vx = 0., vy = 0., vz = 0.;
   double difl = 0., dift = 0.;
   double alpha = 0., eta = 0.;
@@ -3550,6 +3548,7 @@ void MediumMagboltz::GenerateGasTable(const int numColl, const bool verbose) {
   double alphaerr = 0., etaerr = 0.;
   double alphatof = 0.;
   double lorerr = 0.;
+  std::array<double, 6> difftens;
 
   // Run through the grid of E- and B-fields and angles.
   for (unsigned int i = 0; i < nEfields; ++i) {
@@ -3558,13 +3557,12 @@ void MediumMagboltz::GenerateGasTable(const int numColl, const bool verbose) {
       const double a = m_bAngles[j];
       for (unsigned int k = 0; k < nBfields; ++k) {
         const double b = m_bFields[k];
-        if (m_debug) {
-          std::cout << m_className << "::GenerateGasTable: E = " << e 
-                    << " V/cm, B = " << b << " T, angle: " << a << " rad\n";
-        }
+        std::cout << m_className << "::GenerateGasTable: E = " << e 
+                  << " V/cm, B = " << b << " T, angle: " << a << " rad\n";
         RunMagboltz(e, b, a, numColl, verbose, vx, vy, vz, difl, dift, 
                     alpha, eta, lor, vxerr, vyerr, vzerr,
-                    diflerr, difterr, alphaerr, etaerr, lorerr, alphatof);
+                    diflerr, difterr, alphaerr, etaerr, lorerr, alphatof,
+                    difftens);
         m_eVelocityE[j][k][i] = vz;
         m_eVelocityExB[j][k][i] = vy;
         m_eVelocityB[j][k][i] = vx;
@@ -3574,6 +3572,68 @@ void MediumMagboltz::GenerateGasTable(const int numColl, const bool verbose) {
         m_eTownsend[j][k][i] = alpha > 0. ? log(alpha) : -30.;
         m_eTownsendNoPenning[j][k][i] = alpha > 0. ? log(alpha) : -30.;
         m_eAttachment[j][k][i] = eta > 0. ? log(eta) : -30.;
+        for (unsigned int l = 0; l < 6; ++l) {
+          m_eDiffTens[l][j][k][i] = difftens[l];
+        }
+        // If not done yet, retrieve the excitation and ionisation levels.
+        if (m_excLevels.empty() && m_ionLevels.empty()) {
+          for (long long il = 0; il < Magboltz::nMaxLevels; ++il) {
+            if (Magboltz::large_.iarry[il] <= 0) break;
+            // Skip levels that are not ionisations or inelastic collisions.
+            const int cstype = (Magboltz::large_.iarry[il] - 1) % 5;
+            if (cstype != 1 && cstype != 3) continue;
+            const int igas = int((Magboltz::large_.iarry[il] - 1) / 5);
+            std::string descr = GetDescription(il, Magboltz::scrip_.dscrpt);
+            if (cstype == 3) {
+              // Skip levels that are not excitations.
+              if (!(descr[1] == 'E' && descr[2] == 'X') &&  
+                  !(descr[0] == 'E' && descr[1] == 'X')) continue;
+            }
+            descr = m_gas[igas] + descr;
+            if (cstype == 3) {
+              ExcLevel exc;
+              exc.label = descr;
+              exc.energy = Magboltz::large_.ein[il];
+              exc.prob = 0.;
+              exc.rms = 0.;
+              exc.dt = 0.; 
+              m_excLevels.push_back(std::move(exc));
+              excLevelIndex.push_back(il);
+            } else {
+              IonLevel ion;
+              ion.label = descr;
+              ion.energy = Magboltz::large_.ein[il];
+              m_ionLevels.push_back(std::move(ion));
+              ionLevelIndex.push_back(il);
+            }
+          }
+          std::cout << m_className << "::GenerateGasTable: Found "
+                    << m_excLevels.size() << " excitations and "
+                    << m_ionLevels.size() << " ionisations.\n";
+          for (const auto& exc : m_excLevels) {
+            std::cout << "    " << exc.label 
+                      << ", energy = " << exc.energy << " eV.\n";
+          }
+          for (const auto& ion : m_ionLevels) {
+            std::cout << "    " << ion.label 
+                      << ", energy = " << ion.energy << " eV.\n"; 
+          }
+          InitTensor(nEfields, nBfields, nAngles, m_excLevels.size(), 
+                     m_excRates, 0.);
+          InitTensor(nEfields, nBfields, nAngles, m_ionLevels.size(), 
+                     m_ionRates, 0.);
+        }
+        // Retrieve the excitation and ionisation rates.
+        const unsigned int nExc = m_excLevels.size();
+        for (unsigned int ie = 0; ie < nExc; ++ie) { 
+          const unsigned int level = excLevelIndex[ie];
+          m_excRates[ie][j][k][i] = Magboltz::outpt_.icoln[level]; 
+        }
+        const unsigned int nIon = m_ionLevels.size();
+        for (unsigned int ii = 0; ii < nIon; ++ii) { 
+          const unsigned int level = ionLevelIndex[ii];
+          m_ionRates[ii][j][k][i] = Magboltz::outpt_.icoln[level]; 
+        }
       }
     }
   }
