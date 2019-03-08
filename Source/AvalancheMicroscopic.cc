@@ -367,45 +367,28 @@ void AvalancheMicroscopic::SetUserHandleStep(
     return;
   }
   m_userHandleStep = f;
-  m_hasUserHandleStep = true;
 }
 
-void AvalancheMicroscopic::UnsetUserHandleStep() {
-  m_userHandleStep = nullptr;
-  m_hasUserHandleStep = false;
+void AvalancheMicroscopic::SetUserHandleCollision(void (*f)(
+    double x, double y, double z, double t, int type, int level, Medium* m,
+    double e0, double e1, double dx0, double dy0, double dz0, 
+    double dx1, double dy1, double dz1)) {
+  m_userHandleCollision = f;
 }
 
 void AvalancheMicroscopic::SetUserHandleAttachment(void (*f)(
     double x, double y, double z, double t, int type, int level, Medium* m)) {
   m_userHandleAttachment = f;
-  m_hasUserHandleAttachment = true;
-}
-
-void AvalancheMicroscopic::UnsetUserHandleAttachment() {
-  m_userHandleAttachment = nullptr;
-  m_hasUserHandleAttachment = false;
 }
 
 void AvalancheMicroscopic::SetUserHandleInelastic(void (*f)(
     double x, double y, double z, double t, int type, int level, Medium* m)) {
   m_userHandleInelastic = f;
-  m_hasUserHandleInelastic = true;
-}
-
-void AvalancheMicroscopic::UnsetUserHandleInelastic() {
-  m_userHandleInelastic = nullptr;
-  m_hasUserHandleInelastic = false;
 }
 
 void AvalancheMicroscopic::SetUserHandleIonisation(void (*f)(
     double x, double y, double z, double t, int type, int level, Medium* m)) {
   m_userHandleIonisation = f;
-  m_hasUserHandleIonisation = true;
-}
-
-void AvalancheMicroscopic::UnsetUserHandleIonisation() {
-  m_userHandleIonisation = nullptr;
-  m_hasUserHandleIonisation = false;
 }
 
 bool AvalancheMicroscopic::DriftElectron(const double x0, const double y0,
@@ -715,7 +698,7 @@ bool AvalancheMicroscopic::TransportElectron(const double x0, const double y0,
           a2 = c2 * (ex * ex + ey * ey + ez * ez);
         }
 
-        if (m_hasUserHandleStep) {
+        if (m_userHandleStep) {
           m_userHandleStep(x, y, z, t, energy, kx, ky, kz, hole);
         }
 
@@ -949,6 +932,10 @@ bool AvalancheMicroscopic::TransportElectron(const double x0, const double y0,
           }
         }
 
+        if (m_userHandleCollision) {
+          m_userHandleCollision(x, y, z, t, cstype, level, medium, newEnergy,
+                                energy, kx, ky, kz, newKx, newKy, newKz);
+        }
         switch (cstype) {
           // Elastic collision
           case ElectronCollisionTypeElastic:
@@ -958,7 +945,7 @@ bool AvalancheMicroscopic::TransportElectron(const double x0, const double y0,
             if (m_usePlotting && m_plotIonisations) {
               m_viewer->AddIonisationMarker(x, y, z);
             }
-            if (m_hasUserHandleIonisation) {
+            if (m_userHandleIonisation) {
               m_userHandleIonisation(x, y, z, t, cstype, level, medium);
             }
             for (const auto& secondary : secondaries) {
@@ -1005,7 +992,7 @@ bool AvalancheMicroscopic::TransportElectron(const double x0, const double y0,
             if (m_usePlotting && m_plotAttachments) {
               m_viewer->AddAttachmentMarker(x, y, z);
             }
-            if (m_hasUserHandleAttachment) {
+            if (m_userHandleAttachment) {
               m_userHandleAttachment(x, y, z, t, cstype, level, medium);
             }
             // TODO: check kx or newKx!
@@ -1022,7 +1009,7 @@ bool AvalancheMicroscopic::TransportElectron(const double x0, const double y0,
             break;
           // Inelastic collision
           case ElectronCollisionTypeInelastic:
-            if (m_hasUserHandleInelastic) {
+            if (m_userHandleInelastic) {
               m_userHandleInelastic(x, y, z, t, cstype, level, medium);
             }
             break;
@@ -1031,7 +1018,7 @@ bool AvalancheMicroscopic::TransportElectron(const double x0, const double y0,
             if (m_usePlotting && m_plotExcitations) {
               m_viewer->AddExcitationMarker(x, y, z);
             }
-            if (m_hasUserHandleInelastic) {
+            if (m_userHandleInelastic) {
               m_userHandleInelastic(x, y, z, t, cstype, level, medium);
             }
             if (ndxc <= 0) break;

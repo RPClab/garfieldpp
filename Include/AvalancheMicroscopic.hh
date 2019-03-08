@@ -185,19 +185,26 @@ class AvalancheMicroscopic {
   void SetUserHandleStep(void (*f)(double x, double y, double z, double t,
                                    double e, double dx, double dy, double dz,
                                    bool hole));
-  void UnsetUserHandleStep();
+  void UnsetUserHandleStep() { m_userHandleStep = nullptr; }
+  /// Set a user handling procedure, to be called at every (real) collision.
+  void SetUserHandleCollision(void (*f)(double x, double y, double z, double t,
+                                        int type, int level, Medium* m,
+                                        double e0, double e1,
+                                        double dx0, double dy0, double dz0,
+                                        double dx1, double dy1, double dz1));
+  void UnsetUserHandleCollision() { m_userHandleCollision = nullptr; }
   /// Set a user handling procedure, to be called at every attachment.
   void SetUserHandleAttachment(void (*f)(double x, double y, double z, double t,
                                          int type, int level, Medium* m));
-  void UnsetUserHandleAttachment();
+  void UnsetUserHandleAttachment() { m_userHandleAttachment = nullptr; }
   /// Set a user handling procedure, to be called at every inelastic collision.
   void SetUserHandleInelastic(void (*f)(double x, double y, double z, double t,
                                         int type, int level, Medium* m));
-  void UnsetUserHandleInelastic();
+  void UnsetUserHandleInelastic() { m_userHandleInelastic = nullptr; }
   /// Set a user handling procedure, to be called at every ionising collision.
   void SetUserHandleIonisation(void (*f)(double x, double y, double z, double t,
                                          int type, int level, Medium* m));
-  void UnsetUserHandleIonisation();
+  void UnsetUserHandleIonisation() { m_userHandleIonisation = nullptr; }
 
   /// Switch on debugging messages.
   void EnableDebugging() { m_debug = true; }
@@ -284,13 +291,14 @@ class AvalancheMicroscopic {
   double m_tMax = 0.;
 
   // User procedures
-  bool m_hasUserHandleStep = false;
-  bool m_hasUserHandleAttachment = false;
-  bool m_hasUserHandleInelastic = false;
-  bool m_hasUserHandleIonisation = false;
   void (*m_userHandleStep)(double x, double y, double z, double t, double e,
                            double dx, double dy, double dz,
                            bool hole) = nullptr;
+  void (*m_userHandleCollision)(double x, double y, double z, double t,
+                                int type, int level, Medium* m,
+                                double e0, double e1,
+                                double dx0, double dy0, double dz0,
+                                double dx1, double dy1, double dz1) = nullptr;
   void (*m_userHandleAttachment)(double x, double y, double z, double t,
                                  int type, int level, Medium* m) = nullptr;
   void (*m_userHandleInelastic)(double x, double y, double z, double t,
