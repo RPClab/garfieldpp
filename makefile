@@ -166,6 +166,11 @@ $(OBJDIR)/ComponentNeBem3d.o: \
 	$(SRCDIR)/ComponentBase.cc $(INCDIR)/ComponentBase.hh
 	@echo $@
 	@$(CXX) $(CFLAGS) $< -o $@        
+$(OBJDIR)/ComponentNeBem3dMap.o: \
+	$(SRCDIR)/ComponentNeBem3dMap.cc $(INCDIR)/ComponentNeBem3dMap.hh \
+	$(SRCDIR)/ComponentBase.cc $(INCDIR)/ComponentBase.hh
+	@echo $@
+	@$(CXX) $(CFLAGS) $< -o $@        
 $(OBJDIR)/ComponentFieldMap.o: \
 	$(SRCDIR)/ComponentFieldMap.cc $(INCDIR)/ComponentFieldMap.hh \
 	$(SRCDIR)/ComponentBase.cc $(INCDIR)/ComponentBase.hh
