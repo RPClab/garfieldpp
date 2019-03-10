@@ -146,8 +146,10 @@ class MediumMagboltz : public MediumGas {
     * \param[out] lor Lorentz angle
     * \param[out] vxerr,vyerr,vzerr errors on drift velocity
     * \param[out] dlerr,dterr errors on diffusion coefficients
-    * \param[out] alphaerr,etaerr errors on Townsend/ attachment coefficients
+    * \param[out] alphaerr,etaerr errors on Townsend/attachment coefficients
     * \param[out] lorerr error on Lorentz angle
+    * \param[out] alphatof effective Townsend coefficient (#alpha - #eta) calculated using time-of-flight method
+    * \param[out] difftens components of the diffusion tensor (zz, xx, yy, xz, yz, xy)
     */
   void RunMagboltz(const double e, const double b, const double btheta,
                    const int ncoll, bool verbose, double& vx, double& vy,

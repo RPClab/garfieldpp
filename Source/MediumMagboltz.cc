@@ -3399,6 +3399,15 @@ void MediumMagboltz::RunMagboltz(
   eta = Magboltz::ctowns_.att;
   etaerr = Magboltz::ctwner_.atter;
 
+  // Calculate effective Townsend SST coefficient from TOF results. 
+  if (fabs(Magboltz::tofout_.tofdl) > 0.) {
+    const double wrzn = 1.e5 * Magboltz::tofout_.tofwr;
+    const double fc1 = 0.5 * wrzn / Magboltz::tofout_.tofdl;
+    const double fc2 = (Magboltz::tofout_.ralpha - 
+                        Magboltz::tofout_.rattof) * 1.e12 / 
+                       Magboltz::tofout_.tofdl;
+    alphatof = fc1 - sqrt(fc1 * fc1 - fc2);
+  }
   // Print the results.
   if (!(m_debug || verbose)) return;
   std::cout << m_className << "::RunMagboltz: Results:\n";
@@ -3412,6 +3421,10 @@ void MediumMagboltz::RunMagboltz(
          alphaerr);
   printf("    Attachment coefficient:   %12.4f cm-1  +/- %5.2f%%\n", eta,
          etaerr);
+  if (alphatof > 0.) {
+    printf("    TOF effective Townsend:   %12.4f cm-1 (alpha - eta)\n",
+           alphatof);
+  }
 }
 
 void MediumMagboltz::GenerateGasTable(const int numColl, const bool verbose) {
