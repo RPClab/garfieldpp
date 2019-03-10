@@ -178,73 +178,70 @@ void MediumMagboltz::EnableRadiationTrapping() {
   }
 }
 
-void MediumMagboltz::EnablePenningTransfer(const double r,
+bool MediumMagboltz::EnablePenningTransfer(const double r,
                                            const double lambda) {
-  if (r < 0. || r > 1.) {
-    std::cerr << m_className << "::EnablePenningTransfer:\n"
-              << "    Transfer probability must be in the range [0, 1].\n";
-    return;
+   
+  if (!MediumGas::EnablePenningTransfer(r, lambda)) return false;
+ 
+  m_rPenning.fill(0.);
+  m_lambdaPenning.fill(0.);
+
+  // Make sure that the collision rate table is updated.
+  if (m_isChanged) {
+    if (!Mixer()) {
+      PrintErrorMixer(m_className + "::EnablePenningTransfer");
+      return false;
+    }
+    m_isChanged = false;
+  }
+  unsigned int nLevelsFound = 0;
+  for (unsigned int i = 0; i < m_nTerms; ++i) {
+    if (m_csType[i] % nCsTypes == ElectronCollisionTypeExcitation) {
+      ++nLevelsFound;
+    }
+    m_rPenning[i] = m_rPenningGlobal;
+    m_lambdaPenning[i] = m_lambdaPenningGlobal;
   }
 
-  m_rPenningGlobal = r;
-  m_lambdaPenningGlobal = lambda > Small ? lambda : 0.;
-
-  std::cout << m_className << "::EnablePenningTransfer:\n"
-            << "    Global Penning transfer parameters set to:\n"
-            << "    r      = " << m_rPenningGlobal << "\n"
-            << "    lambda = " << m_lambdaPenningGlobal << " cm\n";
-
-  m_rPenning.fill(m_rPenningGlobal);
-  m_lambdaPenning.fill(m_lambdaPenningGlobal);
+  if (nLevelsFound > 0) {
+    std::cout << m_className << "::EnablePenningTransfer:\n    "
+              << "Updated Penning transfer parameters for " << nLevelsFound
+              << " excitation cross-sections.\n";
+  } else {
+    std::cerr << m_className << "::EnablePenningTransfer:\n    "
+              << "No excitation cross-sections in the present energy range.\n";
+  }
 
   if (m_useDeexcitation) {
-    std::cout << m_className << "::EnablePenningTransfer:\n"
-              << "    Deexcitation handling will be switched off.\n";
+    std::cout << m_className << "::EnablePenningTransfer:\n    "
+              << "Deexcitation handling will be switched off.\n";
   }
   m_usePenning = true;
+  return true;
 }
 
-void MediumMagboltz::EnablePenningTransfer(const double r, const double lambda,
+bool MediumMagboltz::EnablePenningTransfer(const double r, const double lambda,
                                            std::string gasname) {
-  if (r < 0. || r > 1.) {
-    std::cerr << m_className << "::EnablePenningTransfer:\n"
-              << "    Transfer probability must be in the range [0, 1].\n";
-    return;
-  }
 
-  // Get the "standard" name of this gas.
-  if (!GetGasName(gasname, gasname)) {
-    std::cerr << m_className << "::EnablePenningTransfer: Unknown gas name.\n";
-    return;
-  }
+  if (!MediumGas::EnablePenningTransfer(r, lambda, gasname)) return false;
 
-  // Look for this gas in the present gas mixture.
+  // Look (again) for this gas in the present mixture.
   int iGas = -1;
   for (unsigned int i = 0; i < m_nComponents; ++i) {
     if (m_gas[i] == gasname) {
-      m_rPenningGas[i] = r;
-      m_lambdaPenningGas[i] = lambda > Small ? lambda : 0.;
       iGas = i;
       break;
     }
-  }
-
-  if (iGas < 0) {
-    std::cerr << m_className << "::EnablePenningTransfer:\n"
-              << "    Specified gas (" << gasname
-              << ") is not part of the present gas mixture.\n";
-    return;
   }
 
   // Make sure that the collision rate table is updated.
   if (m_isChanged) {
     if (!Mixer()) {
       PrintErrorMixer(m_className + "::EnablePenningTransfer");
-      return;
+      return false;
     }
     m_isChanged = false;
   }
-
   unsigned int nLevelsFound = 0;
   for (unsigned int i = 0; i < m_nTerms; ++i) {
     if (int(m_csType[i] / nCsTypes) != iGas) continue;
@@ -268,45 +265,35 @@ void MediumMagboltz::EnablePenningTransfer(const double r, const double lambda,
   }
 
   m_usePenning = true;
+  return true;
 }
 
 void MediumMagboltz::DisablePenningTransfer() {
+
+  MediumGas::DisablePenningTransfer();
   m_rPenning.fill(0.);
   m_lambdaPenning.fill(0.);
-
-  m_rPenningGlobal = 0.;
-  m_lambdaPenningGlobal = 0.;
-
-  m_rPenningGas.fill(0.);
-  m_lambdaPenningGas.fill(0.);
 
   m_usePenning = false;
 }
 
-void MediumMagboltz::DisablePenningTransfer(std::string gasname) {
-  // Get the "standard" name of this gas.
-  if (!GetGasName(gasname, gasname)) {
-    std::cerr << m_className << "::DisablePenningTransfer: Unknown gas name.\n";
-    return;
-  }
+bool MediumMagboltz::DisablePenningTransfer(std::string gasname) {
 
-  // Look for this gas in the present gas mixture.
+  if (!MediumGas::DisablePenningTransfer(gasname)) return false;
+  // Get the "standard" name of this gas.
+  gasname = GetGasName(gasname);
+  if (gasname.empty()) return false;
+
+  // Look (again) for this gas in the present gas mixture.
   int iGas = -1;
   for (unsigned int i = 0; i < m_nComponents; ++i) {
     if (m_gas[i] == gasname) {
-      m_rPenningGas[i] = 0.;
-      m_lambdaPenningGas[i] = 0.;
       iGas = i;
       break;
     }
   }
 
-  if (iGas < 0) {
-    std::cerr << m_className << "::DisablePenningTransfer:\n"
-              << "    Specified gas (" << gasname
-              << ") is not part of the present gas mixture.\n";
-    return;
-  }
+  if (iGas < 0) return false;
 
   unsigned int nLevelsFound = 0;
   for (unsigned int i = 0; i < m_nTerms; ++i) {
@@ -324,9 +311,10 @@ void MediumMagboltz::DisablePenningTransfer(std::string gasname) {
   if (nLevelsFound == 0) {
     // There are no more excitation levels with r > 0.
     std::cout << m_className << "::DisablePenningTransfer:\n"
-              << "    Penning transfer globally switched off.\n";
+              << "    Penning transfer switched off for all excitations.\n";
     m_usePenning = false;
   }
+  return true;
 }
 
 void MediumMagboltz::SetExcitationScaling(const double r, std::string gasname) {
@@ -336,7 +324,8 @@ void MediumMagboltz::SetExcitationScaling(const double r, std::string gasname) {
   }
 
   // Get the "standard" name of this gas.
-  if (!GetGasName(gasname, gasname)) {
+  gasname = GetGasName(gasname);
+  if (gasname.empty()) {
     std::cerr << m_className << "::SetExcitationScaling: Unknown gas name.\n";
     return;
   }
@@ -1061,291 +1050,153 @@ unsigned int MediumMagboltz::GetNumberOfPhotonCollisions(
   return nElastic + nIonising + nInelastic;
 }
 
-bool MediumMagboltz::GetGasNumberMagboltz(const std::string& input,
-                                          int& number) const {
-  if (input == "") {
-    number = 0;
-    return false;
-  }
+int MediumMagboltz::GetGasNumberMagboltz(const std::string& input) const {
 
-  // CF4
+  if (input.empty()) return 0;
+
   if (input == "CF4") {
-    number = 1;
-    return true;
-  }
-  // Argon
-  if (input == "Ar") {
-    number = 2;
-    return true;
-  }
-  // Helium 4
-  if (input == "He" || input == "He-4") {
-    number = 3;
-    return true;
-  }
-  // Helium 3
-  if (input == "He-3") {
-    number = 4;
-    return true;
-  }
-  // Neon
-  if (input == "Ne") {
-    number = 5;
-    return true;
-  }
-  // Krypton
-  if (input == "Kr") {
-    number = 6;
-    return true;
-  }
-  // Xenon
-  if (input == "Xe") {
-    number = 7;
-    return true;
-  }
-  // Methane
-  if (input == "CH4") {
-    number = 8;
-    return true;
-  }
-  // Ethane
-  if (input == "C2H6") {
-    number = 9;
-    return true;
-  }
-  // Propane
-  if (input == "C3H8") {
-    number = 10;
-    return true;
-  }
-  // Isobutane
-  if (input == "iC4H10") {
-    number = 11;
-    return true;
-  }
-  // Carbon dioxide (CO2)
-  if (input == "CO2") {
-    number = 12;
-    return true;
-  }
-  // Neopentane
-  if (input == "neoC5H12") {
-    number = 13;
-    return true;
-  }
-  // Water
-  if (input == "H2O") {
-    number = 14;
-    return true;
-  }
-  // Oxygen
-  if (input == "O2") {
-    number = 15;
-    return true;
-  }
-  // Nitrogen
-  if (input == "N2") {
-    number = 16;
-    return true;
-  }
-  // Nitric oxide (NO)
-  if (input == "NO") {
-    number = 17;
-    return true;
-  }
-  // Nitrous oxide (N2O)
-  if (input == "N2O") {
-    number = 18;
-    return true;
-  }
-  // Ethene (C2H4)
-  if (input == "C2H4") {
-    number = 19;
-    return true;
-  }
-  // Acetylene (C2H2)
-  if (input == "C2H2") {
-    number = 20;
-    return true;
-  }
-  // Hydrogen
-  if (input == "H2") {
-    number = 21;
-    return true;
-  }
-  // Deuterium
-  if (input == "D2") {
-    number = 22;
-    return true;
-  }
-  // Carbon monoxide (CO)
-  if (input == "CO") {
-    number = 23;
-    return true;
-  }
-  // Methylal (dimethoxymethane, CH3-O-CH2-O-CH3, "hot" version)
-  if (input == "Methylal") {
-    number = 24;
-    return true;
-  }
-  // DME
-  if (input == "DME") {
-    number = 25;
-    return true;
-  }
-  // Reid step
-  if (input == "Reid-Step") {
-    number = 26;
-    return true;
-  }
-  // Maxwell model
-  if (input == "Maxwell-Model") {
-    number = 27;
-    return true;
-  }
-  // Reid ramp
-  if (input == "Reid-Ramp") {
-    number = 28;
-    return true;
-  }
-  // C2F6
-  if (input == "C2F6") {
-    number = 29;
-    return true;
-  }
-  // SF6
-  if (input == "SF6") {
-    number = 30;
-    return true;
-  }
-  // NH3
-  if (input == "NH3") {
-    number = 31;
-    return true;
-  }
-  // Propene
-  if (input == "C3H6") {
-    number = 32;
-    return true;
-  }
-  // Cyclopropane
-  if (input == "cC3H6") {
-    number = 33;
-    return true;
-  }
-  // Methanol
-  if (input == "CH3OH") {
-    number = 34;
-    return true;
-  }
-  // Ethanol
-  if (input == "C2H5OH") {
-    number = 35;
-    return true;
-  }
-  // Propanol
-  if (input == "C3H7OH") {
-    number = 36;
-    return true;
-  }
-  // Cesium / Caesium.
-  if (input == "Cs") {
-    number = 37;
-    return true;
-  }
-  // Fluorine
-  if (input == "F2") {
-    number = 38;
-    return true;
-  }
-  if (input == "CS2") {
-    number = 39;
-    return true;
-  }
-  // COS
-  if (input == "COS") {
-    number = 40;
-    return true;
-  }
-  // Deuterated methane
-  if (input == "CD4") {
-    number = 41;
-    return true;
-  }
-  // BF3
-  if (input == "BF3") {
-    number = 42;
-    return true;
-  }
-  // C2H2F4 (C2HF5).
-  if (input == "C2HF5" || input == "C2H2F4") {
-    number = 43;
-    return true;
-  }
-  // TMA
-  if (input == "TMA") {
-    number = 44;
-    return true;
-  }
-  // CHF3
-  if (input == "CHF3") {
-    number = 50;
-    return true;
-  }
-  // CF3Br
-  if (input == "CF3Br") {
-    number = 51;
-    return true;
-  }
-  // C3F8
-  if (input == "C3F8") {
-    number = 52;
-    return true;
-  }
-  // Ozone
-  if (input == "O3") {
-    number = 53;
-    return true;
-  }
-  // Mercury
-  if (input == "Hg") {
-    number = 54;
-    return true;
-  }
-  // H2S
-  if (input == "H2S") {
-    number = 55;
-    return true;
-  }
-  // n-Butane
-  if (input == "nC4H10") {
-    number = 56;
-    return true;
-  }
-  // n-Pentane
-  if (input == "nC5H12") {
-    number = 57;
-    return true;
-  }
-  // Nitrogen
-  if (input == "N2 (Phelps)") {
-    number = 58;
-    return true;
-  }
-  // Germane, GeH4
-  if (input == "GeH4") {
-    number = 59;
-    return true;
-  }
-  // Silane, SiH4
-  if (input == "SiH4") {
-    number = 60;
-    return true;
+    return 1;
+  } else if (input == "Ar") {
+    return 2;
+  } else if (input == "He" || input == "He-4") {
+    // Helium 4
+    return 3;
+  } else if (input == "He-3") {
+    // Helium 3
+    return 4;
+  } else if (input == "Ne") {
+    return 5;
+  } else if (input == "Kr") {
+    return 6;
+  } else if (input == "Xe") {
+    return 7;
+  } else if (input == "CH4") {
+    // Methane
+    return 8;
+  } else if (input == "C2H6") {
+    // Ethane
+    return 9;
+  } else if (input == "C3H8") {
+    // Propane
+    return 10;
+  } else if (input == "iC4H10") {
+    // Isobutane
+    return 11;
+  } else if (input == "CO2") {
+    return 12;
+  } else if (input == "neoC5H12") {
+    // Neopentane
+    return 13;
+  } else if (input == "H2O") {
+    return 14;
+  } else if (input == "O2") {
+    return 15;
+  } else if (input == "N2") {
+    return 16;
+  } else if (input == "NO") {
+    // Nitric oxide (NO)
+    return 17;
+  } else if (input == "N2O") {
+    // Nitrous oxide (N2O)
+    return 18;
+  } else if (input == "C2H4") {
+    // Ethene (C2H4)
+    return 19;
+  } else if (input == "C2H2") {
+    // Acetylene (C2H2)
+    return 20;
+  } else if (input == "H2") {
+    // Hydrogen
+    return 21;
+  } else if (input == "D2") {
+    // Deuterium
+    return 22;
+  } else if (input == "CO") {
+    // Carbon monoxide (CO)
+    return 23;
+  } else if (input == "Methylal") {
+    // Methylal (dimethoxymethane, CH3-O-CH2-O-CH3, "hot" version)
+    return 24;
+  } else if (input == "DME") {
+    return 25;
+  } else if (input == "Reid-Step") {
+    return 26;
+  } else if (input == "Maxwell-Model") {
+    return 27;
+  } else if (input == "Reid-Ramp") {
+    return 28;
+  } else if (input == "C2F6") {
+    return 29;
+  } else if (input == "SF6") {
+    return 30;
+  } else if (input == "NH3") {
+    return 31;
+  } else if (input == "C3H6") {
+    // Propene
+    return 32;
+  } else if (input == "cC3H6") {
+    // Cyclopropane
+    return 33;
+  } else if (input == "CH3OH") {
+    // Methanol
+    return 34;
+  } else if (input == "C2H5OH") {
+    // Ethanol
+    return 35;
+  } else if (input == "C3H7OH") {
+    // Propanol
+    return 36;
+  } else if (input == "Cs") {
+    return 37;
+  } else if (input == "F2") {
+    // Fluorine
+    return 38;
+  } else if (input == "CS2") {
+    return 39;
+  } else if (input == "COS") {
+    return 40;
+  } else if (input == "CD4") {
+    // Deuterated methane
+    return 41;
+  } else if (input == "BF3") {
+    return 42;
+  } else if (input == "C2HF5" || input == "C2H2F4") {
+    return 43;
+  } else if (input == "TMA") {
+    return 44;
+  } else if (input == "CHF3") {
+    return 50;
+  } else if (input == "CF3Br") {
+    return 51;
+  } else if (input == "C3F8") {
+    return 52;
+  } else if (input == "O3") {
+    // Ozone
+    return 53;
+  } else if (input == "Hg") {
+    // Mercury
+    return 54;
+  } else if (input == "H2S") {
+    return 55;
+  } else if (input == "nC4H10") {
+    // n-Butane
+    return 56;
+  } else if (input == "nC5H12") {
+    // n-Pentane
+    return 57;
+  } else if (input == "N2 (Phelps)") {
+    return 58;
+  } else if (input == "GeH4") {
+    // Germane, GeH4
+    return 59;
+  } else if (input == "SiH4") {
+    // Silane, SiH4
+    return 60;
   }
 
-  std::cerr << m_className << "::GetGasNumberMagboltz:\n";
-  std::cerr << "    Gas " << input << " is not defined.\n";
-  return false;
+  std::cerr << m_className << "::GetGasNumberMagboltz:\n"
+            << "    Gas " << input << " is not defined.\n";
+  return 0;
 }
 
 bool MediumMagboltz::Mixer(const bool verbose) {
@@ -1444,12 +1295,13 @@ bool MediumMagboltz::Mixer(const bool verbose) {
   // Check the gas composition and establish the gas numbers.
   int gasNumber[m_nMaxGases];
   for (unsigned int i = 0; i < m_nComponents; ++i) {
-    if (!GetGasNumberMagboltz(m_gas[i], gasNumber[i])) {
-      std::cerr << m_className << "::Mixer:\n";
-      std::cerr << "    Gas " << m_gas[i] << " has no corresponding"
-                << " gas number in Magboltz.\n";
+    const int ng = GetGasNumberMagboltz(m_gas[i]);
+    if (ng <= 0) {
+      std::cerr << m_className << "::Mixer:\n    Gas " << m_gas[i]
+                << " does not have a gas number in Magboltz.\n";
       return false;
     }
+    gasNumber[i] = ng;
   }
 
   if (m_debug || verbose) {
@@ -3420,27 +3272,25 @@ bool MediumMagboltz::ComputePhotonCollisionTable(const bool verbose) {
     return true;
   }
 
-  if (m_debug || verbose) {
-    std::cout << m_className << "::ComputePhotonCollisionTable:\n    "
-              << "Discrete absorption lines:\n   Energy [eV]   "
-              << "Line width (FWHM) [eV]    Mean free path [um]\n        "
-              << "              Doppler    Pressure         (peak)\n";
-    for (const auto& dxc : m_deexcitations) {
-      if (dxc.osc < Small) continue;
-      const double wp = 2 * dxc.gPressure;
-      const double wd = 2 * sqrt(2 * log(2.)) * dxc.sDoppler;
-      const double imfpP =
-          (dxc.cf / SpeedOfLight) * TMath::Voigt(0., dxc.sDoppler, wp);
-      if (imfpP > 0.) {
-        printf("  %6.3f +/- %6.1e  %6.2e  %6.3e  %14.4f\n", dxc.energy,
-               dxc.width, wd, wp, 1.e4 / imfpP);
-      } else {
-        printf("  %6.3f +/- %6.1e  %6.2e  %6.3e  -------------\n", dxc.energy,
-               dxc.width, wd, wp);
-      }
+  if (!(m_debug || verbose)) return true;
+  std::cout << m_className << "::ComputePhotonCollisionTable:\n    "
+            << "Discrete absorption lines:\n   Energy [eV]   "
+            << "Line width (FWHM) [eV]    Mean free path [um]\n        "
+            << "              Doppler    Pressure         (peak)\n";
+  for (const auto& dxc : m_deexcitations) {
+    if (dxc.osc < Small) continue;
+    const double wp = 2 * dxc.gPressure;
+    const double wd = 2 * sqrt(2 * log(2.)) * dxc.sDoppler;
+    const double imfpP =
+        (dxc.cf / SpeedOfLight) * TMath::Voigt(0., dxc.sDoppler, wp);
+    if (imfpP > 0.) {
+      printf("  %6.3f +/- %6.1e  %6.2e  %6.3e  %14.4f\n", dxc.energy,
+             dxc.width, wd, wp, 1.e4 / imfpP);
+    } else {
+      printf("  %6.3f +/- %6.1e  %6.2e  %6.3e  -------------\n", dxc.energy,
+             dxc.width, wd, wp);
     }
   }
-
   return true;
 }
 
@@ -3481,11 +3331,10 @@ void MediumMagboltz::RunMagboltz(
 
   // Set the gas composition in Magboltz.
   for (unsigned int i = 0; i < m_nComponents; ++i) {
-    int ng = 0;
-    if (!GetGasNumberMagboltz(m_gas[i], ng)) {
-      std::cerr << m_className << "::RunMagboltz:\n"
-                << "    Gas " << m_gas[i] << " has no corresponding"
-                << " gas number in Magboltz.\n";
+    const int ng = GetGasNumberMagboltz(m_gas[i]);
+    if (ng <= 0) {
+      std::cerr << m_className << "::RunMagboltz:\n    Gas " << m_gas[i]
+                << " does not have a gas number in Magboltz.\n";
       return;
     }
     Magboltz::gasn_.ngasn[i] = ng;

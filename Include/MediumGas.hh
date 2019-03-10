@@ -49,11 +49,33 @@ class MediumGas : public Medium {
   /// Save the present table of gas properties (transport parameters) to a file.
   bool WriteGasFile(const std::string& filename);
 
+  /** Switch on simulation of Penning transfers by means of
+    * transfer probabilities, for all excitation levels in the mixture.
+    * \param r transfer probability [0, 1]
+    * \param lambda parameter for sampling the distance of the Penning electron
+             with respect to the excitation.
+    */
+  virtual bool EnablePenningTransfer(const double r, const double lambda);
+  /// Switch on simulation of Penning transfers by means of
+  /// transfer probabilities, for all excitations of a given component.
+  virtual bool EnablePenningTransfer(const double r, const double lambda,
+                                     std::string gasname);
+  /// Switch the simulation of Penning transfers off globally.
+  virtual void DisablePenningTransfer();
+  /// Switch the simulation of Penning transfers off for a given component.
+  virtual bool DisablePenningTransfer(std::string gasname);
+
   /// Print information about the present gas mixture and available data.
   void PrintGas();
 
   /// Read a table of ion mobilities as function of electric field from file.
   bool LoadIonMobility(const std::string& filename);
+
+  /// Adjust the Townsend coefficient using the excitation and ionisation 
+  /// rates stored in the gas table and the Penning transfer probabilities.
+  bool AdjustTownsendCoefficient();
+
+  void ResetTables() override;
 
   void SetExtrapolationMethodExcitationRates(const std::string& extrLow,
                                              const std::string& extrHigh);
@@ -86,8 +108,8 @@ class MediumGas : public Medium {
     return lor * m_pressure / m_pressureTable;
   }
 
-  bool GetPhotoabsorptionCrossSection(const double& e, double& sigma,
-                                      const unsigned int& i);
+  bool GetPhotoAbsorptionCrossSection(const double e, double& sigma,
+                                      const unsigned int i) override;
 
  protected:
   static constexpr unsigned int m_nMaxGases = 6;
@@ -145,9 +167,9 @@ class MediumGas : public Medium {
   unsigned int m_intpIonRates = 2;
 
   bool GetGasInfo(const std::string& gasname, double& a, double& z) const;
-  bool GetGasName(const int gasnumber, const int version, std::string& gasname);
-  bool GetGasName(std::string input, std::string& gasname) const;
-  bool GetGasNumberGasFile(const std::string& input, int& number) const;
+  std::string GetGasName(const int gasnumber, const int version) const;
+  std::string GetGasName(std::string input) const;
+  int GetGasNumberGasFile(const std::string& input) const;
 };
 }
 

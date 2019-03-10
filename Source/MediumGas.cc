@@ -16,14 +16,14 @@
 
 namespace {
 
-std::string FormatFloat(const double x, const unsigned int width = 15,
+std::string FmtFloat(const double x, const unsigned int width = 15,
                         const unsigned int precision = 8) {
   char buffer[256];
   std::snprintf(buffer, width + 1, "%*.*E", width, precision, x);
   return std::string(buffer);
 }
 
-std::string FormatInt(const int n, const unsigned int width) {
+std::string FmtInt(const int n, const unsigned int width) {
   char buffer[256];
   std::snprintf(buffer, width + 1, "%*d", width, n);
   return std::string(buffer);
@@ -32,7 +32,7 @@ std::string FormatInt(const int n, const unsigned int width) {
 void PrintArray(const std::vector<double>& values, std::ofstream& outfile,
                 int& col, const int ncols) {
   for (const auto value : values) {
-    outfile << FormatFloat(value);
+    outfile << FmtFloat(value);
     ++col;
     if (col % ncols == 0) outfile << "\n";
   }
@@ -98,15 +98,21 @@ bool MediumGas::SetComposition(const std::string& gas1, const double f1,
   const std::array<std::string, m_nMaxGases> gasOld = m_gas;
   const unsigned int nComponentsOld = m_nComponents;
 
+  // Reset all transport parameters.
+  ResetTables();
+  // Force a recalculation of the collision rates.
+  m_isChanged = true;
+
   m_nComponents = 0;
   m_gas.fill("");
   m_fraction.fill(0.);
   m_atWeight.fill(0.);
   m_atNum.fill(0.);
   for (unsigned int i = 0; i < 6; ++i) {
+    if (fractions[i] < Small) continue;
     // Find the gas name corresponding to the input string.
-    std::string gasname = "";
-    if (fractions[i] > 0. && GetGasName(gases[i], gasname)) {
+    const std::string gasname = GetGasName(gases[i]);
+    if (!gasname.empty()) {
       m_gas[m_nComponents] = gasname;
       m_fraction[m_nComponents] = fractions[i];
       ++m_nComponents;
@@ -149,8 +155,6 @@ bool MediumGas::SetComposition(const std::string& gas1, const double f1,
   }
   std::cout << "\n";
 
-  // Force a recalculation of the collision rates.
-  m_isChanged = true;
 
   // Copy the previous Penning transfer parameters.
   std::array<double, m_nMaxGases> rPenningGasOld;
@@ -282,8 +286,7 @@ bool MediumGas::LoadGasFile(const std::string& filename) {
 
   int version = 12;
 
-  m_excLevels.clear();
-  m_ionLevels.clear();
+  ResetTables();
 
   // Start reading the data.
   if (m_debug) std::cout << m_className << "::LoadGasFile: Header...\n";
@@ -465,40 +468,26 @@ bool MediumGas::LoadGasFile(const std::string& filename) {
               << " electric fields, " << nB << " magnetic fields, " << nA
               << " angles.\n    ";
   }
-  m_eVelocityE.clear();
   if (gasBits[0] == 'T') InitTable(nE, nB, nA, m_eVelocityE, 0.);
-  m_ionMobility.clear();
   if (gasBits[1] == 'T') InitTable(nE, nB, nA, m_ionMobility, 0.);
-  m_eDiffLong.clear();
   if (gasBits[2] == 'T') InitTable(nE, nB, nA, m_eDiffLong, 0.);
-  m_eTownsend.clear();
-  m_eTownsendNoPenning.clear();
   if (gasBits[3] == 'T') {
     InitTable(nE, nB, nA, m_eTownsend, -30.);
     InitTable(nE, nB, nA, m_eTownsendNoPenning, -30.);
   }
   // gasBits[4]: cluster size distribution; skipped
-  m_eAttachment.clear();
   if (gasBits[5] == 'T') InitTable(nE, nB, nA, m_eAttachment, -30.);
-  m_eLorentzAngle.clear();
   if (gasBits[6] == 'T') InitTable(nE, nB, nA, m_eLorentzAngle, -30.);
-  m_eDiffTrans.clear();
   if (gasBits[7] == 'T') InitTable(nE, nB, nA, m_eDiffTrans, 0.);
-  m_eVelocityB.clear();
   if (gasBits[8] == 'T') InitTable(nE, nB, nA, m_eVelocityB, 0.);
-  m_eVelocityExB.clear();
   if (gasBits[9] == 'T') InitTable(nE, nB, nA, m_eVelocityExB, 0.);
-  m_eDiffTens.clear();
   if (gasBits[10] == 'T') InitTensor(nE, nB, nA, 6, m_eDiffTens, 0.);
-  m_ionDissociation.clear();
   if (gasBits[11] == 'T') InitTable(nE, nB, nA, m_ionDissociation, -30.);
   // gasBits[12]: SRIM; skipped
   // gasBits[13]: HEED; skipped
-  m_excRates.clear();
   if (gasBits[14] == 'T') {
     InitTensor(nE, nB, nA, m_excLevels.size(), m_excRates, 0.);
   }
-  m_ionRates.clear();
   if (gasBits[15] == 'T') {
     InitTensor(nE, nB, nA, m_ionLevels.size(), m_ionRates, 0.);
   }
@@ -510,8 +499,8 @@ bool MediumGas::LoadGasFile(const std::string& filename) {
   unsigned int gasCount = 0;
   for (int i = 0; i < nMagboltzGases; ++i) {
     if (mixture[i] < Small) continue;
-    std::string gasname = "";
-    if (!GetGasName(i + 1, version, gasname)) {
+    const std::string gasname = GetGasName(i + 1, version);
+    if (gasname.empty()) {
       std::cerr << m_className << "::LoadGasFile:\n"
                 << "    Unknown gas (gas number " << i + 1 << ").\n";
       gasMixOk = false;
@@ -848,9 +837,7 @@ bool MediumGas::LoadGasFile(const std::string& filename) {
   m_intpIonRates = interpMeth[12];
 
   // Ion diffusion
-  m_ionDiffLong.clear();
   if (ionDiffL > 0.) InitTable(nE, nB, nA, m_ionDiffLong, ionDiffL);
-  m_ionDiffTrans.clear();
   if (ionDiffT > 0.) InitTable(nE, nB, nA, m_ionDiffTrans, ionDiffT);
 
   if (m_debug) std::cout << m_className << "::LoadGasFile: Done.\n";
@@ -863,13 +850,13 @@ bool MediumGas::WriteGasFile(const std::string& filename) {
   constexpr int nMagboltzGases = 60;
   std::vector<double> mixture(nMagboltzGases, 0.);
   for (unsigned int i = 0; i < m_nComponents; ++i) {
-    int ng = 0;
-    if (!GetGasNumberGasFile(m_gas[i], ng) || ng == 0) {
+    const int ng = GetGasNumberGasFile(m_gas[i]);
+    if (ng <= 0) {
       std::cerr << m_className << "::WriteGasFile:\n"
                 << "    Error retrieving gas number for " << m_gas[i] << ".\n";
-    } else {
-      mixture[ng - 1] = m_fraction[i] * 100.;
+      continue;
     }
+    mixture[ng - 1] = m_fraction[i] * 100.;
   }
 
   if (m_debug) {
@@ -945,9 +932,9 @@ bool MediumGas::WriteGasFile(const std::string& filename) {
   const unsigned int nE = m_eFields.size();
   const unsigned int nB = m_bFields.size();
   const unsigned int nA = m_bAngles.size();
-  outfile << FormatInt(nE, 9) << " " << FormatInt(nA, 9) << " "
-          << FormatInt(nB, 9) << " " << FormatInt(m_excLevels.size(), 9) << " "
-          << FormatInt(m_ionLevels.size(), 9) << "\n";
+  outfile << FmtInt(nE, 9) << " " << FmtInt(nA, 9) << " "
+          << FmtInt(nB, 9) << " " << FmtInt(m_excLevels.size(), 9) << " "
+          << FmtInt(m_ionLevels.size(), 9) << "\n";
   // Store reduced electric fields (E/p).
   outfile << " E fields   \n";
   std::vector<double> efields = m_eFields;
@@ -978,16 +965,15 @@ bool MediumGas::WriteGasFile(const std::string& filename) {
   cnt = 0;
   for (const auto& exc : m_excLevels) {
     ++cnt;
-    outfile << " Excitation " << FormatInt(cnt, 5) << ": " << std::setw(45)
-            << exc.label << "  " << FormatFloat(exc.energy)
-            << FormatFloat(exc.prob) << FormatFloat(exc.rms)
-            << FormatFloat(exc.dt) << "\n";
+    outfile << " Excitation " << FmtInt(cnt, 5) << ": " << std::setw(45)
+            << exc.label << "  " << FmtFloat(exc.energy) << FmtFloat(exc.prob) 
+            << FmtFloat(exc.rms) << FmtFloat(exc.dt) << "\n";
   }
   cnt = 0;
   for (const auto& ion : m_ionLevels) {
     ++cnt;
-    outfile << " Ionisation " << FormatInt(cnt, 5) << ": " << std::setw(45)
-            << ion.label << "  " << FormatFloat(ion.energy) << "\n";
+    outfile << " Ionisation " << FmtInt(cnt, 5) << ": " << std::setw(45)
+            << ion.label << "  " << FmtFloat(ion.energy) << "\n";
   }
 
   const double sqrp = sqrt(m_pressureTable);
@@ -1104,33 +1090,29 @@ bool MediumGas::WriteGasFile(const std::string& filename) {
   interpMeth[12] = m_intpIonRates;
 
   outfile << " H Extr: ";
-  for (int i = 0; i < 13; i++) outfile << FormatInt(hExtrap[i], 5);
+  for (int i = 0; i < 13; i++) outfile << FmtInt(hExtrap[i], 5);
   outfile << "\n";
   outfile << " L Extr: ";
-  for (int i = 0; i < 13; i++) outfile << FormatInt(lExtrap[i], 5);
+  for (int i = 0; i < 13; i++) outfile << FmtInt(lExtrap[i], 5);
   outfile << "\n";
-  outfile << " Thresholds: " << FormatInt(thrElectronTownsend, 10)
-          << FormatInt(thrElectronAttachment, 10)
-          << FormatInt(thrIonDissociation, 10) << "\n";
+  outfile << " Thresholds: " << FmtInt(thrElectronTownsend, 10)
+          << FmtInt(thrElectronAttachment, 10)
+          << FmtInt(thrIonDissociation, 10) << "\n";
   outfile << " Interp: ";
-  for (int i = 0; i < 13; i++) outfile << FormatInt(interpMeth[i], 5);
-  ;
+  for (int i = 0; i < 13; i++) outfile << FmtInt(interpMeth[i], 5);
   outfile << "\n";
-  outfile << " A     =" << FormatFloat(0.) << ","
-          << " Z     =" << FormatFloat(0.) << ","
-          << " EMPROB=" << FormatFloat(0.) << ","
-          << " EPAIR =" << FormatFloat(0.) << "\n";
+  outfile << " A     =" << FmtFloat(0.) << ", Z     =" << FmtFloat(0.) << ","
+          << " EMPROB=" << FmtFloat(0.) << ", EPAIR =" << FmtFloat(0.) << "\n";
   const double dli = m_ionDiffLong.empty() ? 0. : m_ionDiffLong[0][0][0];
   const double dti = m_ionDiffTrans.empty() ? 0. : m_ionDiffTrans[0][0][0];
-  outfile << " Ion diffusion: " << FormatFloat(dli) << FormatFloat(dti) << "\n";
-  outfile << " CMEAN =" << FormatFloat(0.) << ","
-          << " RHO   =" << FormatFloat(0.) << ","
-          << " PGAS  =" << FormatFloat(m_pressureTable) << ","
-          << " TGAS  =" << FormatFloat(m_temperatureTable) << "\n";
+  outfile << " Ion diffusion: " << FmtFloat(dli) << FmtFloat(dti) << "\n";
+  outfile << " CMEAN =" << FmtFloat(0.) << ", RHO   =" << FmtFloat(0.) << ","
+          << " PGAS  =" << FmtFloat(m_pressureTable) << ","
+          << " TGAS  =" << FmtFloat(m_temperatureTable) << "\n";
   outfile << " CLSTYP    : NOT SET   \n"
           << " FCNCLS    : " << std::string(80, ' ') << "\n"
-          << " NCLS      : " << FormatInt(0, 10) << "\n"
-          << " Average   : " << FormatFloat(0., 25, 18) << "\n"
+          << " NCLS      : " << FmtInt(0, 10) << "\n"
+          << " Average   : " << FmtFloat(0., 25, 18) << "\n"
           << "  Heed initialisation done: F\n"
           << "  SRIM initialisation done: F\n";
   outfile.close();
@@ -1288,14 +1270,12 @@ bool MediumGas::LoadIonMobility(const std::string& filename) {
   std::vector<double> mobilities;
 
   // Read the file line by line.
-  char line[100];
-
   int i = 0;
   while (!infile.eof()) {
     ++i;
     // Read the next line.
+    char line[100];
     infile.getline(line, 100);
-
     char* token = strtok(line, " ,\t");
     if (!token) {
       break;
@@ -1371,6 +1351,262 @@ bool MediumGas::LoadIonMobility(const std::string& filename) {
   std::cout << "    Read " << ne << " values from file " << filename << "\n";
 
   return SetIonMobility(efields, mobilities);
+}
+
+void MediumGas::ResetTables() {
+
+  Medium::ResetTables();
+  m_eTownsendNoPenning.clear();
+  m_excLevels.clear();
+  m_ionLevels.clear();
+  m_excRates.clear();
+  m_ionRates.clear();
+}
+
+bool MediumGas::EnablePenningTransfer(const double r,
+                                      const double lambda) {
+
+  if (r < 0. || r > 1.) {
+    std::cerr << m_className << "::EnablePenningTransfer:\n"
+              << "    Transfer probability must be in the range [0, 1].\n";
+    return false;
+  }
+
+  m_rPenningGlobal = r;
+  m_lambdaPenningGlobal = lambda > Small ? lambda : 0.;
+
+  std::cout << m_className << "::EnablePenningTransfer:\n"
+            << "    Global Penning transfer parameters set to:\n"
+            << "    r      = " << m_rPenningGlobal << "\n"
+            << "    lambda = " << m_lambdaPenningGlobal << " cm\n";
+
+  // Find the min. ionisation energy.
+  if (m_ionLevels.empty()) {
+    std::cerr << m_className << "::EnablePenningTransfer:\n    Warning: present"
+              << "gas table has no ionisation rates.\n    Ignore this message "
+              << "if you are using microscopic tracking only.\n";
+    return true;
+  }
+  double minIonPot = -1.;
+  for (const auto& ion : m_ionLevels) {
+    if (minIonPot < 0.) {
+      minIonPot = ion.energy;
+    } else {
+      minIonPot = std::min(minIonPot, ion.energy);
+    }
+  }
+
+  // Update the transfer probabilities of the excitation levels in the table.
+  unsigned int nLevelsFound = 0;
+  for (auto& exc : m_excLevels) {
+    if (exc.energy < minIonPot) continue;
+    exc.prob = m_rPenningGlobal;
+    exc.rms = m_lambdaPenningGlobal;
+    ++nLevelsFound; 
+  }
+  if (nLevelsFound > 0) {
+    std::cout << m_className << "::EnablePenningTransfer:\n"
+              << "    Updated transfer probabilities for " << nLevelsFound 
+              << " excitation rates.\n";
+    AdjustTownsendCoefficient();
+  } else {
+    std::cerr << m_className << "::EnablePenningTransfer:\n    Warning: present"
+              << "gas table has no eligible excitation rates.\n    Ignore this "
+              << "message if you are using microscopic tracking only.\n";
+  }
+  return true;
+}
+
+bool MediumGas::EnablePenningTransfer(const double r, const double lambda,
+                                      std::string gasname) {
+
+  if (r < 0. || r > 1.) {
+    std::cerr << m_className << "::EnablePenningTransfer:\n"
+              << "    Transfer probability must be in the range [0, 1].\n";
+    return false;
+  }
+
+  // Get the "standard" name of this gas.
+  gasname = GetGasName(gasname);
+  if (gasname.empty()) {
+    std::cerr << m_className << "::EnablePenningTransfer: Unknown gas name.\n";
+    return false;
+  }
+
+  // Look for this gas in the present gas mixture.
+  int iGas = -1;
+  for (unsigned int i = 0; i < m_nComponents; ++i) {
+    if (m_gas[i] == gasname) {
+      m_rPenningGas[i] = r;
+      m_lambdaPenningGas[i] = lambda > Small ? lambda : 0.;
+      iGas = i;
+      break;
+    }
+  }
+
+  if (iGas < 0) {
+    std::cerr << m_className << "::EnablePenningTransfer:\n"
+              << "    Requested gas (" << gasname
+              << ") is not part of the present gas mixture.\n";
+    return false;
+  }
+
+  // Find the min. ionisation energy.
+  if (m_ionLevels.empty()) {
+    std::cerr << m_className << "::EnablePenningTransfer:\n    Warning: present"
+              << "gas table has no ionisation rates.\n    Ignore this message "
+              << "if you are using microscopic tracking only.\n";
+    return true;
+  }
+  double minIonPot = -1.;
+  for (const auto& ion : m_ionLevels) {
+    if (minIonPot < 0.) {
+      minIonPot = ion.energy;
+    } else {
+      minIonPot = std::min(minIonPot, ion.energy);
+    }
+  }
+  // Update the transfer probabilities of the excitation levels in the table.
+  unsigned int nLevelsFound = 0;
+  for (auto& exc : m_excLevels) {
+    if (exc.energy < minIonPot) continue;
+    // Try to extract the gas name from the label. 
+    // TODO: test if this works for all gases and excitation levels.
+    const auto pos = exc.label.find('-');
+    if (pos == std::string::npos) continue;
+    if (GetGasName(exc.label.substr(0, pos)) != gasname) continue;
+    exc.prob = r;
+    exc.rms = lambda;
+    ++nLevelsFound; 
+  }
+  if (nLevelsFound > 0) {
+    std::cout << m_className << "::EnablePenningTransfer:\n"
+              << "    Updated transfer probabilities for " << nLevelsFound 
+              << " excitation rates.\n";
+    AdjustTownsendCoefficient();
+  } else {
+    std::cerr << m_className << "::EnablePenningTransfer:\n    Warning: present"
+              << "gas table has no eligible excitation rates.\n    Ignore this "
+              << "message if you are using microscopic tracking only.\n";
+  }
+  return true;
+}
+
+void MediumGas::DisablePenningTransfer() {
+
+  m_rPenningGlobal = 0.;
+  m_lambdaPenningGlobal = 0.;
+
+  m_rPenningGas.fill(0.);
+  m_lambdaPenningGas.fill(0.);
+
+  if (m_excLevels.empty()) return;
+  for (auto& exc : m_excLevels) {
+    exc.prob = 0.; 
+  }
+  AdjustTownsendCoefficient();
+}
+
+bool MediumGas::DisablePenningTransfer(std::string gasname) {
+
+  // Get the "standard" name of this gas.
+  gasname = GetGasName(gasname);
+  if (gasname.empty()) {
+    std::cerr << m_className << "::DisablePenningTransfer: Unknown gas name.\n";
+    return false;
+  }
+
+  // Look for this gas in the present gas mixture.
+  int iGas = -1;
+  for (unsigned int i = 0; i < m_nComponents; ++i) {
+    if (m_gas[i] == gasname) {
+      m_rPenningGas[i] = 0.;
+      m_lambdaPenningGas[i] = 0.;
+      iGas = i;
+      break;
+    }
+  }
+
+  if (iGas < 0) {
+    std::cerr << m_className << "::DisablePenningTransfer:\n"
+              << "    Requested gas (" << gasname
+              << ") is not part of the present gas mixture.\n";
+    return false;
+  }
+
+  if (m_excLevels.empty()) return true;
+  for (auto& exc : m_excLevels) {
+    // Try to extract the gas name from the label. 
+    const auto pos = exc.label.find('-');
+    if (pos == std::string::npos) continue;
+    if (GetGasName(exc.label.substr(0, pos)) != gasname) continue;
+    exc.prob = 0.; 
+  }
+  AdjustTownsendCoefficient();
+  return true;
+}
+
+
+bool MediumGas::AdjustTownsendCoefficient() {
+
+  // GASSPT
+
+  // Make sure there are Townsend coefficients.
+  if (m_eTownsend.empty() || m_eTownsendNoPenning.empty()) {
+    std::cerr << m_className << "::AdjustTownsendCoefficient:\n    "
+              << "Present gas table does not include Townsend coefficients.\n";
+    return false;
+  }
+  // Make sure there are excitation and ionisation rates.
+  if (m_excLevels.empty() || m_excRates.empty()) {
+    std::cerr << m_className << "::AdjustTownsendCoefficient:\n    "
+              << "Present gas table does not include excitation rates.\n";
+    return false;
+  }
+  if (m_ionLevels.empty() || m_ionRates.empty()) {
+    std::cerr << m_className << "::AdjustTownsendCoefficient:\n    "
+              << "Present gas table does not include ionisation rates.\n";
+    return false;
+  }
+  const unsigned int nE = m_eFields.size();
+  const unsigned int nB = m_bFields.size();
+  const unsigned int nA = m_bAngles.size();
+  if (m_debug) {
+    std::cout << m_className << "::AdjustTownsendCoefficient:\n"
+              << "   Entry         Exc.      Ion.\n";
+  } 
+  for (unsigned int i = 0; i < nE; ++i) {
+    for (unsigned int j = 0; j < nA; ++j) {
+      for (unsigned int k = 0; k < nB; ++k) {
+        // Compute total ionisation rate.
+        double rion = 0.;
+        for (const auto& ion : m_ionRates) {
+          rion += ion[j][k][i];
+        }
+        // Compute rate of Penning ionisations.
+        double rexc = 0.;
+        const unsigned int nexc = m_excLevels.size();
+        for (unsigned int ie = 0; ie < nexc; ++ie) {
+          rexc += m_excLevels[ie].prob * m_excRates[ie][j][k][i]; 
+        }
+        if (m_debug) {
+          std::cout << FmtInt(i, 4) << FmtInt(j, 4) << FmtInt(k, 4) 
+                    << FmtFloat(rexc, 12, 5) << FmtFloat(rion, 12, 5) << "\n"; 
+        }
+        // Adjust the Townsend coefficient.
+        double alpha0 = m_eTownsendNoPenning[j][k][i];
+        if (alpha0 < -20.) {
+          alpha0 = 0.;
+        } else {
+          alpha0 = m_pressure * exp(alpha0);
+        }
+        double alpha1 = alpha0;
+        if (rion > 0.) alpha1 *= (rexc + rion) / rion;
+        m_eTownsend[j][k][i] = alpha1 > 0. ? log(alpha1 / m_pressure) : -30.;
+      }
+    }
+  }
+  return true;
 }
 
 void MediumGas::SetExtrapolationMethodExcitationRates(const std::string& low,
@@ -1560,508 +1796,356 @@ bool MediumGas::GetGasInfo(const std::string& gasname, double& a,
   return true;
 }
 
-bool MediumGas::GetGasName(const int gasnumber, const int version,
-                           std::string& gasname) {
+std::string MediumGas::GetGasName(const int gasnumber, const int version) const {
+
   switch (gasnumber) {
     case 1:
-      gasname = "CF4";
+      return "CF4";
       break;
     case 2:
-      gasname = "Ar";
+      return "Ar";
       break;
     case 3:
-      gasname = "He";
+      return "He";
       break;
     case 4:
-      gasname = "He-3";
+      return "He-3";
       break;
     case 5:
-      gasname = "Ne";
+      return "Ne";
       break;
     case 6:
-      gasname = "Kr";
+      return "Kr";
       break;
     case 7:
-      gasname = "Xe";
+      return "Xe";
       break;
     case 8:
-      gasname = "CH4";
+      return "CH4";
       break;
     case 9:
-      gasname = "C2H6";
+      return "C2H6";
       break;
     case 10:
-      gasname = "C3H8";
+      return "C3H8";
       break;
     case 11:
-      gasname = "iC4H10";
+      return "iC4H10";
       break;
     case 12:
-      gasname = "CO2";
+      return "CO2";
       break;
     case 13:
-      gasname = "neoC5H12";
+      return "neoC5H12";
       break;
     case 14:
-      gasname = "H2O";
+      return "H2O";
       break;
     case 15:
-      gasname = "O2";
+      return "O2";
       break;
     case 16:
-      gasname = "N2";
+      return "N2";
       break;
     case 17:
-      gasname = "NO";
+      return "NO";
       break;
     case 18:
-      gasname = "N2O";
+      return "N2O";
       break;
     case 19:
-      gasname = "C2H4";
+      return "C2H4";
       break;
     case 20:
-      gasname = "C2H2";
+      return "C2H2";
       break;
     case 21:
-      gasname = "H2";
+      return "H2";
       break;
     case 22:
-      gasname = "D2";
+      return "D2";
       break;
     case 23:
-      gasname = "CO";
+      return "CO";
       break;
     case 24:
-      gasname = "Methylal";
+      return "Methylal";
       break;
     case 25:
-      gasname = "DME";
+      return "DME";
       break;
     case 26:
-      gasname = "Reid-Step";
+      return "Reid-Step";
       break;
     case 27:
-      gasname = "Maxwell-Model";
+      return "Maxwell-Model";
       break;
     case 28:
-      gasname = "Reid-Ramp";
+      return "Reid-Ramp";
       break;
     case 29:
-      gasname = "C2F6";
+      return "C2F6";
       break;
     case 30:
-      gasname = "SF6";
+      return "SF6";
       break;
     case 31:
-      gasname = "NH3";
+      return "NH3";
       break;
     case 32:
-      gasname = "C3H6";
+      return "C3H6";
       break;
     case 33:
-      gasname = "cC3H6";
+      return "cC3H6";
       break;
     case 34:
-      gasname = "CH3OH";
+      return "CH3OH";
       break;
     case 35:
-      gasname = "C2H5OH";
+      return "C2H5OH";
       break;
     case 36:
-      gasname = "C3H7OH";
+      return "C3H7OH";
       break;
     case 37:
-      gasname = "Cs";
+      return "Cs";
       break;
     case 38:
-      gasname = "F2";
+      return "F2";
       break;
     case 39:
-      gasname = "CS2";
+      return "CS2";
       break;
     case 40:
-      gasname = "COS";
+      return "COS";
       break;
     case 41:
-      gasname = "CD4";
+      return "CD4";
       break;
     case 42:
-      gasname = "BF3";
+      return "BF3";
       break;
     case 43:
-      gasname = "C2H2F4";
+      return "C2H2F4";
       break;
     case 44:
-      if (version <= 11) {
-        gasname = "He-3";
-      } else {
-        gasname = "TMA";
-      }
+      return version <= 11 ? "He-3" : "TMA";
       break;
     case 45:
-      gasname = "He";
+      return "He";
       break;
     case 46:
-      gasname = "Ne";
+      return "Ne";
       break;
     case 47:
-      gasname = "Ar";
+      return "Ar";
       break;
     case 48:
-      gasname = "Kr";
+      return "Kr";
       break;
     case 49:
-      gasname = "Xe";
+      return "Xe";
       break;
     case 50:
-      gasname = "CHF3";
+      return "CHF3";
       break;
     case 51:
-      gasname = "CF3Br";
+      return "CF3Br";
       break;
     case 52:
-      gasname = "C3F8";
+      return "C3F8";
       break;
     case 53:
-      gasname = "O3";
+      return "O3";
       break;
     case 54:
-      gasname = "Hg";
+      return "Hg";
       break;
     case 55:
-      gasname = "H2S";
+      return "H2S";
       break;
     case 56:
-      gasname = "nC4H10";
+      return "nC4H10";
       break;
     case 57:
-      gasname = "nC5H12";
+      return "nC5H12";
       break;
     case 58:
-      gasname = "N2";
+      return "N2";
       break;
     case 59:
-      gasname = "GeH4";
+      return "GeH4";
       break;
     case 60:
-      gasname = "SiH4";
+      return "SiH4";
       break;
     default:
-      gasname = "";
-      return false;
+      return "";
       break;
   }
-  return true;
+  return "";
 }
 
-bool MediumGas::GetGasName(std::string input, std::string& gasname) const {
+std::string MediumGas::GetGasName(std::string input) const {
   // Convert to upper-case
   for (unsigned int i = 0; i < input.length(); ++i) {
     input[i] = toupper(input[i]);
   }
 
-  gasname = "";
+  if (input.empty()) return "";
 
-  if (input == "") return false;
-
-  // CF4
   if (input == "CF4" || input == "FREON" || input == "FREON-14" ||
       input == "TETRAFLUOROMETHANE") {
-    gasname = "CF4";
-    return true;
-  }
-  // Argon
-  if (input == "AR" || input == "ARGON") {
-    gasname = "Ar";
-    return true;
-  }
-  // Helium 4
-  if (input == "HE" || input == "HELIUM" || input == "HE-4" ||
-      input == "HE 4" || input == "HE4" || input == "4-HE" || input == "4 HE" ||
-      input == "4HE" || input == "HELIUM-4" || input == "HELIUM 4" ||
-      input == "HELIUM4") {
-    gasname = "He";
-    return true;
-  }
-  // Helium 3
-  if (input == "HE-3" || input == "HE3" || input == "HELIUM-3" ||
+    return "CF4";
+  } else if (input == "AR" || input == "ARGON") {
+    return "Ar";
+  } else if (input == "HE" || input == "HELIUM" || input == "HE-4" ||
+             input == "HE 4" || input == "HE4" || input == "4-HE" || 
+             input == "4 HE" || input == "4HE" || input == "HELIUM-4" || 
+             input == "HELIUM 4" || input == "HELIUM4") {
+    return "He";
+  } else if (input == "HE-3" || input == "HE3" || input == "HELIUM-3" ||
       input == "HELIUM 3" || input == "HELIUM3") {
-    gasname = "He-3";
-    return true;
-  }
-  // Neon
-  if (input == "NE" || input == "NEON") {
-    gasname = "Ne";
-    return true;
-  }
-  // Krypton
-  if (input == "KR" || input == "KRYPTON") {
-    gasname = "Kr";
-    return true;
-  }
-  // Xenon
-  if (input == "XE" || input == "XENON") {
-    gasname = "Xe";
-    return true;
-  }
-  // Methane
-  if (input == "CH4" || input == "METHANE") {
-    gasname = "CH4";
-    return true;
-  }
-  // Ethane
-  if (input == "C2H6" || input == "ETHANE") {
-    gasname = "C2H6";
-    return true;
-  }
-  // Propane
-  if (input == "C3H8" || input == "PROPANE") {
-    gasname = "C3H8";
-    return true;
-  }
-  // Isobutane
-  if (input == "C4H10" || input == "ISOBUTANE" || input == "ISO" ||
-      input == "IC4H10" || input == "ISO-C4H10" || input == "ISOC4H10") {
-    gasname = "iC4H10";
-    return true;
-  }
-  // Carbon dioxide (CO2)
-  if (input == "CO2" || input == "CARBON-DIOXIDE" ||
+    return "He-3";
+  } else if (input == "NE" || input == "NEON") {
+    return "Ne";
+  } else if (input == "KR" || input == "KRYPTON") {
+    return "Kr";
+  } else if (input == "XE" || input == "XENON") {
+    return "Xe";
+  } else if (input == "CH4" || input == "METHANE") {
+    return "CH4";
+  } else if (input == "C2H6" || input == "ETHANE") {
+    return "C2H6";
+  } else if (input == "C3H8" || input == "PROPANE") {
+    return "C3H8";
+  } else  if (input == "C4H10" || input == "ISOBUTANE" || input == "ISO" ||
+              input == "IC4H10" || input == "ISO-C4H10" || input == "ISOC4H10") {
+    return "iC4H10";
+  } else if (input == "CO2" || input == "CARBON-DIOXIDE" ||
       input == "CARBON DIOXIDE" || input == "CARBONDIOXIDE") {
-    gasname = "CO2";
-    return true;
-  }
-  // Neopentane
-  if (input == "NEOPENTANE" || input == "NEO-PENTANE" || input == "NEO-C5H12" ||
-      input == "NEOC5H12" || input == "DIMETHYLPROPANE" || input == "C5H12") {
-    gasname = "neoC5H12";
-    return true;
-  }
-  // Water
-  if (input == "H2O" || input == "WATER" || input == "WATER-VAPOUR" ||
+    return "CO2";
+  } else if (input == "NEOPENTANE" || input == "NEO-PENTANE" || 
+             input == "NEO-C5H12" || input == "NEOC5H12" || 
+             input == "DIMETHYLPROPANE" || input == "C5H12") {
+    return "neoC5H12";
+  } else if (input == "H2O" || input == "WATER" || input == "WATER-VAPOUR" ||
       input == "WATER VAPOUR") {
-    gasname = "H2O";
-    return true;
-  }
-  // Oxygen
-  if (input == "O2" || input == "OXYGEN") {
-    gasname = "O2";
-    return true;
-  }
-  // Nitrogen
-  if (input == "NI" || input == "NITRO" || input == "N2" ||
+    return "H2O";
+  } else if (input == "O2" || input == "OXYGEN") {
+    return "O2";
+  } else if (input == "NI" || input == "NITRO" || input == "N2" ||
       input == "NITROGEN") {
-    gasname = "N2";
-    return true;
-  }
-  // Nitric oxide (NO)
-  if (input == "NO" || input == "NITRIC-OXIDE" || input == "NITRIC OXIDE" ||
+    return "N2";
+  } else if (input == "NO" || input == "NITRIC-OXIDE" || input == "NITRIC OXIDE" ||
       input == "NITROGEN-MONOXIDE" || input == "NITROGEN MONOXIDE") {
-    gasname = "NO";
-    return true;
-  }
-  // Nitrous oxide (N2O)
-  if (input == "N2O" || input == "NITROUS-OXIDE" || input == "NITROUS OXIDE" ||
+    return "NO";
+  } else if (input == "N2O" || input == "NITROUS-OXIDE" || input == "NITROUS OXIDE" ||
       input == "DINITROGEN-MONOXIDE" || input == "LAUGHING-GAS") {
-    gasname = "N2O";
-    return true;
-  }
-  // Ethene (C2H4)
-  if (input == "C2H4" || input == "ETHENE" || input == "ETHYLENE") {
-    gasname = "C2H4";
-    return true;
-  }
-  // Acetylene (C2H2)
-  if (input == "C2H2" || input == "ACETYL" || input == "ACETYLENE" ||
+    return "N2O";
+  } else if (input == "C2H4" || input == "ETHENE" || input == "ETHYLENE") {
+    return "C2H4";
+  } else if (input == "C2H2" || input == "ACETYL" || input == "ACETYLENE" ||
       input == "ETHYNE") {
-    gasname = "C2H2";
-    return true;
-  }
-  // Hydrogen
-  if (input == "H2" || input == "HYDROGEN") {
-    gasname = "H2";
-    return true;
-  }
-  // Deuterium
-  if (input == "D2" || input == "DEUTERIUM") {
-    gasname = "D2";
-    return true;
-  }
-  // Carbon monoxide (CO)
-  if (input == "CO" || input == "CARBON-MONOXIDE" ||
+    return "C2H2";
+  } else if (input == "H2" || input == "HYDROGEN") {
+    return "H2";
+  } else if (input == "D2" || input == "DEUTERIUM") {
+    return "D2";
+  } else if (input == "CO" || input == "CARBON-MONOXIDE" ||
       input == "CARBON MONOXIDE") {
-    gasname = "CO";
-    return true;
-  }
-  // Methylal (dimethoxymethane, CH3-O-CH2-O-CH3, "hot" version)
-  if (input == "METHYLAL" || input == "METHYLAL-HOT" || input == "DMM" ||
+    return "CO";
+  } else if (input == "METHYLAL" || input == "METHYLAL-HOT" || input == "DMM" ||
       input == "DIMETHOXYMETHANE" || input == "FORMAL" || input == "C3H8O2") {
-    gasname = "Methylal";
-    return true;
-  }
-  // DME
-  if (input == "DME" || input == "DIMETHYL-ETHER" || input == "DIMETHYLETHER" ||
+    // Methylal (dimethoxymethane, CH3-O-CH2-O-CH3, "hot" version)
+    return "Methylal";
+  } else if (input == "DME" || input == "DIMETHYL-ETHER" || input == "DIMETHYLETHER" ||
       input == "DIMETHYL ETHER" || input == "METHYL ETHER" ||
       input == "METHYL-ETHER" || input == "METHYLETHER" ||
       input == "WOOD-ETHER" || input == "WOODETHER" || input == "WOOD ETHER" ||
       input == "DIMETHYL OXIDE" || input == "DIMETHYL-OXIDE" ||
       input == "DEMEON" || input == "METHOXYMETHANE" || input == "C4H10O2") {
-    gasname = "DME";
-    return true;
-  }
-  // Reid step
-  if (input == "REID-STEP") {
-    gasname = "Reid-Step";
-    return true;
-  }
-  // Maxwell model
-  if (input == "MAXWELL-MODEL") {
-    gasname = "Maxwell-Model";
-    return true;
-  }
-  // Reid ramp
-  if (input == "REID-RAMP") {
-    gasname = "Reid-Ramp";
-    return true;
-  }
-  // C2F6
-  if (input == "C2F6" || input == "FREON-116" || input == "ZYRON-116" ||
+    return "DME";
+  } else if (input == "REID-STEP") {
+    return "Reid-Step";
+  } else if (input == "MAXWELL-MODEL") {
+    return "Maxwell-Model";
+  } else if (input == "REID-RAMP") {
+    return "Reid-Ramp";
+  } else if (input == "C2F6" || input == "FREON-116" || input == "ZYRON-116" ||
       input == "ZYRON-116-N5" || input == "HEXAFLUOROETHANE") {
-    gasname = "C2F6";
-    return true;
-  }
-  // SF6
-  if (input == "SF6" || input == "SULPHUR-HEXAFLUORIDE" ||
+    return "C2F6";
+  } else if (input == "SF6" || input == "SULPHUR-HEXAFLUORIDE" ||
       input == "SULFUR-HEXAFLUORIDE" || input == "SULPHUR HEXAFLUORIDE" ||
       input == "SULFUR HEXAFLUORIDE") {
-    gasname = "SF6";
-    return true;
-  }
-  // NH3
-  if (input == "NH3" || input == "AMMONIA") {
-    gasname = "NH3";
-    return true;
-  }
-  // Propene
-  if (input == "C3H6" || input == "PROPENE" || input == "PROPYLENE") {
-    gasname = "C3H6";
-    return true;
-  }
-  // Cyclopropane
-  if (input == "C-PROPANE" || input == "CYCLO-PROPANE" ||
+    return "SF6";
+  } else if (input == "NH3" || input == "AMMONIA") {
+    return "NH3";
+  } else if (input == "C3H6" || input == "PROPENE" || input == "PROPYLENE") {
+    return "C3H6";
+  } else if (input == "C-PROPANE" || input == "CYCLO-PROPANE" ||
       input == "CYCLO PROPANE" || input == "CYCLOPROPANE" ||
       input == "C-C3H6" || input == "CC3H6" || input == "CYCLO-C3H6") {
-    gasname = "cC3H6";
-    return true;
-  }
-  // Methanol
-  if (input == "METHANOL" || input == "METHYL-ALCOHOL" ||
+    return "cC3H6";
+  } else if (input == "METHANOL" || input == "METHYL-ALCOHOL" ||
       input == "METHYL ALCOHOL" || input == "WOOD ALCOHOL" ||
       input == "WOOD-ALCOHOL" || input == "CH3OH") {
-    gasname = "CH3OH";
-    return true;
-  }
-  // Ethanol
-  if (input == "ETHANOL" || input == "ETHYL-ALCOHOL" ||
+    return "CH3OH";
+  } else if (input == "ETHANOL" || input == "ETHYL-ALCOHOL" ||
       input == "ETHYL ALCOHOL" || input == "GRAIN ALCOHOL" ||
       input == "GRAIN-ALCOHOL" || input == "C2H5OH") {
-    gasname = "C2H5OH";
-    return true;
-  }
-  // Propanol
-  if (input == "PROPANOL" || input == "2-PROPANOL" || input == "ISOPROPYL" ||
+    return "C2H5OH";
+  } else if (input == "PROPANOL" || input == "2-PROPANOL" || input == "ISOPROPYL" ||
       input == "ISO-PROPANOL" || input == "ISOPROPANOL" ||
       input == "ISOPROPYL ALCOHOL" || input == "ISOPROPYL-ALCOHOL" ||
       input == "C3H7OH") {
-    gasname = "C3H7OH";
-    return true;
-  }
-  // Cesium / Caesium.
-  if (input == "CS" || input == "CESIUM" || input == "CAESIUM") {
-    gasname = "Cs";
-    return true;
-  }
-  // Fluorine
-  if (input == "F2" || input == "FLUOR" || input == "FLUORINE") {
-    gasname = "F2";
-    return true;
-  }
-  // CS2
-  if (input == "CS2" || input == "CARBON-DISULPHIDE" ||
+    return "C3H7OH";
+  } else if (input == "CS" || input == "CESIUM" || input == "CAESIUM") {
+    return "Cs";
+  } else if (input == "F2" || input == "FLUOR" || input == "FLUORINE") {
+    return "F2";
+  } else if (input == "CS2" || input == "CARBON-DISULPHIDE" ||
       input == "CARBON-DISULFIDE" || input == "CARBON DISULPHIDE" ||
       input == "CARBON DISULFIDE") {
-    gasname = "CS2";
-    return true;
-  }
-  // COS
-  if (input == "COS" || input == "CARBONYL-SULPHIDE" ||
+    return "CS2";
+  } else if (input == "COS" || input == "CARBONYL-SULPHIDE" ||
       input == "CARBONYL-SULFIDE" || input == "CARBONYL SULFIDE") {
-    gasname = "COS";
-    return true;
-  }
-  // Deuterated methane
-  if (input == "DEUT-METHANE" || input == "DEUTERIUM-METHANE" ||
+    return "COS";
+  } else if (input == "DEUT-METHANE" || input == "DEUTERIUM-METHANE" ||
       input == "DEUTERATED-METHANE" || input == "DEUTERATED METHANE" ||
       input == "DEUTERIUM METHANE" || input == "CD4") {
-    gasname = "CD4";
-    return true;
-  }
-  // BF3
-  if (input == "BF3" || input == "BORON-TRIFLUORIDE" ||
+    return "CD4";
+  } else if (input == "BF3" || input == "BORON-TRIFLUORIDE" ||
       input == "BORON TRIFLUORIDE") {
-    gasname = "BF3";
-    return true;
-  }
-  // C2H2F4 (and C2HF5).
-  if (input == "C2HF5" || input == "C2H2F4" || input == "C2F5H" ||
+    return "BF3";
+  } else if (input == "C2HF5" || input == "C2H2F4" || input == "C2F5H" ||
       input == "C2F4H2" || input == "FREON 134" || input == "FREON 134A" ||
       input == "FREON-134" || input == "FREON-134-A" || input == "FREON 125" ||
       input == "ZYRON 125" || input == "FREON-125" || input == "ZYRON-125" ||
       input == "TETRAFLUOROETHANE" || input == "PENTAFLUOROETHANE") {
-    gasname = "C2H2F4";
-    return true;
-  }
-  // TMA
-  if (input == "TMA" || input == "TRIMETHYLAMINE" || input == "N(CH3)3" ||
+    // C2H2F4 (and C2HF5).
+    return "C2H2F4";
+  } else if (input == "TMA" || input == "TRIMETHYLAMINE" || input == "N(CH3)3" ||
       input == "N-(CH3)3") {
-    gasname = "TMA";
-    return true;
-  }
-  // CHF3
-  if (input == "CHF3" || input == "FREON-23" || input == "TRIFLUOROMETHANE" ||
+    return "TMA";
+  } else if (input == "CHF3" || input == "FREON-23" || input == "TRIFLUOROMETHANE" ||
       input == "FLUOROFORM") {
-    gasname = "CHF3";
-    return true;
-  }
-  // CF3Br
-  if (input == "CF3BR" || input == "TRIFLUOROBROMOMETHANE" ||
+    return "CHF3";
+  } else if (input == "CF3BR" || input == "TRIFLUOROBROMOMETHANE" ||
       input == "BROMOTRIFLUOROMETHANE" || input == "HALON-1301" ||
       input == "HALON 1301" || input == "FREON-13B1" || input == "FREON 13BI") {
-    gasname = "CF3Br";
-    return true;
-  }
-  // C3F8
-  if (input == "C3F8" || input == "OCTAFLUOROPROPANE" || input == "R218" ||
+    return "CF3Br";
+  } else if (input == "C3F8" || input == "OCTAFLUOROPROPANE" || input == "R218" ||
       input == "R-218" || input == "FREON 218" || input == "FREON-218" ||
       input == "PERFLUOROPROPANE" || input == "RC 218" || input == "PFC 218" ||
       input == "RC-218" || input == "PFC-218" || input == "FLUTEC PP30" ||
       input == "GENETRON 218") {
-    gasname = "C3F8";
-    return true;
-  }
-  // Ozone
-  if (input == "OZONE" || input == "O3") {
-    gasname = "O3";
-    return true;
-  }
-  // Mercury
-  if (input == "MERCURY" || input == "HG" || input == "HG2") {
-    gasname = "Hg";
-    return true;
-  }
-  // H2S
-  if (input == "H2S" || input == "HYDROGEN SULPHIDE" || input == "SEWER GAS" ||
+    return "C3F8";
+  } else if (input == "OZONE" || input == "O3") {
+    return "O3";
+  } else if (input == "MERCURY" || input == "HG" || input == "HG2") {
+    return "Hg";
+  } else if (input == "H2S" || input == "HYDROGEN SULPHIDE" || input == "SEWER GAS" ||
       input == "HYDROGEN-SULPHIDE" || input == "SEWER-GAS" ||
       input == "HYDROGEN SULFIDE" || input == "HEPATIC ACID" ||
       input == "HYDROGEN-SULFIDE" || input == "HEPATIC-ACID" ||
@@ -2071,342 +2155,183 @@ bool MediumGas::GetGasName(std::string input, std::string& gasname) const {
       input == "DIHYDROGEN-MONOSULPHIDE" || input == "SULPHUR-HYDRIDE" ||
       input == "STINK DAMP" || input == "SULFURATED HYDROGEN" ||
       input == "STINK-DAMP" || input == "SULFURATED-HYDROGEN") {
-    gasname = "H2S";
-    return true;
-  }
-  // n-Butane
-  if (input == "N-BUTANE" || input == "N-C4H10" || input == "NBUTANE" ||
+    return "H2S";
+  } else if (input == "N-BUTANE" || input == "N-C4H10" || input == "NBUTANE" ||
       input == "NC4H10") {
-    gasname = "nC4H10";
-    return true;
-  }
-  // n-Pentane
-  if (input == "N-PENTANE" || input == "N-C5H12" || input == "NPENTANE" ||
+    return "nC4H10";
+  } else if (input == "N-PENTANE" || input == "N-C5H12" || input == "NPENTANE" ||
       input == "NC5H12") {
-    gasname = "nC5H12";
-    return true;
-  }
-  // Nitrogen
-  if (input == "NI-PHELPS" || input == "NI PHELPS" ||
+    return "nC5H12";
+  } else if (input == "NI-PHELPS" || input == "NI PHELPS" ||
       input == "NITROGEN-PHELPS" || input == "NITROGEN PHELPHS" ||
       input == "N2-PHELPS" || input == "N2 PHELPS" || input == "N2 (PHELPS)") {
-    gasname = "N2 (Phelps)";
-    return true;
-  }
-  // Germane, GeH4
-  if (input == "GERMANE" || input == "GERM" || input == "GERMANIUM-HYDRIDE" ||
+    // Nitrogen
+    return "N2 (Phelps)";
+  } else if (input == "GERMANE" || input == "GERM" || input == "GERMANIUM-HYDRIDE" ||
       input == "GERMANIUM HYDRIDE" || input == "GERMANIUM TETRAHYDRIDE" ||
       input == "GERMANIUM-TETRAHYDRIDE" || input == "GERMANOMETHANE" ||
       input == "MONOGERMANE" || input == "GEH4") {
-    gasname = "GeH4";
-    return true;
-  }
-  // Silane, SiH4
-  if (input == "SILANE" || input == "SIL" || input == "SILICON-HYDRIDE" ||
-      input == "SILICON HYDRIDE" || input == "SILICON-TETRAHYDRIDE" ||
-      input == "SILICANE" || input == "MONOSILANE" || input == "SIH4") {
-    gasname = "SiH4";
-    return true;
+    return "GeH4";
+  } else if (input == "SILANE" || input == "SIL" || input == "SILICON-HYDRIDE" ||
+             input == "SILICON HYDRIDE" || input == "SILICON-TETRAHYDRIDE" ||
+             input == "SILICANE" || input == "MONOSILANE" || input == "SIH4") {
+    return "SiH4";
   }
 
-  std::cerr << m_className << "::GetGasName:\n";
-  std::cerr << "    Gas " << input << " is not defined.\n";
-  return false;
+  std::cerr << m_className << "::GetGasName:\n"
+            << "    Gas " << input << " is not recognized.\n";
+  return "";
 }
 
-bool MediumGas::GetGasNumberGasFile(const std::string& input,
-                                    int& number) const {
-  if (input == "") {
-    number = 0;
-    return false;
-  }
+int MediumGas::GetGasNumberGasFile(const std::string& input) const {
 
-  // CF4
+  if (input.empty()) return 0;
+
   if (input == "CF4") {
-    number = 1;
-    return true;
-  }
-  // Argon
-  if (input == "Ar") {
-    number = 2;
-    return true;
-  }
-  // Helium 4
-  if (input == "He" || input == "He-4") {
-    number = 3;
-    return true;
-  }
-  // Helium 3
-  if (input == "He-3") {
-    number = 4;
-    return true;
-  }
-  // Neon
-  if (input == "Ne") {
-    number = 5;
-    return true;
-  }
-  // Krypton
-  if (input == "Kr") {
-    number = 6;
-    return true;
-  }
-  // Xenon
-  if (input == "Xe") {
-    number = 7;
-    return true;
-  }
-  // Methane
-  if (input == "CH4") {
-    number = 8;
-    return true;
-  }
-  // Ethane
-  if (input == "C2H6") {
-    number = 9;
-    return true;
-  }
-  // Propane
-  if (input == "C3H8") {
-    number = 10;
-    return true;
-  }
-  // Isobutane
-  if (input == "iC4H10") {
-    number = 11;
-    return true;
-  }
-  // Carbon dioxide (CO2)
-  if (input == "CO2") {
-    number = 12;
-    return true;
-  }
-  // Neopentane
-  if (input == "neoC5H12") {
-    number = 13;
-    return true;
-  }
-  // Water
-  if (input == "H2O") {
-    number = 14;
-    return true;
-  }
-  // Oxygen
-  if (input == "O2") {
-    number = 15;
-    return true;
-  }
-  // Nitrogen
-  if (input == "N2") {
-    number = 16;
-    return true;
-  }
-  // Nitric oxide (NO)
-  if (input == "NO") {
-    number = 17;
-    return true;
-  }
-  // Nitrous oxide (N2O)
-  if (input == "N2O") {
-    number = 18;
-    return true;
-  }
-  // Ethene (C2H4)
-  if (input == "C2H4") {
-    number = 19;
-    return true;
-  }
-  // Acetylene (C2H2)
-  if (input == "C2H2") {
-    number = 20;
-    return true;
-  }
-  // Hydrogen
-  if (input == "H2") {
-    number = 21;
-    return true;
-  }
-  // Deuterium
-  if (input == "D2") {
-    number = 22;
-    return true;
-  }
-  // Carbon monoxide (CO)
-  if (input == "CO") {
-    number = 23;
-    return true;
-  }
-  // Methylal (dimethoxymethane, CH3-O-CH2-O-CH3, "hot" version)
-  if (input == "Methylal") {
-    number = 24;
-    return true;
-  }
-  // DME
-  if (input == "DME") {
-    number = 25;
-    return true;
-  }
-  // Reid step
-  if (input == "Reid-Step") {
-    number = 26;
-    return true;
-  }
-  // Maxwell model
-  if (input == "Maxwell-Model") {
-    number = 27;
-    return true;
-  }
-  // Reid ramp
-  if (input == "Reid-Ramp") {
-    number = 28;
-    return true;
-  }
-  // C2F6
-  if (input == "C2F6") {
-    number = 29;
-    return true;
-  }
-  // SF6
-  if (input == "SF6") {
-    number = 30;
-    return true;
-  }
-  // NH3
-  if (input == "NH3") {
-    number = 31;
-    return true;
-  }
-  // Propene
-  if (input == "C3H6") {
-    number = 32;
-    return true;
-  }
-  // Cyclopropane
-  if (input == "cC3H6") {
-    number = 33;
-    return true;
-  }
-  // Methanol
-  if (input == "CH3OH") {
-    number = 34;
-    return true;
-  }
-  // Ethanol
-  if (input == "C2H5OH") {
-    number = 35;
-    return true;
-  }
-  // Propanol
-  if (input == "C3H7OH") {
-    number = 36;
-    return true;
-  }
-  // Cesium / Caesium.
-  if (input == "Cs") {
-    number = 37;
-    return true;
-  }
-  // Fluorine
-  if (input == "F2") {
-    number = 38;
-    return true;
-  }
-  // CS2
-  if (input == "CS2") {
-    number = 39;
-    return true;
-  }
-  // COS
-  if (input == "COS") {
-    number = 40;
-    return true;
-  }
-  // Deuterated methane
-  if (input == "CD4") {
-    number = 41;
-    return true;
-  }
-  // BF3
-  if (input == "BF3") {
-    number = 42;
-    return true;
-  }
-  // C2HF5 and C2H2F4.
-  if (input == "C2HF5" || input == "C2H2F4") {
-    number = 43;
-    return true;
-  }
-  // TMA
-  if (input == "TMA") {
-    number = 44;
-    return true;
-  }
-  // CHF3
-  if (input == "CHF3") {
-    number = 50;
-    return true;
-  }
-  // CF3Br
-  if (input == "CF3Br") {
-    number = 51;
-    return true;
-  }
-  // C3F8
-  if (input == "C3F8") {
-    number = 52;
-    return true;
-  }
-  // Ozone
-  if (input == "O3") {
-    number = 53;
-    return true;
-  }
-  // Mercury
-  if (input == "Hg") {
-    number = 54;
-    return true;
-  }
-  // H2S
-  if (input == "H2S") {
-    number = 55;
-    return true;
-  }
-  // n-butane
-  if (input == "nC4H10") {
-    number = 56;
-    return true;
-  }
-  // n-pentane
-  if (input == "nC5H12") {
-    number = 57;
-    return true;
-  }
-  // Nitrogen
-  if (input == "N2 (Phelps)") {
-    number = 58;
-    return true;
-  }
-  // Germane, GeH4
-  if (input == "GeH4") {
-    number = 59;
-    return true;
-  }
-  // Silane, SiH4
-  if (input == "SiH4") {
-    number = 60;
-    return true;
+    return 1;
+  } else if (input == "Ar") {
+    return 2;
+  } else if (input == "He" || input == "He-4") {
+    return 3;
+  } else if (input == "He-3") {
+    return 4;
+  } else if (input == "Ne") {
+    return 5;
+  } else if (input == "Kr") {
+    return 6;
+  } else if (input == "Xe") {
+    return 7;
+  } else if (input == "CH4") {
+    // Methane
+    return 8;
+  } else if (input == "C2H6") {
+    // Ethane
+    return 9;
+  } else if (input == "C3H8") {
+    // Propane
+    return 10;
+  } else if (input == "iC4H10") {
+    // Isobutane
+    return 11;
+  } else if (input == "CO2") {
+    return 12;
+  } else if (input == "neoC5H12") {
+    // Neopentane
+    return 13;
+  } else if (input == "H2O") {
+    return 14;
+  } else if (input == "O2") {
+    return 15;
+  } else if (input == "N2") {
+    return 16;
+  } else if (input == "NO") {
+    // Nitric oxide
+    return 17;
+  } else if (input == "N2O") {
+    // Nitrous oxide
+    return 18;
+  } else if (input == "C2H4") {
+    // Ethene
+    return 19;
+  } else if (input == "C2H2") {
+    // Acetylene
+    return 20;
+  } else if (input == "H2") {
+    return 21;
+  } else if (input == "D2") {
+    // Deuterium
+    return 22;
+  } else if (input == "CO") {
+    return 23;
+  } else if (input == "Methylal") {
+    // Methylal (dimethoxymethane, CH3-O-CH2-O-CH3, "hot" version)
+    return 24;
+  } else if (input == "DME") {
+    return 25;
+  } else if (input == "Reid-Step") {
+    return 26;
+  } else if (input == "Maxwell-Model") {
+    return 27;
+  } else if (input == "Reid-Ramp") {
+    return 28;
+  } else if (input == "C2F6") {
+    return 29;
+  } else if (input == "SF6") {
+    return 30;
+  } else if (input == "NH3") {
+    return 31;
+  } else if (input == "C3H6") {
+    // Propene
+    return 32;
+  } else if (input == "cC3H6") {
+    // Cyclopropane
+    return 33;
+  } else if (input == "CH3OH") {
+    // Methanol
+    return 34;
+  } else if (input == "C2H5OH") {
+    // Ethanol
+    return 35;
+  } else if (input == "C3H7OH") {
+    // Propanol
+    return 36;
+  } else if (input == "Cs") {
+    return 37;
+  } else if (input == "F2") {
+    // Fluorine
+    return 38;
+  } else if (input == "CS2") {
+    return 39;
+  } else if (input == "COS") {
+    return 40;
+  } else if (input == "CD4") {
+    // Deuterated methane
+    return 41;
+  } else if (input == "BF3") {
+    return 42;
+  } else if (input == "C2HF5" || input == "C2H2F4") {
+    return 43;
+  } else if (input == "TMA") {
+    return 44;
+  } else if (input == "CHF3") {
+    return 50;
+  } else if (input == "CF3Br") {
+    return 51;
+  } else if (input == "C3F8") {
+    return 52;
+  } else if (input == "O3") {
+    // Ozone
+    return 53;
+  } else if (input == "Hg") {
+    return 54;
+  } else if (input == "H2S") {
+    return 55;
+  } else if (input == "nC4H10") {
+    // n-butane
+    return 56;
+  } else if (input == "nC5H12") {
+    // n-pentane
+    return 57;
+  } else if (input == "N2 (Phelps)") {
+    return 58;
+  } else if (input == "GeH4") {
+    // Germane
+    return 59;
+  } else if (input == "SiH4") {
+    // Silane
+    return 60;
   }
 
-  std::cerr << m_className << "::GetGasNumberGasFile:\n";
-  std::cerr << "    Gas " << input << " is not defined.\n";
-  return false;
+  std::cerr << m_className << "::GetGasNumberGasFile:\n"
+            << "    Gas " << input << " not found.\n";
+  return 0;
 }
 
-bool MediumGas::GetPhotoabsorptionCrossSection(const double& e, double& sigma,
-                                               const unsigned int& i) {
+bool MediumGas::GetPhotoAbsorptionCrossSection(const double e, double& sigma,
+                                               const unsigned int i) {
   if (i >= m_nMaxGases) {
-    std::cerr << m_className << "::GetPhotoabsorptionCrossSection:\n";
-    std::cerr << "    Index (" << i << ") out of range.\n";
+    std::cerr << m_className 
+              << "::GetPhotoAbsorptionCrossSection: Index out of range.\n";
     return false;
   }
 

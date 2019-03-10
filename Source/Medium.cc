@@ -1438,6 +1438,23 @@ bool Medium::GetIonTransverseDiffusion(const unsigned int ie,
   return true;
 }
 
+void Medium::ResetTables() {
+  ResetElectronVelocity();
+  ResetElectronDiffusion();
+  ResetElectronTownsend();
+  ResetElectronAttachment();
+  ResetElectronLorentzAngle();
+  
+  ResetHoleVelocity();
+  ResetHoleDiffusion();
+  ResetHoleTownsend();
+  ResetHoleAttachment();
+ 
+  ResetIonMobility();
+  ResetIonDiffusion();
+  ResetIonDissociation();
+}
+
 bool Medium::GetIonDissociation(const unsigned int ie, const unsigned int ib,
                                 const unsigned int ia, double& diss) {
   diss = 0.;

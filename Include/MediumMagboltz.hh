@@ -56,21 +56,11 @@ class MediumMagboltz : public MediumGas {
   /// Switch off discrete photoabsorption levels.
   void DisableRadiationTrapping() { m_useRadTrap = false; }
 
-  /** Switch on simulation of Penning transfers by means of
-    * transfer probabilities, for all excitation levels in the mixture.
-    * \param r transfer probability [0, 1]
-    * \param lambda parameter for sampling the distance of the Penning electron
-             with respect to the excitation.
-    */
-  void EnablePenningTransfer(const double r, const double lambda);
-  /// Switch on simulation of Penning transfers by means of
-  /// transfer probabilities, for all excitations of a given component.
-  void EnablePenningTransfer(const double r, const double lambda,
-                             std::string gasname);
-  /// Switch the simulation of Penning transfers off globally.
-  void DisablePenningTransfer();
-  /// Switch the simulation of Penning transfers off for a given component.
-  void DisablePenningTransfer(std::string gasname);
+  bool EnablePenningTransfer(const double r, const double lambda) override;
+  bool EnablePenningTransfer(const double r, const double lambda,
+                             std::string gasname) override;
+  void DisablePenningTransfer() override;
+  bool DisablePenningTransfer(std::string gasname) override;
 
   /// Write the gas cross-section table to a file during the initialisation.
   void EnableCrossSectionOutput(const bool on = true) { m_useCsOutput = on; }
@@ -328,7 +318,7 @@ class MediumMagboltz : public MediumGas {
   // 3: excitation
   std::array<unsigned int, nCsTypesGamma> m_nPhotonCollisions;
 
-  bool GetGasNumberMagboltz(const std::string& input, int& number) const;
+  int GetGasNumberMagboltz(const std::string& input) const;
   bool Mixer(const bool verbose = false);
   void SetupGreenSawada();
   void SetScatteringParameters(const int model, const double parIn, double& cut,

@@ -203,6 +203,8 @@ class Medium {
   bool GetIonDissociation(const unsigned int ie, const unsigned int ib,
                           const unsigned int ia, double& diss);
 
+  virtual void ResetTables();
+
   void ResetElectronVelocity() {
     m_eVelocityE.clear();
     m_eVelocityB.clear();
