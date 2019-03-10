@@ -808,6 +808,14 @@ bool MediumGas::LoadGasFile(const std::string& filename) {
         if (!m_eTownsend.empty()) m_eTownsend[j][k][i] += logp;
         if (!m_eAttachment.empty()) m_eAttachment[j][k][i] += logp;
         if (!m_ionDissociation.empty()) m_ionDissociation[j][k][i] += logp;
+        /*
+        for (auto& exc : m_excRates) {
+          exc[j][k][i] /= m_pressureTable;
+        }
+        for (auto& ion : m_ionRates) {
+          ion[j][k][i] /= m_pressureTable;
+        }
+        */
       }
     }
   }

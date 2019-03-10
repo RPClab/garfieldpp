@@ -10,88 +10,107 @@ namespace Garfield {
 
 class Medium {
  public:
-  // Constructor
+  /// Constructor
   Medium();
-  // Destructor
+  /// Destructor
   virtual ~Medium();
 
-  // Return the id number of the class instance
+  /// Return the id number of the class instance.
   int GetId() const { return m_id; }
-  // Medium name/identifier
+  /// Get the medium name/identifier.
   const std::string& GetName() const { return m_name; }
+  /// Is this medium a gas?
   virtual bool IsGas() const { return false; }
+  /// Is this medium a semiconductor?
   virtual bool IsSemiconductor() const { return false; }
 
-  // Temperature [K]
+  /// Set the temperature [K].
   void SetTemperature(const double t);
+  /// Get the temperature [K].
   double GetTemperature() const { return m_temperature; }
-  // Pressure [Torr]
+  // Set the pressure [Torr].
   void SetPressure(const double p);
+  // Get the pressure [Torr].
   double GetPressure() const { return m_pressure; }
-  // Relative static dielectric constant
+  /// Set the relative static dielectric constant.
   void SetDielectricConstant(const double eps);
+  /// Get the relative static dielectric constant.
   double GetDielectricConstant() const { return m_epsilon; }
 
-  // Get number of components
+  /// Get number of components of the medium.
   unsigned int GetNumberOfComponents() const { return m_nComponents; }
+  /// Get the name and fraction of a given component.
   virtual void GetComponent(const unsigned int i, std::string& label,
                             double& f);
-  // Effective atomic number and weight
+  /// Set the effective atomic number.
   virtual void SetAtomicNumber(const double z);
+  /// Get the effective atomic number.
   virtual double GetAtomicNumber() const { return m_z; }
+  /// Set the effective atomic weight.
   virtual void SetAtomicWeight(const double a);
+  /// Get the effective atomic weight.
   virtual double GetAtomicWeight() const { return m_a; }
-  // Number density [cm-3] and mass density [g/cm3]
+  /// Set the number density [cm-3].
   virtual void SetNumberDensity(const double n);
+  /// Get the number density [cm-3].
   virtual double GetNumberDensity() const { return m_density; }
+  /// Set the mass density [g/cm3].
   virtual void SetMassDensity(const double rho);
+  /// Get the mass density [g/cm3].
   virtual double GetMassDensity() const;
 
-  // Transport properties
-  virtual void EnableDrift() { m_driftable = true; }
-  void DisableDrift() { m_driftable = false; }
+  /// Switch electron/ion/hole on/off.
+  virtual void EnableDrift(const bool on = true) { m_driftable = on; }
+  /// Make the medium ionisable.
   virtual void EnablePrimaryIonisation() { m_ionisable = true; }
+  /// Make the medium non-ionisable.
   void DisablePrimaryIonisation() { m_ionisable = false; }
 
+  /// Is charge carrier transport enabled in this medium?
   bool IsDriftable() const { return m_driftable; }
+  /// Does the medium have electron scattering rates?
   bool IsMicroscopic() const { return m_microscopic; }
+  /// Is charge deposition by charged particles/photon enabled in this medium?
   bool IsIonisable() const { return m_ionisable; }
 
-  // W value and Fano factor
+  /// Set the W value (average energy to produce an electron/ion or e/h pair).
   void SetW(const double w) { m_w = w; }
+  /// Get the W value.
   double GetW() { return m_w; }
+  /// Set the Fano factor.
   void SetFanoFactor(const double f) { m_fano = f; }
+  /// Get the Fano factor.
   double GetFanoFactor() { return m_fano; }
 
   // Transport parameters for electrons
-  // Drift velocity [cm / ns]
+  /// Drift velocity [cm / ns]
   virtual bool ElectronVelocity(const double ex, const double ey,
                                 const double ez, const double bx,
                                 const double by, const double bz, double& vx,
                                 double& vy, double& vz);
-  // Longitudinal and transverse diffusion coefficients [cm1/2]
+  /// Longitudinal and transverse diffusion coefficients [cm1/2]
   virtual bool ElectronDiffusion(const double ex, const double ey,
                                  const double ez, const double bx,
                                  const double by, const double bz, double& dl,
                                  double& dt);
-  // Diffusion tensor: diagonal elements are the diffusion
-  // coefficients [cm] along e, btrans, e x b,
-  // off-diagonal elements are the covariances
+  /// Diffusion tensor: diagonal elements are the diffusion
+  /// coefficients [cm] along e, btrans, e x b,
+  /// off-diagonal elements are the covariances
   virtual bool ElectronDiffusion(const double ex, const double ey,
                                  const double ez, const double bx,
                                  const double by, const double bz,
                                  double cov[3][3]);
-  // Ionisation coefficient [cm-1]
+  /// Ionisation coefficient [cm-1]
   virtual bool ElectronTownsend(const double ex, const double ey,
                                 const double ez, const double bx,
                                 const double by, const double bz,
                                 double& alpha);
-  // Attachment coefficient [cm-1]
+  /// Attachment coefficient [cm-1]
   virtual bool ElectronAttachment(const double ex, const double ey,
                                   const double ez, const double bx,
                                   const double by, const double bz,
                                   double& eta);
-  // Lorentz angle
+  /// Lorentz angle
   virtual bool ElectronLorentzAngle(const double ex, const double ey,
                                     const double ez, const double bx,
                                     const double by, const double bz,
@@ -99,17 +118,20 @@ class Medium {
 
   // Microscopic electron transport properties
 
-  // Dispersion relation (Energy vs. wave vector)
+  /// Dispersion relation (energy vs. wave vector)
   virtual double GetElectronEnergy(const double px, const double py,
                                    const double pz, double& vx, double& vy,
                                    double& vz, const int band = 0);
+  /// Sample the momentum vector for a given energy 
+  /// (only meaningful in semiconductors).
   virtual void GetElectronMomentum(const double e, double& px, double& py,
                                    double& pz, int& band);
 
-  // Null-collision rate [ns-1]
+  /// Null-collision rate [ns-1]
   virtual double GetElectronNullCollisionRate(const int band = 0);
-  // Collision rate [ns-1] for given electron energy
+  /// Collision rate [ns-1] for given electron energy
   virtual double GetElectronCollisionRate(const double e, const int band = 0);
+  /// Sample the collision type. Update energy and direction vector.
   virtual bool GetElectronCollision(
       const double e, int& type, int& level, double& e1, double& dx, double& dy,
       double& dz, std::vector<std::pair<int, double> >& secondaries, int& ndxc,
@@ -143,38 +165,48 @@ class Medium {
   virtual bool IonDiffusion(const double ex, const double ey, const double ez,
                             const double bx, const double by, const double bz,
                             double& dl, double& dt);
-  // Dissociation coefficient
+  /// Dissociation coefficient
   virtual bool IonDissociation(const double ex, const double ey,
                                const double ez, const double bx,
                                const double by, const double bz, double& diss);
 
-  // Set the range of fields to be covered by the transport tables.
+  /// Set the range of fields to be covered by the transport tables.
   void SetFieldGrid(double emin, double emax, const size_t ne, bool logE,
                     double bmin = 0., double bmax = 0., const size_t nb = 1,
                     double amin = 0., double amax = 0., const size_t na = 1);
+  /// Set the fields and E-B angles to be used in the transport tables.
   void SetFieldGrid(const std::vector<double>& efields,
                     const std::vector<double>& bfields,
                     const std::vector<double>& angles);
+  /// Get the fields and E-B angles used in the transport tables.
   void GetFieldGrid(std::vector<double>& efields, std::vector<double>& bfields,
                     std::vector<double>& angles);
 
+  /// Get an entry in the table of drift speeds along E.
   bool GetElectronVelocityE(const unsigned int ie, const unsigned int ib,
                             const unsigned int ia, double& v);
+  /// Get an entry in the table of drift speeds along ExB.
   bool GetElectronVelocityExB(const unsigned int ie, const unsigned int ib,
                               const unsigned int ia, double& v);
+  /// Get an entry in the table of drift speeds along Btrans.
   bool GetElectronVelocityB(const unsigned int ie, const unsigned int ib,
                             const unsigned int ia, double& v);
 
+  /// Get an entry in the table of longitudinal diffusion coefficients.
   bool GetElectronLongitudinalDiffusion(const unsigned int ie,
                                         const unsigned int ib,
                                         const unsigned int ia, double& dl);
+  /// Get an entry in the table of transverse diffusion coefficients.
   bool GetElectronTransverseDiffusion(const unsigned int ie,
                                       const unsigned int ib,
                                       const unsigned int ia, double& dt);
+  /// Get an entry in the table of Townsend coefficients.
   bool GetElectronTownsend(const unsigned int ie, const unsigned int ib,
                            const unsigned int ia, double& alpha);
+  /// Get an entry in the table of attachment coefficients.
   bool GetElectronAttachment(const unsigned int ie, const unsigned int ib,
                              const unsigned int ia, double& eta);
+  /// Get an entry in the table of Lorentz angles.
   bool GetElectronLorentzAngle(const unsigned int ie, const unsigned int ib,
                                const unsigned int ia, double& lor);
 
@@ -203,6 +235,7 @@ class Medium {
   bool GetIonDissociation(const unsigned int ie, const unsigned int ib,
                           const unsigned int ia, double& diss);
 
+  /// Reset all tables of transport parameters.
   virtual void ResetTables();
 
   void ResetElectronVelocity() {
@@ -244,8 +277,8 @@ class Medium {
   bool SetIonMobility(const std::vector<double>& fields,
                       const std::vector<double>& mobilities);
 
-  // Select extrapolation method for fields below/above the table range.
-  // Options are "constant"/"linear"/"exponential".
+  /// Select the extrapolation method for fields below/above the table range.
+  /// Possible options are "constant", "linear", and "exponential".
   void SetExtrapolationMethodVelocity(const std::string& extrLow,
                                       const std::string& extrHigh);
   void SetExtrapolationMethodDiffusion(const std::string& extrLow,
@@ -259,7 +292,7 @@ class Medium {
   void SetExtrapolationMethodIonDissociation(const std::string& extrLow,
                                              const std::string& extrHigh);
 
-  // Set the degree of polynomial interpolation (usually 2).
+  /// Set the degree of polynomial interpolation (usually 2).
   void SetInterpolationMethodVelocity(const unsigned int intrp);
   void SetInterpolationMethodDiffusion(const unsigned int intrp);
   void SetInterpolationMethodTownsend(const unsigned int intrp);
@@ -279,13 +312,13 @@ class Medium {
   virtual double ScaleDissociation(const double diss) const { return diss; }
 
   // Optical properties
-  // Energy range [eV] of available optical data
+  /// Get the energy range [eV] of the available optical data.
   virtual bool GetOpticalDataRange(double& emin, double& emax,
                                    const unsigned int i = 0);
-  // Complex dielectric function
+  /// Get the complex dielectric function at a given energy.
   virtual bool GetDielectricFunction(const double e, double& eps1, double& eps2,
                                      const unsigned int i = 0);
-  // Photoabsorption cross-section [cm2]
+  // Get the photoabsorption cross-section [cm2] at a given energy.
   virtual bool GetPhotoAbsorptionCrossSection(const double e, double& sigma,
                                               const unsigned int i = 0);
   virtual double GetPhotonCollisionRate(const double e);
@@ -293,7 +326,7 @@ class Medium {
                                   double& e1, double& ctheta, int& nsec,
                                   double& esec);
 
-  // Switch on/off debugging  messages
+  /// Switch on/off debugging  messages
   void EnableDebugging() { m_debug = true; }
   void DisableDebugging() { m_debug = false; }
 
