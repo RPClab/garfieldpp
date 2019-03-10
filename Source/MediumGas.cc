@@ -1701,7 +1701,7 @@ bool MediumGas::GetGasInfo(const std::string& gasname, double& a,
   } else if (gasname == "C2H2") {
     a = 2 * 12.0107 + 2 * 1.00794;
     z = 2 * 6 + 2;
-  } else if (gasname == "H2" || gasname == "paraH2") {
+  } else if (gasname == "H2" || gasname == "paraH2") {
     a = 2 * 1.00794;
     z = 2;
   } else if (gasname == "D2") {
@@ -1741,7 +1741,7 @@ bool MediumGas::GetGasInfo(const std::string& gasname, double& a,
   } else if (gasname == "C2H5OH") {
     a = 2 * 12.0107 + 6 * 1.00794 + 15.9994;
     z = 2 * 6 + 6 + 8;
-  } else if (gasname == "C3H7OH" || gasname == "nC3H7OH") {
+  } else if (gasname == "C3H7OH" || gasname == "nC3H7OH") {
     a = 3 * 12.0107 + 8 * 1.00794 + 15.9994;
     z = 3 * 6 + 8 * 8;
   } else if (gasname == "Cs") {
@@ -2061,8 +2061,8 @@ std::string MediumGas::GetGasName(std::string input) const {
     return "C2H2";
   } else if (input == "H2" || input == "HYDROGEN") {
     return "H2";
-  } else if (input == "PARA H2" || input == "PARA-H2" ||
-             input == "PARAH2" || input == "PARA HYDROGEN" || 
+  } else if (input == "PARA H2" || input == "PARA-H2" ||
+             input == "PARAH2" || input == "PARA HYDROGEN" ||
              input == "PARA-HYDROGEN" || input == "PARAHYDROGEN") {
     return "paraH2";
   } else if (input == "D2" || input == "DEUTERIUM") {
@@ -2117,7 +2117,7 @@ std::string MediumGas::GetGasName(std::string input) const {
     return "C3H7OH";
   } else if (input == "NPROPANOL" || input == "N-PROPANOL" || 
              input == "1-PROPANOL" || input == "PROPYL ALCOHOL" ||
-             input == "PROPYL-ALCOHOL" || input == "N-PROPYL ALCOHOL" || 
+             input == "PROPYL-ALCOHOL" || input == "N-PROPYL ALCOHOL" ||
              input == "NC3H7OH" || input == "N-C3H7OH") {
     return "nC3H7OH"; 
   } else if (input == "CS" || input == "CESIUM" || input == "CAESIUM") {
