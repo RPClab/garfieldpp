@@ -1176,6 +1176,12 @@ int MediumMagboltz::GetGasNumberMagboltz(const std::string& input) const {
     return 43;
   } else if (input == "TMA") {
     return 44;
+  } else if (input == "paraH2") {
+    // Para hydrogen
+    return 45;
+  } else if (input == "nC3H7OH") {
+    // n-propanol
+    return 46;
   } else if (input == "CHF3") {
     return 50;
   } else if (input == "CF3Br") {

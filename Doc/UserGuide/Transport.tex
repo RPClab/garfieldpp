@@ -275,6 +275,12 @@ so-called ``user handles'' are available.
                                   double dx, double dy, double dz,
                                   bool hole));
 void UnsetUserHandleStep();
+void SetUserHandleCollision(void (*f)(double x, double y, double z, double     t,
+                                      int type, int level, Medium* m,
+                                      double e0, double e1,
+                                      double dx0, double dy0, double dz0,
+                                      double dx1, double dy1, double dz1));
+void UnsetUserHandleCollision();
 void SetUserHandleAttachment(void (*f)(double x, double y, double z,
                                        double t,
                                        int type, int level, Medium* m));
@@ -301,6 +307,8 @@ The parameters passed to this function are
   \item[hole]
   flag indicating whether the particle is an electron or a hole.
 \end{description}  
+The ``user handle'' function set via \texttt{SetUserHandleCollision} 
+is called every time a real collision (as opposed to a null collision) occurs.
 The ``user handle'' functions for attachment, ionisation, and inelastic collisions 
 are called each time a collision of the respective type occurs.  
 In this context, inelastic collisions also include excitations. 
@@ -315,6 +323,10 @@ The parameters passed to these functions are
   \item[m]
    a pointer to the current \texttt{Medium}. 
 \end{description}
+In the function set using \texttt{SetUserHandleCollision}, the energy 
+and the direction vector before and after the collision are available 
+in addition. 
+
 In the following example we want 
 all excitations which occur to undergo a special treatment. 
 \begin{lstlisting}
