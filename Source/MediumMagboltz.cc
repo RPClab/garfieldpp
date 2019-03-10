@@ -207,6 +207,14 @@ bool MediumMagboltz::EnablePenningTransfer(const double r,
     std::cout << m_className << "::EnablePenningTransfer:\n    "
               << "Updated Penning transfer parameters for " << nLevelsFound
               << " excitation cross-sections.\n";
+    if (nLevelsFound != m_excLevels.size() && !m_excLevels.empty()) {
+      std::cerr << m_className << "::EnablePenningTransfer:\n    Warning: "
+                << "mismatch between number of excitation cross-sections ("
+                << nLevelsFound << ")\n    and number of excitation rates in "
+                << "the gas table (" << m_excLevels.size() << ").\n    "
+                << "The gas table was probably calculated using a different "
+                << "version of Magboltz.\n";
+    }
   } else {
     std::cerr << m_className << "::EnablePenningTransfer:\n    "
               << "No excitation cross-sections in the present energy range.\n";
@@ -373,16 +381,20 @@ void MediumMagboltz::PrintGas() {
     if (!Initialise()) return;
   }
 
-  std::cout << m_className << "::PrintGas:\n";
+  std::cout << "    Electron cross-sections:\n";
+  int igas = -1; 
   for (unsigned int i = 0; i < m_nTerms; ++i) {
     // Collision type
     int type = m_csType[i] % nCsTypes;
-    int ngas = int(m_csType[i] / nCsTypes);
+    if (igas != int(m_csType[i] / nCsTypes)) {
+      igas = int(m_csType[i] / nCsTypes);
+      std::cout << "      " << m_gas[igas] << "\n";
+    }
     // Description (from Magboltz)
     // Threshold energy
-    double e = m_rgas[ngas] * m_energyLoss[i];
-    std::cout << "    Level " << i << ": " << m_description[i] << "\n";
-    std::cout << "        Type " << type;
+    double e = m_rgas[igas] * m_energyLoss[i];
+    std::cout << "        Level " << i << ": " << m_description[i] << "\n";
+    std::cout << "          Type " << type;
     if (type == ElectronCollisionTypeElastic) {
       std::cout << " (elastic)\n";
     } else if (type == ElectronCollisionTypeIonisation) {
@@ -402,19 +414,19 @@ void MediumMagboltz::PrintGas() {
     }
     if (type == ElectronCollisionTypeExcitation && m_usePenning &&
         e > m_minIonPot) {
-      std::cout << "        Penning transfer coefficient: " << m_rPenning[i]
-                << "\n";
+      std::cout << "          Penning transfer coefficient: " 
+                << m_rPenning[i] << "\n";
     } else if (type == ElectronCollisionTypeExcitation && m_useDeexcitation) {
       const int idxc = m_iDeexcitation[i];
       if (idxc < 0 || idxc >= (int)m_deexcitations.size()) {
-        std::cout << "        Deexcitation cascade not implemented.\n";
+        std::cout << "          Deexcitation cascade not implemented.\n";
         continue;
       }
       const auto& dxc = m_deexcitations[idxc];
       if (dxc.osc > 0.) {
-        std::cout << "        Oscillator strength: " << dxc.osc << "\n";
+        std::cout << "          Oscillator strength: " << dxc.osc << "\n";
       }
-      std::cout << "        Decay channels:\n";
+      std::cout << "          Decay channels:\n";
       const int nChannels = dxc.type.size();
       for (int j = 0; j < nChannels; ++j) {
         if (dxc.type[j] == DxcTypeRad) {

@@ -312,8 +312,8 @@ bool MediumGas::LoadGasFile(const std::string& filename) {
           gasfile.close();
           return false;
         } else {
-          std::cout << m_className << "::LoadGasFile:\n"
-                    << "    Version: " << version << "\n";
+          std::cout << m_className << "::LoadGasFile: Version " 
+                    << version << "\n";
         }
       } else if (strcmp(token, "GASOK") == 0) {
         // Get the GASOK bits indicating if a parameter
@@ -704,7 +704,6 @@ bool MediumGas::LoadGasFile(const std::string& filename) {
     gasfile.getline(line, 256);
     char* token = strtok(line, " :,%=\t");
     while (token) {
-      std::cout << "TOKEN: " << token << "\n";
       if (strcmp(token, "H") == 0) {
         token = strtok(NULL, " :,%=\t");
         for (int i = 0; i < 13; i++) {
@@ -1132,11 +1131,11 @@ void MediumGas::PrintGas() {
     std::cout << ")";
   }
   std::cout << "\n";
-  std::cout << "    Pressure:    " << m_pressure << " Torr\n";
-  std::cout << "    Temperature: " << m_temperature << " K\n";
-  std::cout << "    Gas file:\n";
-  std::cout << "      Pressure:    " << m_pressureTable << " Torr\n";
-  std::cout << "      Temperature: " << m_temperatureTable << " K\n";
+  std::cout << "    Pressure:    " << m_pressure << " Torr\n"
+            << "    Temperature: " << m_temperature << " K\n"
+            << "    Gas file:\n"
+            << "      Pressure:    " << m_pressureTable << " Torr\n"
+            << "      Temperature: " << m_temperatureTable << " K\n";
   if (m_eFields.size() > 1) {
     std::cout << "    Electric field range:  " << m_eFields[0] << " - "
               << m_eFields.back() << " V/cm in " << m_eFields.size() - 1
@@ -1151,16 +1150,16 @@ void MediumGas::PrintGas() {
               << m_bFields.back() << " T in " << m_bFields.size() - 1
               << " steps.\n";
   } else if (m_bFields.size() == 1) {
-    std::cout << "    Magnetic field:        " << m_bFields[0] << "\n";
+    std::cout << "    Magnetic field:        " << m_bFields[0] << " T\n";
   } else {
     std::cout << "    Magnetic field range: not set\n";
   }
   if (m_bAngles.size() > 1) {
     std::cout << "    Angular range:         " << m_bAngles[0] << " - "
-              << m_bAngles.back() << " in " << m_bAngles.size() - 1
+              << m_bAngles.back() << " rad in " << m_bAngles.size() - 1
               << " steps.\n";
   } else if (m_bAngles.size() == 1) {
-    std::cout << "    Angle between E and B: " << m_bAngles[0] << "\n";
+    std::cout << "    Angle between E and B: " << m_bAngles[0] << " rad\n";
   } else {
     std::cout << "    Angular range: not set\n";
   }
@@ -1175,8 +1174,8 @@ void MediumGas::PrintGas() {
   if (!m_eVelocityExB.empty()) {
     std::cout << "      Velocity along ExB\n";
   }
-  if (!m_eVelocityE.empty() || !m_eVelocityB.empty() ||
-      !m_eVelocityExB.empty()) {
+  if (!(m_eVelocityE.empty() && m_eVelocityB.empty() && 
+        m_eVelocityExB.empty())) {
     PrintExtrapolation(m_extrVel);
     std::cout << "        Interpolation order: " << m_intpVel << "\n";
   }
@@ -1210,11 +1209,23 @@ void MediumGas::PrintGas() {
   }
   if (!m_excRates.empty()) {
     std::cout << "      Excitation rates\n";
+    for (const auto& exc : m_excLevels) {
+      std::cout << "        " << exc.label << "\n";
+      std::cout << "          Energy = " << exc.energy << " eV";
+      if (exc.prob > 0.) {
+        std::cout << ", Penning transfer probability = " << exc.prob;
+      } 
+      std::cout << "\n";
+    }
     PrintExtrapolation(m_extrExcRates);
     std::cout << "        Interpolation order: " << m_intpExcRates << "\n";
   }
   if (!m_ionRates.empty()) {
     std::cout << "      Ionisation rates\n";
+    for (const auto& ion : m_ionLevels) {
+      std::cout << "        " << ion.label << "\n";
+      std::cout << "          Threshold = " << ion.energy << " eV\n";
+    }
     PrintExtrapolation(m_extrIonRates);
     std::cout << "        Interpolation order: " << m_intpIonRates << "\n";
   }
