@@ -1383,7 +1383,7 @@ bool MediumGas::EnablePenningTransfer(const double r,
   // Find the min. ionisation energy.
   if (m_ionLevels.empty()) {
     std::cerr << m_className << "::EnablePenningTransfer:\n    Warning: present"
-              << "gas table has no ionisation rates.\n    Ignore this message "
+              << " gas table has no ionisation rates.\n    Ignore this message "
               << "if you are using microscopic tracking only.\n";
     return true;
   }
@@ -1411,8 +1411,8 @@ bool MediumGas::EnablePenningTransfer(const double r,
     AdjustTownsendCoefficient();
   } else {
     std::cerr << m_className << "::EnablePenningTransfer:\n    Warning: present"
-              << "gas table has no eligible excitation rates.\n    Ignore this "
-              << "message if you are using microscopic tracking only.\n";
+              << " gas table has no eligible excitation rates.\n    Ignore this"
+              << " message if you are using microscopic tracking only.\n";
   }
   return true;
 }
@@ -1454,8 +1454,8 @@ bool MediumGas::EnablePenningTransfer(const double r, const double lambda,
   // Find the min. ionisation energy.
   if (m_ionLevels.empty()) {
     std::cerr << m_className << "::EnablePenningTransfer:\n    Warning: present"
-              << "gas table has no ionisation rates.\n    Ignore this message "
-              << "if you are using microscopic tracking only.\n";
+              << " gas table has no ionisation rates.\n    Ignore this message"
+              << " if you are using microscopic tracking only.\n";
     return true;
   }
   double minIonPot = -1.;
@@ -1486,8 +1486,8 @@ bool MediumGas::EnablePenningTransfer(const double r, const double lambda,
     AdjustTownsendCoefficient();
   } else {
     std::cerr << m_className << "::EnablePenningTransfer:\n    Warning: present"
-              << "gas table has no eligible excitation rates.\n    Ignore this "
-              << "message if you are using microscopic tracking only.\n";
+              << " gas table has no eligible excitation rates.\n    Ignore this"
+              << " message if you are using microscopic tracking only.\n";
   }
   return true;
 }
