@@ -3442,16 +3442,16 @@ void MediumMagboltz::GenerateGasTable(const int numColl, const bool verbose) {
   const unsigned int nEfields = m_eFields.size();
   const unsigned int nBfields = m_bFields.size();
   const unsigned int nAngles = m_bAngles.size();
-  InitTable(nEfields, nBfields, nAngles, m_eVelocityE, 0.);
-  InitTable(nEfields, nBfields, nAngles, m_eVelocityB, 0.);
-  InitTable(nEfields, nBfields, nAngles, m_eVelocityExB, 0.);
-  InitTable(nEfields, nBfields, nAngles, m_eDiffLong, 0.);
-  InitTable(nEfields, nBfields, nAngles, m_eDiffTrans, 0.);
-  InitTable(nEfields, nBfields, nAngles, m_eLorentzAngle, 0.);
-  InitTable(nEfields, nBfields, nAngles, m_eTownsend, -30.);
-  InitTable(nEfields, nBfields, nAngles, m_eTownsendNoPenning, -30.);
-  InitTable(nEfields, nBfields, nAngles, m_eAttachment, -30.);
-  InitTensor(nEfields, nBfields, nAngles, 6, m_eDiffTens, 0.);
+  InitTable(nEfields, nBfields, nAngles, m_eVelE, 0.);
+  InitTable(nEfields, nBfields, nAngles, m_eVelB, 0.);
+  InitTable(nEfields, nBfields, nAngles, m_eVelX, 0.);
+  InitTable(nEfields, nBfields, nAngles, m_eDifL, 0.);
+  InitTable(nEfields, nBfields, nAngles, m_eDifT, 0.);
+  InitTable(nEfields, nBfields, nAngles, m_eLor, 0.);
+  InitTable(nEfields, nBfields, nAngles, m_eAlp, -30.);
+  InitTable(nEfields, nBfields, nAngles, m_eAlpNoPenning, -30.);
+  InitTable(nEfields, nBfields, nAngles, m_eAtt, -30.);
+  InitTensor(nEfields, nBfields, nAngles, 6, m_eDifM, 0.);
 
   m_excRates.clear();
   m_ionRates.clear();
@@ -3483,17 +3483,17 @@ void MediumMagboltz::GenerateGasTable(const int numColl, const bool verbose) {
         RunMagboltz(e, b, a, numColl, verbose, vx, vy, vz, difl, dift, alpha,
                     eta, lor, vxerr, vyerr, vzerr, diflerr, difterr, alphaerr,
                     etaerr, lorerr, alphatof, difftens);
-        m_eVelocityE[j][k][i] = vz;
-        m_eVelocityExB[j][k][i] = vy;
-        m_eVelocityB[j][k][i] = vx;
-        m_eDiffLong[j][k][i] = difl;
-        m_eDiffTrans[j][k][i] = dift;
-        m_eLorentzAngle[j][k][i] = lor;
-        m_eTownsend[j][k][i] = alpha > 0. ? log(alpha) : -30.;
-        m_eTownsendNoPenning[j][k][i] = alpha > 0. ? log(alpha) : -30.;
-        m_eAttachment[j][k][i] = eta > 0. ? log(eta) : -30.;
+        m_eVelE[j][k][i] = vz;
+        m_eVelX[j][k][i] = vy;
+        m_eVelB[j][k][i] = vx;
+        m_eDifL[j][k][i] = difl;
+        m_eDifT[j][k][i] = dift;
+        m_eLor[j][k][i] = lor;
+        m_eAlp[j][k][i] = alpha > 0. ? log(alpha) : -30.;
+        m_eAlpNoPenning[j][k][i] = alpha > 0. ? log(alpha) : -30.;
+        m_eAtt[j][k][i] = eta > 0. ? log(eta) : -30.;
         for (unsigned int l = 0; l < 6; ++l) {
-          m_eDiffTens[l][j][k][i] = difftens[l];
+          m_eDifM[l][j][k][i] = difftens[l];
         }
         // If not done yet, retrieve the excitation and ionisation levels.
         if (m_excLevels.empty() && m_ionLevels.empty()) {

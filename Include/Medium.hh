@@ -184,93 +184,133 @@ class Medium {
 
   /// Get an entry in the table of drift speeds along E.
   bool GetElectronVelocityE(const unsigned int ie, const unsigned int ib,
-                            const unsigned int ia, double& v);
+                            const unsigned int ia, double& v) {
+    return GetEntry(ie, ib, ia, "GetElectronVelocityE", m_eVelE, v);
+  }
   /// Get an entry in the table of drift speeds along ExB.
   bool GetElectronVelocityExB(const unsigned int ie, const unsigned int ib,
-                              const unsigned int ia, double& v);
+                              const unsigned int ia, double& v) {
+    return GetEntry(ie, ib, ia, "GetElectronVelocityExB", m_eVelX, v);
+  }
   /// Get an entry in the table of drift speeds along Btrans.
   bool GetElectronVelocityB(const unsigned int ie, const unsigned int ib,
-                            const unsigned int ia, double& v);
-
+                            const unsigned int ia, double& v) {
+    return GetEntry(ie, ib, ia, "GetElectronVelocityB", m_eVelB, v);
+  }
   /// Get an entry in the table of longitudinal diffusion coefficients.
   bool GetElectronLongitudinalDiffusion(const unsigned int ie,
                                         const unsigned int ib,
-                                        const unsigned int ia, double& dl);
+                                        const unsigned int ia, double& dl) {
+    return GetEntry(ie, ib, ia, "GetElectronLongitudinalDiffusion", 
+                    m_eDifL, dl);
+  }
   /// Get an entry in the table of transverse diffusion coefficients.
   bool GetElectronTransverseDiffusion(const unsigned int ie,
                                       const unsigned int ib,
-                                      const unsigned int ia, double& dt);
+                                      const unsigned int ia, double& dt) {
+    return GetEntry(ie, ib, ia, "GetElectronTransverseDiffusion", 
+                    m_eDifT, dt);
+  }
   /// Get an entry in the table of Townsend coefficients.
   bool GetElectronTownsend(const unsigned int ie, const unsigned int ib,
-                           const unsigned int ia, double& alpha);
+                           const unsigned int ia, double& alpha) {
+    return GetEntry(ie, ib, ia, "GetElectronTownsend", m_eAlp, alpha);
+  }
   /// Get an entry in the table of attachment coefficients.
   bool GetElectronAttachment(const unsigned int ie, const unsigned int ib,
-                             const unsigned int ia, double& eta);
+                             const unsigned int ia, double& eta) {
+    return GetEntry(ie, ib, ia, "GetElectronAttachment", m_eAtt, eta);
+  }
+ 
   /// Get an entry in the table of Lorentz angles.
   bool GetElectronLorentzAngle(const unsigned int ie, const unsigned int ib,
-                               const unsigned int ia, double& lor);
+                               const unsigned int ia, double& lor) {
+    return GetEntry(ie, ib, ia, "GetElectronLorentzAngle", m_eLor, lor);
+  }
 
   bool GetHoleVelocityE(const unsigned int ie, const unsigned int ib,
-                        const unsigned int ia, double& v);
+                        const unsigned int ia, double& v) {
+    return GetEntry(ie, ib, ia, "GetHoleVelocityE", m_hVelE, v);
+  }
   bool GetHoleVelocityExB(const unsigned int ie, const unsigned int ib,
-                          const unsigned int ia, double& v);
+                          const unsigned int ia, double& v) {
+    return GetEntry(ie, ib, ia, "GetHoleVelocityExB", m_hVelX, v);
+  }
   bool GetHoleVelocityB(const unsigned int ie, const unsigned int ib,
-                        const unsigned int ia, double& v);
+                        const unsigned int ia, double& v) {
+    return GetEntry(ie, ib, ia, "GetHoleVelocityB", m_hVelB, v);
+  }
   bool GetHoleLongitudinalDiffusion(const unsigned int ie,
                                     const unsigned int ib,
-                                    const unsigned int ia, double& dl);
+                                    const unsigned int ia, double& dl) {
+    return GetEntry(ie, ib, ia, "GetHoleLongitudinalDiffusion", m_hDifL, dl);
+  }
   bool GetHoleTransverseDiffusion(const unsigned int ie, const unsigned int ib,
-                                  const unsigned int ia, double& dt);
+                                  const unsigned int ia, double& dt) {
+    return GetEntry(ie, ib, ia, "GetHoleTransverseDiffusion", m_hDifT, dt);
+  }
   bool GetHoleTownsend(const unsigned int ie, const unsigned int ib,
-                       const unsigned int ia, double& alpha);
+                       const unsigned int ia, double& alpha) {
+    return GetEntry(ie, ib, ia, "GetHoleTownsend", m_hAlp, alpha);
+  }
   bool GetHoleAttachment(const unsigned int ie, const unsigned int ib,
-                         const unsigned int ia, double& eta);
+                         const unsigned int ia, double& eta) {
+    return GetEntry(ie, ib, ia, "GetHoleAttachment", m_hAtt, eta);
+  }
 
   bool GetIonMobility(const unsigned int ie, const unsigned int ib,
-                      const unsigned int ia, double& mu);
+                      const unsigned int ia, double& mu) {
+    return GetEntry(ie, ib, ia, "GetIonMobility", m_iMob, mu);
+  }
   bool GetIonLongitudinalDiffusion(const unsigned int ie, const unsigned int ib,
-                                   const unsigned int ia, double& dl);
+                                   const unsigned int ia, double& dl) {
+    return GetEntry(ie, ib, ia, "GetIonLongitudinalDiffusion", m_iDifL, dl);
+  } 
   bool GetIonTransverseDiffusion(const unsigned int ie, const unsigned int ib,
-                                 const unsigned int ia, double& dt);
+                                 const unsigned int ia, double& dt) {
+    return GetEntry(ie, ib, ia, "GetIonTransverseDiffusion", m_iDifT, dt);
+  }
   bool GetIonDissociation(const unsigned int ie, const unsigned int ib,
-                          const unsigned int ia, double& diss);
+                          const unsigned int ia, double& diss) {
+    return GetEntry(ie, ib, ia, "GetIonDissociation", m_iDis, diss);
+  }
 
   /// Reset all tables of transport parameters.
   virtual void ResetTables();
 
   void ResetElectronVelocity() {
-    m_eVelocityE.clear();
-    m_eVelocityB.clear();
-    m_eVelocityExB.clear();
+    m_eVelE.clear();
+    m_eVelB.clear();
+    m_eVelX.clear();
   }
   void ResetElectronDiffusion() {
-    m_eDiffLong.clear();
-    m_eDiffTrans.clear();
-    m_eDiffTens.clear();
+    m_eDifL.clear();
+    m_eDifT.clear();
+    m_eDifM.clear();
   }
-  void ResetElectronTownsend() { m_eTownsend.clear(); }
-  void ResetElectronAttachment() { m_eAttachment.clear(); }
-  void ResetElectronLorentzAngle() { m_eLorentzAngle.clear(); }
+  void ResetElectronTownsend() { m_eAlp.clear(); }
+  void ResetElectronAttachment() { m_eAtt.clear(); }
+  void ResetElectronLorentzAngle() { m_eLor.clear(); }
 
   void ResetHoleVelocity() {
-    m_hVelocityE.clear();
-    m_hVelocityB.clear();
-    m_hVelocityExB.clear();
+    m_hVelE.clear();
+    m_hVelB.clear();
+    m_hVelX.clear();
   }
   void ResetHoleDiffusion() {
-    m_hDiffLong.clear();
-    m_hDiffTrans.clear();
-    m_hDiffTens.clear();
+    m_hDifL.clear();
+    m_hDifT.clear();
+    m_hDifM.clear();
   }
-  void ResetHoleTownsend() { m_hTownsend.clear(); }
-  void ResetHoleAttachment() { m_hAttachment.clear(); }
+  void ResetHoleTownsend() { m_hAlp.clear(); }
+  void ResetHoleAttachment() { m_hAtt.clear(); }
 
-  void ResetIonMobility() { m_ionMobility.clear(); }
+  void ResetIonMobility() { m_iMob.clear(); }
   void ResetIonDiffusion() {
-    m_ionDiffLong.clear();
-    m_ionDiffTrans.clear();
+    m_iDifL.clear();
+    m_iDifT.clear();
   }
-  void ResetIonDissociation() { m_ionDissociation.clear(); }
+  void ResetIonDissociation() { m_iDis.clear(); }
 
   bool SetIonMobility(const unsigned int ie, const unsigned int ib,
                       const unsigned int ia, const double mu);
@@ -376,62 +416,82 @@ class Medium {
   std::vector<double> m_bAngles;
 
   // Tables of transport parameters
-  bool m_map2d = false;
+  bool m_tab2d = false;
   // Electrons
-  std::vector<std::vector<std::vector<double> > > m_eVelocityE;
-  std::vector<std::vector<std::vector<double> > > m_eVelocityExB;
-  std::vector<std::vector<std::vector<double> > > m_eVelocityB;
-  std::vector<std::vector<std::vector<double> > > m_eDiffLong;
-  std::vector<std::vector<std::vector<double> > > m_eDiffTrans;
-  std::vector<std::vector<std::vector<double> > > m_eTownsend;
-  std::vector<std::vector<std::vector<double> > > m_eAttachment;
-  std::vector<std::vector<std::vector<double> > > m_eLorentzAngle;
+  std::vector<std::vector<std::vector<double> > > m_eVelE;
+  std::vector<std::vector<std::vector<double> > > m_eVelX;
+  std::vector<std::vector<std::vector<double> > > m_eVelB;
+  std::vector<std::vector<std::vector<double> > > m_eDifL;
+  std::vector<std::vector<std::vector<double> > > m_eDifT;
+  std::vector<std::vector<std::vector<double> > > m_eAlp;
+  std::vector<std::vector<std::vector<double> > > m_eAtt;
+  std::vector<std::vector<std::vector<double> > > m_eLor;
 
-  std::vector<std::vector<std::vector<std::vector<double> > > > m_eDiffTens;
+  std::vector<std::vector<std::vector<std::vector<double> > > > m_eDifM;
 
   // Holes
-  std::vector<std::vector<std::vector<double> > > m_hVelocityE;
-  std::vector<std::vector<std::vector<double> > > m_hVelocityExB;
-  std::vector<std::vector<std::vector<double> > > m_hVelocityB;
-  std::vector<std::vector<std::vector<double> > > m_hDiffLong;
-  std::vector<std::vector<std::vector<double> > > m_hDiffTrans;
-  std::vector<std::vector<std::vector<double> > > m_hTownsend;
-  std::vector<std::vector<std::vector<double> > > m_hAttachment;
+  std::vector<std::vector<std::vector<double> > > m_hVelE;
+  std::vector<std::vector<std::vector<double> > > m_hVelX;
+  std::vector<std::vector<std::vector<double> > > m_hVelB;
+  std::vector<std::vector<std::vector<double> > > m_hDifL;
+  std::vector<std::vector<std::vector<double> > > m_hDifT;
+  std::vector<std::vector<std::vector<double> > > m_hAlp;
+  std::vector<std::vector<std::vector<double> > > m_hAtt;
 
-  std::vector<std::vector<std::vector<std::vector<double> > > > m_hDiffTens;
+  std::vector<std::vector<std::vector<std::vector<double> > > > m_hDifM;
 
   // Ions
-  std::vector<std::vector<std::vector<double> > > m_ionMobility;
-  std::vector<std::vector<std::vector<double> > > m_ionDiffLong;
-  std::vector<std::vector<std::vector<double> > > m_ionDiffTrans;
-  std::vector<std::vector<std::vector<double> > > m_ionDissociation;
+  std::vector<std::vector<std::vector<double> > > m_iMob;
+  std::vector<std::vector<std::vector<double> > > m_iDifL;
+  std::vector<std::vector<std::vector<double> > > m_iDifT;
+  std::vector<std::vector<std::vector<double> > > m_iDis;
 
   // Thresholds for Townsend, attachment and dissociation coefficients.
-  int thrElectronTownsend = 0;
-  int thrElectronAttachment = 0;
-
-  int thrHoleTownsend = 0;
-  int thrHoleAttachment = 0;
-  int thrIonDissociation = 0;
+  unsigned int m_eThrAlp = 0;
+  unsigned int m_eThrAtt = 0;
+  unsigned int m_hThrAlp = 0;
+  unsigned int m_hThrAtt = 0;
+  unsigned int m_iThrDis = 0;
 
   // Extrapolation methods (TODO: enum).
   std::pair<unsigned int, unsigned int> m_extrVel = {0, 1};
-  std::pair<unsigned int, unsigned int> m_extrDiff = {0, 1};
-  std::pair<unsigned int, unsigned int> m_extrTownsend = {0, 1};
-  std::pair<unsigned int, unsigned int> m_extrAttachment = {0, 1};
-  std::pair<unsigned int, unsigned int> m_extrLorentzAngle = {0, 1};
-  std::pair<unsigned int, unsigned int> m_extrMobility = {0, 1};
-  std::pair<unsigned int, unsigned int> m_extrDissociation = {0, 1};
+  std::pair<unsigned int, unsigned int> m_extrDif = {0, 1};
+  std::pair<unsigned int, unsigned int> m_extrAlp = {0, 1};
+  std::pair<unsigned int, unsigned int> m_extrAtt = {0, 1};
+  std::pair<unsigned int, unsigned int> m_extrLor = {0, 1};
+  std::pair<unsigned int, unsigned int> m_extrMob = {0, 1};
+  std::pair<unsigned int, unsigned int> m_extrDis = {0, 1};
 
   // Interpolation methods
   unsigned int m_intpVel = 2;
-  unsigned int m_intpDiff = 2;
-  unsigned int m_intpTownsend = 2;
-  unsigned int m_intpAttachment = 2;
-  unsigned int m_intpLorentzAngle = 2;
-  unsigned int m_intpMobility = 2;
-  unsigned int m_intpDissociation = 2;
+  unsigned int m_intpDif = 2;
+  unsigned int m_intpAlp = 2;
+  unsigned int m_intpAtt = 2;
+  unsigned int m_intpLor = 2;
+  unsigned int m_intpMob = 2;
+  unsigned int m_intpDis = 2;
 
+  bool Velocity(const double ex, const double ey, const double ez,
+                const double bx, const double by, const double bz,
+                const std::vector<std::vector<std::vector<double> > >& velE,
+                const std::vector<std::vector<std::vector<double> > >& velB,
+                const std::vector<std::vector<std::vector<double> > >& velX,
+                const double q, double& vx, double& vy, double& vz) const;
+  bool Diffusion(const double ex, const double ey, const double ez,
+                 const double bx, const double by, const double bz,
+                 const std::vector<std::vector<std::vector<double> > >& difL,
+                 const std::vector<std::vector<std::vector<double> > >& difT,
+                 double& dl, double& dt) const;
+  bool Diffusion(const double ex, const double ey, const double ez,
+    const double bx, const double by, const double bz,
+    const std::vector<std::vector<std::vector<std::vector<double> > > >& diff,
+    double cov[3][3]) const;
+  bool Alpha(const double ex, const double ey, const double ez,
+             const double bx, const double by, const double bz,
+             const std::vector<std::vector<std::vector<double> > >& tab,
+             unsigned int intp, const unsigned int thr, 
+             const std::pair<unsigned int, unsigned int>& extr, 
+             double& alpha) const; 
   double GetAngle(const double ex, const double ey, const double ez,
                   const double bx, const double by, const double bz,
                   const double e, const double b) const;
@@ -444,18 +504,24 @@ class Medium {
                        const std::vector<double>& fields,
                        const unsigned int intpMeth,
                        const std::pair<unsigned int, unsigned int>& extr) const;
+
+  bool GetEntry(const unsigned int i, const unsigned int j, 
+                const unsigned int k, const std::string& fcn, 
+                const std::vector<std::vector<std::vector<double> > >& tab,
+                double& val) const;
+
   void SetExtrapolationMethod(const std::string& low, const std::string& high,
                               std::pair<unsigned int, unsigned int>& extr,
                               const std::string& fcn);
   bool GetExtrapolationIndex(std::string str, unsigned int& nb) const;
 
-  void CloneTable(std::vector<std::vector<std::vector<double> > >& tab,
-                  const std::vector<double>& efields,
-                  const std::vector<double>& bfields,
-                  const std::vector<double>& angles, const unsigned int intp,
-                  const std::pair<unsigned int, unsigned int>& extr,
-                  const double init, const std::string& label);
-  void CloneTensor(
+  void Clone(std::vector<std::vector<std::vector<double> > >& tab,
+             const std::vector<double>& efields,
+             const std::vector<double>& bfields,
+             const std::vector<double>& angles, const unsigned int intp,
+             const std::pair<unsigned int, unsigned int>& extr,
+             const double init, const std::string& label);
+  void Clone(
       std::vector<std::vector<std::vector<std::vector<double> > > >& tab,
       const unsigned int n, const std::vector<double>& efields,
       const std::vector<double>& bfields, const std::vector<double>& angles,

@@ -77,12 +77,20 @@ class MediumGas : public Medium {
 
   void ResetTables() override;
 
-  void SetExtrapolationMethodExcitationRates(const std::string& extrLow,
-                                             const std::string& extrHigh);
-  void SetExtrapolationMethodIonisationRates(const std::string& extrLow,
-                                             const std::string& extrHigh);
-  void SetInterpolationMethodExcitationRates(const int intrp);
-  void SetInterpolationMethodIonisationRates(const int intrp);
+  void SetExtrapolationMethodExcitationRates(const std::string& low,
+                                             const std::string& high) {
+    SetExtrapolationMethod(low, high, m_extrExc, "ExcitationRates");
+  }
+  void SetExtrapolationMethodIonisationRates(const std::string& low,
+                                             const std::string& high) {
+    SetExtrapolationMethod(low, high, m_extrIon, "IonisationRates");
+  }
+  void SetInterpolationMethodExcitationRates(const unsigned int intrp) {
+    if (intrp > 0) m_intpExc = intrp;
+  }
+  void SetInterpolationMethodIonisationRates(const unsigned int intrp) {
+    if (intrp > 0) m_intpIon = intrp;
+  }
 
   // Scaling laws.
   // TODO: cache scaling factors.
@@ -138,7 +146,7 @@ class MediumGas : public Medium {
   double m_temperatureTable;
 
   // Table of Townsend coefficients without Penning transfer
-  std::vector<std::vector<std::vector<double> > > m_eTownsendNoPenning;
+  std::vector<std::vector<std::vector<double> > > m_eAlpNoPenning;
 
   // Tables for excitation and ionisation rates
   std::vector<std::vector<std::vector<std::vector<double> > > > m_excRates;
@@ -161,10 +169,10 @@ class MediumGas : public Medium {
   std::vector<IonLevel> m_ionLevels;
 
   // Extrapolation/interpolation for excitation and ionisation rates.
-  std::pair<unsigned int, unsigned int> m_extrExcRates = {0, 1};
-  std::pair<unsigned int, unsigned int> m_extrIonRates = {0, 1};
-  unsigned int m_intpExcRates = 2;
-  unsigned int m_intpIonRates = 2;
+  std::pair<unsigned int, unsigned int> m_extrExc = {0, 1};
+  std::pair<unsigned int, unsigned int> m_extrIon = {0, 1};
+  unsigned int m_intpExc = 2;
+  unsigned int m_intpIon = 2;
 
   bool GetGasInfo(const std::string& gasname, double& a, double& z) const;
   std::string GetGasName(const int gasnumber, const int version) const;
