@@ -3449,7 +3449,7 @@ void MediumMagboltz::GenerateGasTable(const int numColl, const bool verbose) {
   InitTable(nEfields, nBfields, nAngles, m_eDifT, 0.);
   InitTable(nEfields, nBfields, nAngles, m_eLor, 0.);
   InitTable(nEfields, nBfields, nAngles, m_eAlp, -30.);
-  InitTable(nEfields, nBfields, nAngles, m_eAlpNoPenning, -30.);
+  InitTable(nEfields, nBfields, nAngles, m_eAlp0, -30.);
   InitTable(nEfields, nBfields, nAngles, m_eAtt, -30.);
   InitTensor(nEfields, nBfields, nAngles, 6, m_eDifM, 0.);
 
@@ -3490,7 +3490,7 @@ void MediumMagboltz::GenerateGasTable(const int numColl, const bool verbose) {
         m_eDifT[j][k][i] = dift;
         m_eLor[j][k][i] = lor;
         m_eAlp[j][k][i] = alpha > 0. ? log(alpha) : -30.;
-        m_eAlpNoPenning[j][k][i] = alpha > 0. ? log(alpha) : -30.;
+        m_eAlp0[j][k][i] = alpha > 0. ? log(alpha) : -30.;
         m_eAtt[j][k][i] = eta > 0. ? log(eta) : -30.;
         for (unsigned int l = 0; l < 6; ++l) {
           m_eDifM[l][j][k][i] = difftens[l];

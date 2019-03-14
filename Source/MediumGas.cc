@@ -7,6 +7,7 @@
 #include <iomanip>
 #include <iostream>
 #include <sstream>
+#include <numeric>
 
 #include "FundamentalConstants.hh"
 #include "GarfieldConstants.hh"
@@ -58,6 +59,51 @@ void PrintExtrapolation(const std::pair<unsigned int, unsigned int>& extr) {
   else
     std::cout << " unknown\n";
 }
+
+void PrintAbsentInNew(const std::string& par) {
+  std::cout << "    Warning: The " << par << " is absent in the dataset "
+            << "to be added; data reset.\n";
+}
+
+void PrintAbsentInExisting(const std::string& par) {
+  std::cout << "    Warning: The " << par << " is absent in the existing data; "
+            << "new data not used.\n";
+}
+
+bool Similar(const double v1, const double v2, const double eps) {
+  const double dif = v1 - v2;
+  const double sum = fabs(v1) + fabs(v2);
+  return fabs(dif) < std::max(eps * sum, Garfield::Small);
+} 
+
+int Equal(const std::vector<double>& fields1, 
+          const std::vector<double>& fields2, const double eps) {
+  if (fields1.size() != fields2.size()) return 0;
+  const unsigned int n = fields1.size();
+  for (unsigned int i = 0; i < n; ++i) {
+    if (!Similar(fields1[i], fields2[i], eps)) return 0;
+  }
+  return 1;
+}
+
+int FindIndex(const double field, const std::vector<double>& fields,
+              const double eps) {
+
+  const int n = fields.size();
+  for (int i = 0; i < n; ++i) {
+    if (Similar(field, fields[i], eps)) return i;
+  }
+  return -1;
+}
+
+void ResizeA(std::vector<std::vector<std::vector<double> > >& tab,
+             const int ne, const int nb, const int na) {
+  if (tab.empty()) return;
+  tab.resize(na, 
+             std::vector<std::vector<double> >(nb, 
+                                               std::vector<double>(ne, 0.)));
+}
+
 }
 
 namespace Garfield {
@@ -261,6 +307,11 @@ double MediumGas::GetAtomicNumber() const {
 }
 
 bool MediumGas::LoadGasFile(const std::string& filename) {
+
+  // -----------------------------------------------------------------------
+  //    GASGET
+  // -----------------------------------------------------------------------
+
   std::ifstream gasfile;
   // Open the file.
   gasfile.open(filename.c_str());
@@ -272,31 +323,265 @@ bool MediumGas::LoadGasFile(const std::string& filename) {
   }
   std::cout << m_className << "::LoadGasFile: Reading " << filename << ".\n";
 
-  // GASOK bits
-  std::string gasBits = "";
-
-  // Gas composition
-  constexpr int nMagboltzGases = 60;
-  std::array<double, nMagboltzGases> mixture;
-  mixture.fill(0.);
-
-  int nE = 1;
-  int nB = 1;
-  int nA = 1;
-
-  int version = 12;
-
   ResetTables();
 
   // Start reading the data.
-  if (m_debug) std::cout << m_className << "::LoadGasFile: Header...\n";
-  bool atTables = false;
-  while (!atTables) {
+  if (m_debug) std::cout << m_className << "::LoadGasFile: Reading header.\n";
+  int version = 12;
+  // GASOK bits
+  std::bitset<20> gasok;
+  // Gas composition
+  constexpr int nMagboltzGases = 60;
+  std::vector<double> mixture(nMagboltzGases, 0.);
+  if (!ReadHeader(gasfile, version, gasok, m_tab2d, mixture, 
+                  m_eFields, m_bFields, m_bAngles, m_excLevels, m_ionLevels)) {
+    gasfile.close();
+    return false;
+  }
+  std::cout << m_className << "::LoadGasFile: Version " << version << "\n";
+
+  // Check the gas mixture.
+  std::vector<std::string> gasnames;
+  std::vector<double> percentages;
+  if (!GetMixture(mixture, version, gasnames, percentages)) {
+    std::cerr << m_className << "::LoadGasFile:\n    "
+              << "Cannot determine the gas composition.\n";
+    gasfile.close();
+    return false;
+  }
+
+  m_name = "";
+  m_nComponents = gasnames.size();
+  for (unsigned int i = 0; i < m_nComponents; ++i) {
+    if (i > 0) m_name += "/";
+    m_name += gasnames[i];
+    m_gas[i] = gasnames[i];
+    m_fraction[i] = percentages[i] / 100.;
+    GetGasInfo(m_gas[i], m_atWeight[i], m_atNum[i]);
+  }
+  std::cout << m_className << "::LoadGasFile:\n"
+            << "    Gas composition set to " << m_name;
+  if (m_nComponents > 1) {
+    std::cout << " (" << m_fraction[0] * 100;
+    for (unsigned int i = 1; i < m_nComponents; ++i) {
+      std::cout << "/" << m_fraction[i] * 100;
+    }
+    std::cout << ")";
+  }
+  std::cout << "\n";
+
+  const int nE = m_eFields.size();
+  const int nB = m_bFields.size();
+  const int nA = m_bAngles.size();
+  if (m_debug) {
+    std::cout << m_className << "::LoadGasFile:\n    " << nE
+              << " electric fields, " << nB
+              << " magnetic fields, " << nA << " angles.\n";
+  }
+
+  // Decode the GASOK bits.
+  // GASOK(I)   : .TRUE. if present
+  // (1)  electron drift velocity || E
+  // (2)  ion mobility,
+  // (3)  longitudinal diffusion || E
+  // (4)  Townsend coefficient,
+  // (5)  cluster size distribution.
+  // (6)  attachment coefficient,
+  // (7)  Lorentz angle,
+  // (8)  transverse diffusion || ExB and Bt
+  // (9)  electron drift velocity || Bt
+  // (10) electron drift velocity || ExB
+  // (11) diffusion tensor
+  // (12) ion dissociation
+  // (13) allocated for SRIM data (not used)
+  // (14) allocated for HEED data (not used)
+  // (15) excitation rates
+  // (16) ionisation rates
+
+  if (gasok[0]) InitTable(nE, nB, nA, m_eVelE, 0.);
+  if (gasok[1]) InitTable(nE, nB, nA, m_iMob, 0.);
+  if (gasok[2]) InitTable(nE, nB, nA, m_eDifL, 0.);
+  if (gasok[3]) {
+    InitTable(nE, nB, nA, m_eAlp, -30.);
+    InitTable(nE, nB, nA, m_eAlp0, -30.);
+  }
+  if (gasok[5]) InitTable(nE, nB, nA, m_eAtt, -30.);
+  if (gasok[6]) InitTable(nE, nB, nA, m_eLor, -30.);
+  if (gasok[7]) InitTable(nE, nB, nA, m_eDifT, 0.);
+  if (gasok[8]) InitTable(nE, nB, nA, m_eVelB, 0.);
+  if (gasok[9]) InitTable(nE, nB, nA, m_eVelX, 0.);
+  if (gasok[10]) InitTensor(nE, nB, nA, 6, m_eDifM, 0.);
+  if (gasok[11]) InitTable(nE, nB, nA, m_iDis, -30.);
+  if (gasok[14]) InitTensor(nE, nB, nA, m_excLevels.size(), m_excRates, 0.);
+  if (gasok[15]) InitTensor(nE, nB, nA, m_ionLevels.size(), m_ionRates, 0.);
+
+  // Force re-initialisation of collision rates etc.
+  m_isChanged = true;
+
+  if (m_debug) {
+    const std::string fmt = m_tab2d ? "3D" : "1D";
+    std::cout << m_className << "::LoadGasFile: Reading " << fmt << " table.\n";
+  }
+
+  // Drift velocity along E, Bt and ExB
+  double ve = 0., vb = 0., vx = 0.;
+  // Lorentz angle
+  double lor = 0.;
+  // Longitudinal and transverse diffusion coefficients
+  double dl = 0., dt = 0.;
+  // Townsend and attachment coefficients
+  double alpha = 0., alpha0 = 0., eta = 0.;
+  // Ion mobility and dissociation coefficient
+  double mu = 0., dis = 0.;
+  // Diffusion tensor.
+  std::array<double, 6> diff;
+  // Excitation and ionization rates.
+  const unsigned int nexc = m_excLevels.size();
+  std::vector<double> rexc(nexc, 0.);
+  const unsigned int nion = m_ionLevels.size();
+  std::vector<double> rion(nion, 0.);
+  for (int i = 0; i < nE; i++) {
+    for (int j = 0; j < nA; j++) {
+      for (int k = 0; k < nB; k++) {
+        if (m_tab2d) {
+          ReadRecord3D(gasfile, ve, vb, vx, dl, dt, alpha, alpha0, eta, mu, 
+                       lor, dis, diff, rexc, rion);
+        } else {
+          ReadRecord1D(gasfile, ve, vb, vx, dl, dt, alpha, alpha0, eta, mu, 
+                       lor, dis, diff, rexc, rion);
+        }
+        if (!m_eVelE.empty()) m_eVelE[j][k][i] = ve;
+        if (!m_eVelB.empty()) m_eVelB[j][k][i] = vb;
+        if (!m_eVelX.empty()) m_eVelX[j][k][i] = vx;
+        if (!m_eDifL.empty()) m_eDifL[j][k][i] = dl;
+        if (!m_eDifT.empty()) m_eDifT[j][k][i] = dt;
+        if (!m_eAlp.empty()) {
+          m_eAlp[j][k][i] = alpha;
+          m_eAlp0[j][k][i] = alpha0;
+        }
+        if (!m_eAtt.empty()) m_eAtt[j][k][i] = eta;
+        if (!m_iMob.empty()) m_iMob[j][k][i] = mu;
+        if (!m_eLor.empty()) m_eLor[j][k][i] = lor;
+        if (!m_iDis.empty()) m_iDis[j][k][i] = dis;
+        if (!m_eDifM.empty()) {
+          for (int l = 0; l < 6; l++) {
+            m_eDifM[l][j][k][i] = diff[l];
+          }
+        }
+        if (!m_excRates.empty()) {
+          for (unsigned int l = 0; l < nexc; ++l) {
+            m_excRates[l][j][k][i] = rexc[l];
+          }
+        }
+        if (!m_ionRates.empty()) {
+          for (unsigned int l = 0; l < nion; ++l) {
+            m_ionRates[l][j][k][i] = rion[l];
+          }
+        }
+      }
+    }
+  }
+
+  // Extrapolation methods
+  std::array<unsigned int, 13> extrapH = {{0}};
+  std::array<unsigned int, 13> extrapL = {{1}};
+  // Interpolation methods
+  std::array<unsigned int, 13> interp = {{2}};
+  // Ion diffusion coefficients.
+  double ionDiffL = 0.;
+  double ionDiffT = 0.;
+  // Gas pressure [Torr] and temperature [K].
+  double pgas = 0.;
+  double tgas = 0.;
+  // Moving on to the file footer
+  gasfile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+  if (m_debug) std::cout << m_className << "::LoadGasFile: Reading footer.\n";
+  ReadFooter(gasfile, extrapH, extrapL, interp, 
+             m_eThrAlp, m_eThrAtt, m_iThrDis, ionDiffL, ionDiffT, pgas, tgas);
+  gasfile.close();
+
+  // Set the reference pressure and temperature.
+  if (pgas > 0.) m_pressure = m_pressureTable = pgas;
+  if (tgas > 0.) m_temperature = m_temperatureTable = tgas;
+
+  // Multiply the E/p values by the pressure.
+  for (auto& field : m_eFields) field *= m_pressureTable;
+
+  // Scale the parameters.
+  const double sqrp = sqrt(m_pressureTable);
+  const double logp = log(m_pressureTable);
+  for (int i = nE; i--;) {
+    for (int j = nA; j--;) {
+      for (int k = nB; k--;) {
+        if (!m_eDifL.empty()) m_eDifL[j][k][i] /= sqrp;
+        if (!m_eDifT.empty()) m_eDifT[j][k][i] /= sqrp;
+        if (!m_eDifM.empty()) {
+          for (int l = 6; l--;) m_eDifM[l][j][k][i] /= m_pressureTable;
+        }
+        if (!m_eAlp.empty()) {
+          m_eAlp[j][k][i] += logp;
+          m_eAlp0[j][k][i] += logp;
+        }
+        if (!m_eAtt.empty()) m_eAtt[j][k][i] += logp;
+        if (!m_iDis.empty()) m_iDis[j][k][i] += logp;
+        /*
+        for (auto& exc : m_excRates) {
+          exc[j][k][i] /= m_pressureTable;
+        }
+        for (auto& ion : m_ionRates) {
+          ion[j][k][i] /= m_pressureTable;
+        }
+        */
+      }
+    }
+  }
+
+  // Decode the extrapolation and interpolation tables.
+  m_extrVel = {extrapL[0], extrapH[0]};
+  // Indices 1 and 2 correspond to velocities along Bt and ExB.
+  m_extrDif = {extrapL[3], extrapH[3]};
+  m_extrAlp = {extrapL[4], extrapH[4]};
+  m_extrAtt = {extrapL[5], extrapH[5]};
+  m_extrMob = {extrapL[6], extrapH[6]};
+  m_extrLor = {extrapL[7], extrapH[7]};
+  // Index 8: transverse diffusion.
+  m_extrDis = {extrapL[9], extrapH[9]};
+  // Index 10: diff. tensor
+  m_extrExc = {extrapL[11], extrapH[11]};
+  m_extrIon = {extrapL[12], extrapH[12]};
+  m_intpVel = interp[0];
+  m_intpDif = interp[3];
+  m_intpAlp = interp[4];
+  m_intpAtt = interp[5];
+  m_intpMob = interp[6];
+  m_intpLor = interp[7];
+  m_intpDis = interp[9];
+  m_intpExc = interp[11];
+  m_intpIon = interp[12];
+
+  // Ion diffusion
+  if (ionDiffL > 0.) InitTable(nE, nB, nA, m_iDifL, ionDiffL);
+  if (ionDiffT > 0.) InitTable(nE, nB, nA, m_iDifT, ionDiffT);
+
+  if (m_debug) std::cout << m_className << "::LoadGasFile: Done.\n";
+
+  return true;
+}
+
+bool MediumGas::ReadHeader(std::ifstream& gasfile, int& version,
+  std::bitset<20>& gasok, bool& is3d, std::vector<double>& mixture,
+  std::vector<double>& efields, std::vector<double>& bfields, 
+  std::vector<double>& angles, std::vector<ExcLevel>& excLevels,
+  std::vector<IonLevel>& ionLevels) {
+
+  gasok.reset();
+  bool done = false;
+  while (!done) {
     char line[256];
     gasfile.getline(line, 256);
     if (strncmp(line, " The gas tables follow:", 8) == 0 ||
         strncmp(line, "The gas tables follow:", 7) == 0) {
-      atTables = true;
+      done = true;
       break;
     }
     char* token = strtok(line, " :,%");
@@ -306,22 +591,27 @@ bool MediumGas::LoadGasFile(const std::string& filename) {
         version = atoi(token);
         // Check the version number.
         if (version != 10 && version != 11 && version != 12) {
-          std::cerr << m_className << "::LoadGasFile:\n"
+          std::cerr << m_className << "::ReadHeader:\n"
                     << "    The file has version number " << version << ".\n"
                     << "    Files written in this format cannot be read.\n";
-          gasfile.close();
           return false;
-        } else {
-          std::cout << m_className << "::LoadGasFile: Version " 
-                    << version << "\n";
         }
       } else if (strcmp(token, "GASOK") == 0) {
         // Get the GASOK bits indicating if a parameter
         // is present in the table (T) or not (F).
         token = strtok(NULL, " :,%\t");
         token = strtok(NULL, " :,%\t");
-        gasBits += token;
-        if (m_debug) std::cout << "    GASOK bits: " << gasBits << "\n";
+        std::string okstr(token);
+        if (m_debug) std::cout << "    GASOK bits: " << okstr << "\n";
+        if (okstr.size() < 20) {
+          std::cerr << m_className << "::ReadHeader:\n"
+                    << "    Unexpected size of GASOK string (" 
+                    << okstr.size() << ").\n";
+          return false;
+        }
+        for (unsigned int i = 0; i < 20; ++i) {
+          if (okstr[i] == 'T') gasok.set(i);
+        }
       } else if (strcmp(token, "Identifier") == 0) {
         // Get the identification string.
         std::string identifier = "";
@@ -331,43 +621,37 @@ bool MediumGas::LoadGasFile(const std::string& filename) {
       } else if (strcmp(token, "Dimension") == 0) {
         token = strtok(NULL, " :,%\t");
         if (strcmp(token, "F") == 0) {
-          m_tab2d = false;
+          is3d = false;
         } else {
-          m_tab2d = true;
+          is3d = true;
         }
         token = strtok(NULL, " :,%\t");
-        nE = atoi(token);
+        const int nE = atoi(token);
         // Check the number of E points.
         if (nE <= 0) {
-          std::cerr << m_className << "::LoadGasFile:\n"
+          std::cerr << m_className << "::ReadHeader:\n"
                     << "    Number of E fields out of range.\n";
-          gasfile.close();
           return false;
         }
         token = strtok(NULL, " :,%\t");
-        nA = atoi(token);
+        const int nA = atoi(token);
         // Check the number of angles.
-        if (m_tab2d && nA <= 0) {
-          std::cerr << m_className << "::LoadGasFile:\n"
+        if (is3d && nA <= 0) {
+          std::cerr << m_className << "::ReadHeader:\n"
                     << "    Number of E-B angles out of range.\n";
-          gasfile.close();
           return false;
         }
-
         token = strtok(NULL, " :,%\t");
-        nB = atoi(token);
+        const int nB = atoi(token);
         // Check the number of B points.
-        if (m_tab2d && nB <= 0) {
-          std::cerr << m_className << "::LoadGasFile:\n"
+        if (is3d && nB <= 0) {
+          std::cerr << m_className << "::ReadHeader:\n"
                     << "    Number of B fields out of range.\n";
-          gasfile.close();
           return false;
         }
-
-        m_eFields.resize(nE);
-        m_bFields.resize(nB);
-        m_bAngles.resize(nA);
-
+        efields.resize(nE);
+        angles.resize(nA);
+        bfields.resize(nB); 
         // Fill in the excitation/ionisation structs
         // Excitation
         token = strtok(NULL, " :,%\t");
@@ -381,25 +665,29 @@ bool MediumGas::LoadGasFile(const std::string& filename) {
         }
       } else if (strcmp(token, "E") == 0) {
         token = strtok(NULL, " :,%");
+        const int nE = efields.size();
         if (strcmp(token, "fields") == 0) {
-          for (int i = 0; i < nE; ++i) gasfile >> m_eFields[i];
+          for (int i = 0; i < nE; ++i) gasfile >> efields[i];
         }
       } else if (strcmp(token, "E-B") == 0) {
         token = strtok(NULL, " :,%");
+        const int nA = angles.size();
         if (strcmp(token, "angles") == 0) {
-          for (int i = 0; i < nA; ++i) gasfile >> m_bAngles[i];
+          for (int i = 0; i < nA; ++i) gasfile >> angles[i];
         }
       } else if (strcmp(token, "B") == 0) {
         token = strtok(NULL, " :,%");
         if (strcmp(token, "fields") == 0) {
           double bstore = 0.;
+          const int nB = angles.size();
           for (int i = 0; i < nB; i++) {
             gasfile >> bstore;
-            m_bFields[i] = bstore / 100.;
+            bfields[i] = bstore / 100.;
           }
         }
       } else if (strcmp(token, "Mixture") == 0) {
-        for (int i = 0; i < nMagboltzGases; ++i) {
+        const unsigned int nMagboltzGases = mixture.size();
+        for (unsigned int i = 0; i < nMagboltzGases; ++i) {
           gasfile >> mixture[i];
         }
       } else if (strcmp(token, "Excitation") == 0) {
@@ -427,7 +715,7 @@ bool MediumGas::LoadGasFile(const std::string& filename) {
             if (token) exc.dt = atof(token);
           }
         }
-        m_excLevels.push_back(std::move(exc));
+        excLevels.push_back(std::move(exc));
       } else if (strcmp(token, "Ionisation") == 0) {
         // Skip number.
         token = strtok(NULL, " :,%");
@@ -438,262 +726,80 @@ bool MediumGas::LoadGasFile(const std::string& filename) {
         // Get energy.
         token = strtok(NULL, " :,%");
         ion.energy = atof(token);
-        m_ionLevels.push_back(std::move(ion));
+        ionLevels.push_back(std::move(ion));
       }
       token = strtok(NULL, " :,%");
     }
   }
+  return true;
+}
 
-  // Decode the GASOK bits.
-  // GASOK(I)   : .TRUE. if present
-  // (1)  electron drift velocity || E
-  // (2)  ion mobility,
-  // (3)  longitudinal diffusion || E
-  // (4)  Townsend coefficient,
-  // (5)  cluster size distribution.
-  // (6)  attachment coefficient,
-  // (7)  Lorentz angle,
-  // (8)  transverse diffusion || ExB and Bt
-  // (9)  electron drift velocity || Bt
-  // (10) electron drift velocity || ExB
-  // (11) diffusion tensor
-  // (12) ion dissociation
-  // (13) allocated for SRIM data (not used)
-  // (14) allocated for HEED data (not used)
-  // (15) excitation rates
-  // (16) ionisation rates
+void MediumGas::ReadRecord3D(std::ifstream& gasfile, 
+  double& ve, double& vb, double& vx, double& dl, double& dt, 
+  double& alpha, double& alpha0, double& eta, double& mu, double& lor,
+  double& dis, std::array<double, 6>& dif, 
+  std::vector<double>& rexc, std::vector<double>& rion) {
 
-  if (m_debug) {
-    std::cout << m_className << "::LoadGasFile:\n    " << nE
-              << " electric fields, " << nB << " magnetic fields, " << nA
-              << " angles.\n    ";
-  }
-  if (gasBits[0] == 'T') InitTable(nE, nB, nA, m_eVelE, 0.);
-  if (gasBits[1] == 'T') InitTable(nE, nB, nA, m_iMob, 0.);
-  if (gasBits[2] == 'T') InitTable(nE, nB, nA, m_eDifL, 0.);
-  if (gasBits[3] == 'T') {
-    InitTable(nE, nB, nA, m_eAlp, -30.);
-    InitTable(nE, nB, nA, m_eAlpNoPenning, -30.);
-  }
-  // gasBits[4]: cluster size distribution; skipped
-  if (gasBits[5] == 'T') InitTable(nE, nB, nA, m_eAtt, -30.);
-  if (gasBits[6] == 'T') InitTable(nE, nB, nA, m_eLor, -30.);
-  if (gasBits[7] == 'T') InitTable(nE, nB, nA, m_eDifT, 0.);
-  if (gasBits[8] == 'T') InitTable(nE, nB, nA, m_eVelB, 0.);
-  if (gasBits[9] == 'T') InitTable(nE, nB, nA, m_eVelX, 0.);
-  if (gasBits[10] == 'T') InitTensor(nE, nB, nA, 6, m_eDifM, 0.);
-  if (gasBits[11] == 'T') InitTable(nE, nB, nA, m_iDis, -30.);
-  // gasBits[12]: SRIM; skipped
-  // gasBits[13]: HEED; skipped
-  if (gasBits[14] == 'T') {
-    InitTensor(nE, nB, nA, m_excLevels.size(), m_excRates, 0.);
-  }
-  if (gasBits[15] == 'T') {
-    InitTensor(nE, nB, nA, m_ionLevels.size(), m_ionRates, 0.);
-  }
+  // Drift velocity along E, Bt and ExB
+  gasfile >> ve >> vb >> vx;
+  // Convert from cm / us to cm / ns.
+  ve *= 1.e-3;
+  vb *= 1.e-3;
+  vx *= 1.e-3;
+  // Longitudinal and transverse diffusion coefficients
+  gasfile >> dl >> dt;
+  // Townsend and attachment coefficients
+  gasfile >> alpha >> alpha0 >> eta;
+  // Ion mobility
+  gasfile >> mu;
+  // Convert from cm2 / (V us) to cm2 / (V ns)
+  mu *= 1.e-3;
+  // Lorentz angle
+  gasfile >> lor;
+  // Ion dissociation
+  gasfile >> dis;
+  // Diffusion tensor
+  for (int l = 0; l < 6; l++) gasfile >> dif[l];
+  // Excitation rates
+  const unsigned int nexc = rexc.size();
+  for (unsigned int l = 0; l < nexc; ++l) gasfile >> rexc[l];
+  // Ionization rates
+  const unsigned int nion = rion.size();
+  for (unsigned int l = 0; l < nion; ++l) gasfile >> rion[l];
+}
 
-  // Check the gas mixture.
-  std::vector<std::string> gasnames;
-  std::vector<double> percentages;
-  bool gasMixOk = true;
-  unsigned int gasCount = 0;
-  for (int i = 0; i < nMagboltzGases; ++i) {
-    if (mixture[i] < Small) continue;
-    const std::string gasname = GetGasName(i + 1, version);
-    if (gasname.empty()) {
-      std::cerr << m_className << "::LoadGasFile:\n"
-                << "    Unknown gas (gas number " << i + 1 << ").\n";
-      gasMixOk = false;
-      break;
-    }
-    gasnames.push_back(gasname);
-    percentages.push_back(mixture[i]);
-    ++gasCount;
-  }
-  if (gasCount > m_nMaxGases) {
-    std::cerr << m_className << "::LoadGasFile:\n"
-              << "    Gas mixture has " << gasCount << " components.\n"
-              << "    Number of gases is limited to " << m_nMaxGases << ".\n";
-    gasMixOk = false;
-  } else if (gasCount == 0) {
-    std::cerr << m_className << "::LoadGasFile:\n"
-              << "    Gas mixture is not defined (zero components).\n";
-    gasMixOk = false;
-  }
-  double sum = 0.;
-  for (unsigned int i = 0; i < gasCount; ++i) sum += percentages[i];
-  if (gasMixOk && sum != 100.) {
-    std::cout << m_className << "::LoadGasFile:\n"
-              << "    Renormalizing the percentages.\n";
-    for (unsigned int i = 0; i < gasCount; ++i) percentages[i] *= 100. / sum;
-  }
+void MediumGas::ReadRecord1D(std::ifstream& gasfile, 
+  double& ve, double& vb, double& vx, double& dl, double& dt, 
+  double& alpha, double& alpha0, double& eta, double& mu, double& lor,
+  double& dis, std::array<double, 6>& dif, 
+  std::vector<double>& rexc, std::vector<double>& rion) {
 
-  // Force re-initialisation of collision rates etc.
-  m_isChanged = true;
+  double waste = 0.;
+  gasfile >> ve >> waste >> vb >> waste >> vx >> waste;
+  ve *= 1.e-3;
+  vb *= 1.e-3;
+  vx *= 1.e-3;
+  gasfile >> dl >> waste >> dt >> waste;
+  gasfile >> alpha >> waste >> alpha0 >> eta >> waste;
+  gasfile >> mu >> waste;
+  mu *= 1.e-3;
+  gasfile >> lor >> waste;
+  gasfile >> dis >> waste;
+  for (int j = 0; j < 6; j++) gasfile >> dif[j] >> waste;
+  const unsigned int nexc = rexc.size();
+  for (unsigned int j = 0; j < nexc; ++j) gasfile >> rexc[j] >> waste;
+  const unsigned int nion = rion.size();
+  for (unsigned int j = 0; j < nion; ++j) gasfile >> rion[j] >> waste;
+}
 
-  if (gasMixOk) {
-    m_name = "";
-    m_nComponents = gasCount;
-    for (unsigned int i = 0; i < m_nComponents; ++i) {
-      if (i > 0) m_name += "/";
-      m_name += gasnames[i];
-      m_gas[i] = gasnames[i];
-      m_fraction[i] = percentages[i] / 100.;
-      GetGasInfo(m_gas[i], m_atWeight[i], m_atNum[i]);
-    }
-    std::cout << m_className << "::LoadGasFile:\n"
-              << "    Gas composition set to " << m_name;
-    if (m_nComponents > 1) {
-      std::cout << " (" << m_fraction[0] * 100;
-      for (unsigned int i = 1; i < m_nComponents; ++i) {
-        std::cout << "/" << m_fraction[i] * 100;
-      }
-      std::cout << ")";
-    }
-    std::cout << "\n";
-  } else {
-    std::cerr << m_className << "::LoadGasFile:\n"
-              << "    Gas composition could not be established.\n";
-  }
+void MediumGas::ReadFooter(std::ifstream& gasfile,
+  std::array<unsigned int, 13>& extrapH,
+  std::array<unsigned int, 13>& extrapL,
+  std::array<unsigned int, 13>& interp, 
+  unsigned int& thrAlp, unsigned int& thrAtt, unsigned int& thrDis, 
+  double& ionDiffL, double& ionDiffT,
+  double& pgas, double& tgas) {
 
-  if (m_debug) std::cout << m_className << "::LoadGasFile: Gas tables...\n";
-
-  if (m_tab2d) {
-    if (m_debug) {
-      std::cout << m_className << "::LoadGasFile: Loading 3D table.\n";
-    }
-    for (int i = 0; i < nE; i++) {
-      for (int j = 0; j < nA; j++) {
-        for (int k = 0; k < nB; k++) {
-          // Drift velocity along E, Bt and ExB
-          double ve = 0., vb = 0., vx = 0.;
-          gasfile >> ve >> vb >> vx;
-          // Convert from cm / us to cm / ns and add to the table.
-          if (!m_eVelE.empty()) m_eVelE[j][k][i] = 1.e-3 * ve;
-          if (!m_eVelB.empty()) m_eVelB[j][k][i] = 1.e-3 * vb;
-          if (!m_eVelX.empty()) m_eVelX[j][k][i] = 1.e-3 * vx;
-          // Longitudinal and transverse diffusion coefficients
-          double dl = 0., dt = 0.;
-          gasfile >> dl >> dt;
-          if (!m_eDifL.empty()) m_eDifL[j][k][i] = dl;
-          if (!m_eDifT.empty()) m_eDifT[j][k][i] = dt;
-          // Townsend and attachment coefficients
-          double alpha = 0., alpha0 = 0., eta = 0.;
-          gasfile >> alpha >> alpha0 >> eta;
-          if (!m_eAlp.empty()) {
-            m_eAlp[j][k][i] = alpha;
-            m_eAlpNoPenning[j][k][i] = alpha0;
-          }
-          if (!m_eAtt.empty()) m_eAtt[j][k][i] = eta;
-          // Ion mobility
-          double mu = 0.;
-          gasfile >> mu;
-          // Convert from cm2 / (V us) to cm2 / (V ns)
-          if (!m_iMob.empty()) m_iMob[j][k][i] = 1.e-3 * mu;
-          // Lorentz angle
-          double lor = 0.;
-          gasfile >> lor;
-          if (!m_eLor.empty()) m_eLor[j][k][i] = lor;
-          // Ion dissociation
-          double dis = 0.;
-          gasfile >> dis;
-          if (!m_iDis.empty()) m_iDis[j][k][i] = dis;
-          // Diffusion tensor
-          for (int l = 0; l < 6; l++) {
-            double diff = 0.;
-            gasfile >> diff;
-            if (!m_eDifM.empty()) m_eDifM[l][j][k][i] = diff;
-          }
-          // Excitation rates
-          const unsigned int nexc = m_excLevels.size();
-          for (unsigned int l = 0; l < nexc; ++l) {
-            double rate = 0.;
-            gasfile >> rate;
-            if (!m_excRates.empty()) m_excRates[l][j][k][i] = rate;
-          }
-          // Ionization rates
-          const unsigned int nion = m_ionLevels.size();
-          for (unsigned int l = 0; l < nion; ++l) {
-            double rate = 0.;
-            gasfile >> rate;
-            if (!m_ionRates.empty()) m_ionRates[l][j][k][i] = rate;
-          }
-        }
-      }
-    }
-  } else {
-    if (m_debug) {
-      std::cout << m_className << "::LoadGasFile: Reading 1D table.\n";
-    }
-    for (int i = 0; i < nE; i++) {
-      double waste = 0.;
-      // Drift velocity along E, Bt, ExB
-      double ve = 0., vb = 0., vx = 0.;
-      gasfile >> ve >> waste >> vb >> waste >> vx >> waste;
-      if (!m_eVelE.empty()) m_eVelE[0][0][i] = 1.e-3 * ve;
-      if (!m_eVelB.empty()) m_eVelB[0][0][i] = 1.e-3 * vb;
-      if (!m_eVelX.empty()) m_eVelX[0][0][i] = 1.e-3 * vx;
-      // Longitudinal and transferse diffusion coefficients
-      double dl = 0., dt = 0.;
-      gasfile >> dl >> waste >> dt >> waste;
-      if (!m_eDifL.empty()) m_eDifL[0][0][i] = dl;
-      if (!m_eDifT.empty()) m_eDifT[0][0][i] = dt;
-      // Townsend and attachment coefficients
-      double alpha = 0., alpha0 = 0., eta = 0.;
-      gasfile >> alpha >> waste >> alpha0 >> eta >> waste;
-      if (!m_eAlp.empty()) {
-        m_eAlp[0][0][i] = alpha;
-        m_eAlpNoPenning[0][0][i] = alpha0;
-      }
-      if (!m_eAtt.empty()) {
-        m_eAtt[0][0][i] = eta;
-      }
-      // Ion mobility
-      double mu = 0.;
-      gasfile >> mu >> waste;
-      if (!m_iMob.empty()) m_iMob[0][0][i] = 1.e-3 * mu;
-      // Lorentz angle
-      double lor = 0.;
-      gasfile >> lor >> waste;
-      if (!m_eLor.empty()) m_eLor[0][0][i] = lor;
-      // Ion dissociation
-      double diss = 0.;
-      gasfile >> diss >> waste;
-      if (!m_iDis.empty()) m_iDis[0][0][i] = diss;
-      // Diffusion tensor
-      for (int j = 0; j < 6; j++) {
-        double diff = 0.;
-        gasfile >> diff >> waste;
-        if (!m_eDifM.empty()) m_eDifM[j][0][0][i] = diff;
-      }
-      // Excitation rates
-      const unsigned int nexc = m_excLevels.size();
-      for (unsigned int j = 0; j < nexc; ++j) {
-        double rate = 0.;
-        gasfile >> rate >> waste;
-        if (!m_excRates.empty()) m_excRates[j][0][0][i] = rate;
-      }
-      // Ionization rates
-      const unsigned int nion = m_ionLevels.size();
-      for (unsigned int j = 0; j < nion; ++j) {
-        double rate = 0.;
-        gasfile >> rate >> waste;
-        if (!m_ionRates.empty()) m_ionRates[j][0][0][i] = rate;
-      }
-    }
-  }
-
-  // Extrapolation methods
-  std::array<unsigned int, 13> hExtrap = {{0}};
-  std::array<unsigned int, 13> lExtrap = {{1}};
-  // Interpolation methods
-  std::array<unsigned int, 13> interpMeth = {{2}};
-  // Ion diffusion coefficients.
-  double ionDiffL = 0.;
-  double ionDiffT = 0.;
-  // Moving on to the file footer
-  gasfile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-  if (m_debug) std::cout << m_className << "::LoadGasFile: Footer...\n";
   bool done = false;
   while (!done) {
     char line[256];
@@ -704,25 +810,25 @@ bool MediumGas::LoadGasFile(const std::string& filename) {
         token = strtok(NULL, " :,%=\t");
         for (int i = 0; i < 13; i++) {
           token = strtok(NULL, " :,%=\t");
-          if (token != NULL) hExtrap[i] = atoi(token);
+          if (token != NULL) extrapH[i] = atoi(token);
         }
       } else if (strcmp(token, "L") == 0) {
         token = strtok(NULL, " :,%=\t");
         for (int i = 0; i < 13; i++) {
           token = strtok(NULL, " :,%=\t");
-          if (token != NULL) lExtrap[i] = atoi(token);
+          if (token != NULL) extrapL[i] = atoi(token);
         }
       } else if (strcmp(token, "Thresholds") == 0) {
         token = strtok(NULL, " :,%=\t");
-        if (token != NULL) m_eThrAlp = atoi(token);
+        if (token != NULL) thrAlp = atoi(token);
         token = strtok(NULL, " :,%=\t");
-        if (token != NULL) m_eThrAtt = atoi(token);
+        if (token != NULL) thrAtt = atoi(token);
         token = strtok(NULL, " :,%=\t");
-        if (token != NULL) m_iThrDis = atoi(token);
+        if (token != NULL) thrDis = atoi(token);
       } else if (strcmp(token, "Interp") == 0) {
         for (int i = 0; i < 13; i++) {
           token = strtok(NULL, " :,%=\t");
-          if (token != NULL) interpMeth[i] = atoi(token);
+          if (token != NULL) interp[i] = atoi(token);
         }
       } else if (strcmp(token, "A") == 0) {
         token = strtok(NULL, " :,%=\t");
@@ -762,15 +868,13 @@ bool MediumGas::LoadGasFile(const std::string& filename) {
         // double rho;
         // if (token != NULL) rho = atof(token);
       } else if (strcmp(token, "PGAS") == 0) {
+        // Pressure [Torr]
         token = strtok(NULL, " :,%=\t");
-        double pTorr = 760.;
-        if (token != NULL) pTorr = atof(token);
-        if (pTorr > 0.) m_pressure = pTorr;
+        if (token != NULL) pgas = atof(token);
       } else if (strcmp(token, "TGAS") == 0) {
+        // Temperature [K]
         token = strtok(NULL, " :,%=\t");
-        double tKelvin = 293.15;
-        if (token != NULL) tKelvin = atof(token);
-        if (tKelvin > 0.) m_temperature = tKelvin;
+        if (token != NULL) tgas = atof(token);
         done = true;
         break;
       } else {
@@ -780,75 +884,867 @@ bool MediumGas::LoadGasFile(const std::string& filename) {
       token = strtok(NULL, " :,%=\t");
     }
   }
+}
 
-  gasfile.close();
+bool MediumGas::GetMixture(const std::vector<double>& mixture,
+  const int version, std::vector<std::string>& gasnames,
+  std::vector<double>& percentages) const {
 
-  // Set the reference pressure and temperature.
-  m_pressureTable = m_pressure;
-  m_temperatureTable = m_temperature;
+  gasnames.clear();
+  percentages.clear();
+  const unsigned int nMagboltzGases = mixture.size();
+  for (unsigned int i = 0; i < nMagboltzGases; ++i) {
+    if (mixture[i] < Small) continue;
+    const std::string gasname = GetGasName(i + 1, version);
+    if (gasname.empty()) {
+      std::cerr << m_className << "::GetMixture:\n"
+                << "    Unknown gas (gas number " << i + 1 << ").\n";
+      return false;
+    }
+    gasnames.push_back(gasname);
+    percentages.push_back(mixture[i]);
+  }
+  if (gasnames.size() > m_nMaxGases) {
+    std::cerr << m_className << "::GetMixture:\n"
+              << "    Gas mixture has " << gasnames.size() << " components.\n"
+              << "    Number of gases is limited to " << m_nMaxGases << ".\n";
+    return false;
+  } else if (gasnames.empty()) {
+    std::cerr << m_className << "::GetMixture:\n"
+              << "    Gas mixture is not defined (zero components).\n";
+    return false;
+  }
+  double sum = std::accumulate(percentages.begin(), percentages.end(), 0.);
+  if (sum != 100.) {
+    std::cout << m_className << "::GetMixture:\n"
+              << "    Renormalizing the percentages.\n";
+    for (auto& percentage : percentages) percentage *= 100. / sum;
+  }
+  return true;
+}
 
-  // Multiply the E/p values by the pressure.
-  for (auto& field : m_eFields) field *= m_pressureTable;
+bool MediumGas::MergeGasFile(const std::string& filename,
+                             const bool replaceOld) {
 
-  // Scale the parameters.
-  const double sqrp = sqrt(m_pressureTable);
-  const double logp = log(m_pressureTable);
-  for (int i = nE; i--;) {
-    for (int j = nA; j--;) {
-      for (int k = nB; k--;) {
-        if (!m_eDifL.empty()) m_eDifL[j][k][i] /= sqrp;
-        if (!m_eDifT.empty()) m_eDifT[j][k][i] /= sqrp;
-        if (!m_eDifM.empty()) {
-          for (int l = 6; l--;) m_eDifM[l][j][k][i] /= m_pressureTable;
+  // -----------------------------------------------------------------------
+  //    GASMRG - Merges gas data from a file with existing gas tables.
+  //    (Last changed on 16/ 2/11.)
+  // -----------------------------------------------------------------------
+
+  constexpr double eps = 1.e-3;
+
+  std::ifstream gasfile;
+  // Open the file.
+  gasfile.open(filename.c_str());
+  // Make sure the file could be opened.
+  if (!gasfile.is_open()) {
+    std::cerr << m_className << "::MergeGasFile:\n"
+              << "    Cannot open file " << filename << ".\n";
+    return false;
+  }
+
+  int version = 12;
+  std::bitset<20> gasok;
+  bool is3d = false;
+  constexpr int nMagboltzGases = 60;
+  std::vector<double> mixture(nMagboltzGases, 0.);
+  std::vector<double> efields;
+  std::vector<double> bfields;
+  std::vector<double> angles;
+  std::vector<ExcLevel> excLevels;
+  std::vector<IonLevel> ionLevels;
+  if (!ReadHeader(gasfile, version, gasok, is3d, mixture, efields, bfields,
+                  angles, excLevels, ionLevels)) {
+    std::cerr << m_className << "::MergeGasFile: Error reading header.\n",
+    gasfile.close();
+    return false;
+  } 
+  // Check the version.
+  if (version != 12) {
+    std::cout << m_className << "::MergeGasFile:\n    "
+              << "This dataset cannot be read because of a change in format.\n";
+    gasfile.close();
+    return false;
+  }
+
+  // Check the gas composition.
+  std::vector<std::string> gasnames;
+  std::vector<double> percentages;
+  if (!GetMixture(mixture, version, gasnames, percentages)) {
+    std::cerr << m_className << "::MergeGasFile:\n    "
+              << "Cannot determine the gas composition.\n";
+    gasfile.close();
+    return false;
+  }
+  if (m_nComponents != gasnames.size()) {
+    std::cerr << m_className << "::MergeGasFile:\n    "
+              << "Composition of the dataset differs from the present one.\n";
+    gasfile.close();
+    return false;
+  }
+
+  for (unsigned int i = 0; i < m_nComponents; ++i) {
+    const auto it = std::find(gasnames.begin(), gasnames.end(), m_gas[i]);
+    if (it == gasnames.end()) {
+      std::cerr << m_className << "::MergeGasFile:\n    "
+                << "Composition of the dataset differs from the present one.\n";
+      gasfile.close();
+      return false;
+    }
+    const double f2 = m_fraction[i];
+    const double f1 = 0.01 * percentages[it - gasnames.begin()];
+    if (fabs(f1 - f2) > 1.e-6 * (1. + fabs(f1) + fabs(f2))) {
+      std::cerr << m_className << "::MergeGasFile:\n    "
+                << "Percentages of " << m_gas[i] << " differ.\n";
+      gasfile.close();
+      return false;
+    }
+  }
+
+  // Check that the excitations and ionisations match.
+  const unsigned int nexc = excLevels.size();
+  const unsigned int nion = ionLevels.size();
+  bool excMatch = (m_excLevels.size() == nexc);
+  if (excMatch) {
+    for (unsigned int i = 0; i < nexc; ++i) {
+      if (m_excLevels[i].label == excLevels[i].label) continue;
+      excMatch = false;
+      break;
+    }
+  } 
+  bool ionMatch = (m_ionLevels.size() == nion);
+  if (ionMatch) {
+    for (unsigned int i = 0; i < nion; ++i) {
+      if (m_ionLevels[i].label == ionLevels[i].label) continue;
+      ionMatch = false;
+      break;
+    }
+  } 
+
+  // Drift velocity along E, Bt and ExB
+  double ve = 0., vb = 0., vx = 0.;
+  // Lorentz angle
+  double lor = 0.;
+  // Longitudinal and transverse diffusion coefficients
+  double dl = 0., dt = 0.;
+  // Townsend and attachment coefficients
+  double alpha = 0., alpha0 = 0., eta = 0.;
+  // Ion mobility and dissociation coefficient
+  double mu = 0., dis = 0.;
+  // Diffusion tensor.
+  std::array<double, 6> diff;
+  // Excitation and ionization rates.
+  std::vector<double> rexc(nexc, 0.);
+  std::vector<double> rion(nion, 0.);
+  // Loop through the gas tables to fast-forward to the footer.
+  const unsigned int nNewE = efields.size();
+  const unsigned int nNewB = bfields.size();
+  const unsigned int nNewA = angles.size();
+  for (unsigned int i = 0; i < nNewE; i++) {
+    for (unsigned int j = 0; j < nNewA; j++) {
+      for (unsigned int k = 0; k < nNewB; k++) {
+        if (m_tab2d) {
+          ReadRecord3D(gasfile, ve, vb, vx, dl, dt, alpha, alpha0, eta, mu, 
+                       lor, dis, diff, rexc, rion);
+        } else {
+          ReadRecord1D(gasfile, ve, vb, vx, dl, dt, alpha, alpha0, eta, mu, 
+                       lor, dis, diff, rexc, rion);
         }
-        if (!m_eAlp.empty()) m_eAlp[j][k][i] += logp;
-        if (!m_eAtt.empty()) m_eAtt[j][k][i] += logp;
-        if (!m_iDis.empty()) m_iDis[j][k][i] += logp;
-        /*
-        for (auto& exc : m_excRates) {
-          exc[j][k][i] /= m_pressureTable;
-        }
-        for (auto& ion : m_ionRates) {
-          ion[j][k][i] /= m_pressureTable;
-        }
-        */
       }
     }
   }
 
-  // Decode the extrapolation and interpolation tables.
-  m_extrVel = {lExtrap[0], hExtrap[0]};
-  m_intpVel = interpMeth[0];
-  // Indices 1 and 2 correspond to velocities along Bt and ExB.
-  m_extrDif = {lExtrap[3], hExtrap[3]};
-  m_intpDif = interpMeth[3];
-  m_extrAlp = {lExtrap[4], hExtrap[4]};
-  m_intpAlp = interpMeth[4];
-  m_extrAtt = {lExtrap[5], hExtrap[5]};
-  m_intpAtt = interpMeth[5];
-  m_extrMob = {lExtrap[6], hExtrap[6]};
-  m_intpMob = interpMeth[6];
-  m_extrLor = {lExtrap[7], hExtrap[7]};
-  m_intpLor = interpMeth[7];
-  // Index 8: transv. diff.
-  m_extrDis = {lExtrap[9], hExtrap[9]};
-  m_intpDis = interpMeth[9];
-  // Index 10: diff. tensor
-  m_extrExc = {lExtrap[11], hExtrap[11]};
-  m_intpExc = interpMeth[11];
-  m_extrIon = {lExtrap[12], hExtrap[12]};
-  m_intpIon = interpMeth[12];
+  // Extrapolation methods
+  std::array<unsigned int, 13> extrapH = {{0}};
+  std::array<unsigned int, 13> extrapL = {{1}};
+  // Interpolation methods
+  std::array<unsigned int, 13> interp = {{2}};
+  // Thresholds.
+  unsigned int thrAlp = 0, thrAtt = 0, thrDis = 0;
+  // Ion diffusion coefficients.
+  double ionDiffL = 0., ionDiffT = 0.;
+  // Gas pressure [Torr] and temperature [K].
+  double pgas = 0., tgas = 0.;
+  // Read the footer.
+  gasfile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+  ReadFooter(gasfile, extrapH, extrapL, interp, thrAlp, thrAtt, thrDis, 
+             ionDiffL, ionDiffT, pgas, tgas);
 
-  // Ion diffusion
-  if (ionDiffL > 0.) InitTable(nE, nB, nA, m_iDifL, ionDiffL);
-  if (ionDiffT > 0.) InitTable(nE, nB, nA, m_iDifT, ionDiffT);
+  // Check the pressure and temperature.
+  if (!Similar(pgas, m_pressureTable, eps)) {
+    std::cerr << m_className << "::MergeGasFile:\n    "
+              << "The gas pressure of the dataset to be read differs\n    " 
+              << "from the current reference pressure; stop.\n";
+    gasfile.close();
+    return false;
+  }
+  if (!Similar(tgas, m_temperatureTable, eps)) {
+    std::cerr << m_className << "::MergeGasFile:\n    "     
+              << "The gas temperature of the dataset to be read differs\n    "
+              << "from the current reference temperature; stop.\n";
+    gasfile.close();
+    return false;
+  }
 
-  if (m_debug) std::cout << m_className << "::LoadGasFile: Done.\n";
+  // Go back to the start and re-read the header to get to the gas tables.
+  gasfile.clear();
+  gasfile.seekg(0);
+  if (!ReadHeader(gasfile, version, gasok, is3d, mixture, efields, bfields,
+                  angles, excLevels, ionLevels)) {
+    std::cerr << m_className << "::MergeGasFile: Error re-reading header.\n",
+    gasfile.close();
+    return false;
+  }
 
+  // Multiply the E/p values by the pressure.
+  for (auto& field : efields) field *= pgas;
+
+  if (m_debug) {
+    std::cout << m_className << "::MergeGasFile:\n    "
+              << "Dataset to be merged has the following dimensions:\n    "
+              << "3D = " << is3d << " nE = " << nNewE << ", nB = " << nNewB 
+              << ", nA = " << nNewA << ", nExc = "
+              << excLevels.size() << ", nIon = " << ionLevels.size() << "\n";
+  } 
+
+  unsigned int nE = m_eFields.size();
+  unsigned int nB = m_bFields.size();
+  unsigned int nA = m_bAngles.size();
+  // Determine which mode we have to use for the E field.
+  const int iemode = Equal(efields, m_eFields, eps);
+  // Determine which mode we have to use for the angles.
+  const int iamode = Equal(angles, m_bAngles, eps);
+  // Determine which mode we have to use for the B field.
+  const int ibmode = Equal(bfields, m_bFields, eps);
+  if (m_debug) {
+    std::cout << m_className << "::MergeGasFile:\n";
+    if (iemode == 0) std::cout << "    The E vectors differ.\n";
+    else std::cout << "    The E vectors are identical.\n";
+    if (iamode == 0) std::cout << "    The angle vectors differ.\n";
+    else std::cout << "    The angle vectors are identical.\n";
+    if (ibmode == 0) std::cout << "    The B vectors differ.\n";
+    else std::cout << "    The B vectors are identical.\n";
+  }
+  // Ensure there is a common mode.
+  if (iemode + iamode + ibmode < 2) {
+    std::cerr << m_className << "::MergeGasFile:\n    Existing data and data "
+              << "in the file don't have two common axes; not merged.\n";
+    gasfile.close();
+    return false;
+  }
+  // Decide whether we have to produce a 3D table or a 1D table.
+  if ((is3d || ibmode * iamode == 0) && !m_tab2d) {
+    if (m_debug) std::cout << "    Expanding existing table to 3D mode.\n";
+    m_tab2d = true;
+  }
+ 
+  // Determine which data are currently present. 
+  std::bitset<20> existing;
+  GetGasBits(existing);
+  // If the grids don't match, warn for data being lost in the merge.
+  if (iemode * ibmode * iamode == 0) {
+    // Check for data currently present which are absent in the new data.
+    if (existing[0] && !gasok[0]) {
+      existing.reset(0);
+      m_eVelE.clear();
+      PrintAbsentInNew("drift velocity");
+    }
+    if (existing[1] && !gasok[1]) {
+      existing.reset(1);
+      m_iMob.clear();
+      PrintAbsentInNew("ion mobility");
+    }
+    if (existing[2] && !gasok[2]) {
+      existing.reset(2);
+      m_eDifL.clear();
+      PrintAbsentInNew("longitudinal diffusion");
+    }
+    if (existing[3] && !gasok[3]) {
+      existing.reset(3);
+      m_eAlp.clear();
+      PrintAbsentInNew("Townsend coefficient");
+    }
+    if (existing[5] && !gasok[5]) {
+      existing.reset(5);
+      m_eAtt.clear();
+      PrintAbsentInNew("attachment coefficient");
+    }
+    if (existing[6] && !gasok[6]) {
+      existing.reset(6);
+      m_eLor.clear();
+      PrintAbsentInNew("Lorentz angle");
+    }
+    if (existing[7] && !gasok[7]) {
+      existing.reset(7);
+      m_eDifT.clear();
+      PrintAbsentInNew("transverse diffusion");
+    }
+    if (existing[8] && !gasok[8]) {
+      existing.reset(8);
+      m_eVelB.clear();
+      PrintAbsentInNew("velocity along Bt");
+    }
+    if (existing[9] && !gasok[9]) {
+      existing.reset(9);
+      m_eVelX.clear();
+      PrintAbsentInNew("velocity along ExB");
+    }
+    if (existing[10] && !gasok[10]) {
+      existing.reset(10);
+      m_eDifM.clear();
+      PrintAbsentInNew("diffusion tensor");
+    }
+    if (existing[11] && !gasok[11]) {
+      existing.reset(11);
+      m_iDis.clear();
+      PrintAbsentInNew("ion dissociation data");
+    }
+    if (existing[14] && !gasok[14]) {
+      existing.reset(14);
+      m_excLevels.clear();
+      m_excRates.clear();
+      PrintAbsentInNew("excitation data");
+    }
+    if (existing[15] && !gasok[15]) {
+      existing.reset(15);
+      m_ionLevels.clear();
+      m_ionRates.clear();
+      PrintAbsentInNew("ionisation data");
+    }
+    // And for data present in the file but not currently present.
+    if (!existing[0] && gasok[0]) {
+      gasok.reset(0);
+      PrintAbsentInExisting("drift velocity");
+    }
+    if (!existing[1] && gasok[1]) {
+      gasok.reset(1);
+      PrintAbsentInExisting("ion mobility");
+    }
+    if (!existing[2] && gasok[2]) {
+      gasok.reset(2);
+      PrintAbsentInExisting("longitudinal diffusion");
+    }
+    if (!existing[3] && gasok[3]) {
+      gasok.reset(3);
+      PrintAbsentInExisting("Townsend coefficient");
+    }
+    if (!existing[5] && gasok[5]) {
+      gasok.reset(5);
+      PrintAbsentInExisting("attachment coefficient");
+    }
+    if (!existing[6] && gasok[6]) {
+      gasok.reset(6);
+      PrintAbsentInExisting("Lorentz angle");
+    }
+    if (!existing[7] && gasok[7]) {
+      gasok.reset(7);
+      PrintAbsentInExisting("transverse diffusion");
+    }
+    if (!existing[8] && gasok[8]) {
+      gasok.reset(8);
+      PrintAbsentInExisting("velocity along Bt");
+    }
+    if (!existing[9] && gasok[9]) {
+      gasok.reset(9);
+      PrintAbsentInExisting("velocity along ExB");
+    }
+    if (!existing[10] && gasok[10]) {
+      gasok.reset(10);
+      PrintAbsentInExisting("diffusion tensor");
+    }
+    if (!existing[11] && gasok[11]) {
+      gasok.reset(11);
+      PrintAbsentInExisting("ion dissociation data");
+    }
+    if (!existing[14] && gasok[14]) {
+      gasok.reset(14);
+      PrintAbsentInExisting("excitation data");
+    }
+    if (!existing[15] && gasok[15]) {
+      gasok.reset(15);
+      PrintAbsentInExisting("ionisation data");
+    }
+    if (existing[14] && gasok[14] && !excMatch) {
+      std::cerr << "    Excitation levels of the two datasets don't match.\n"
+                << "    Deleting excitation data.\n";
+      m_excLevels.clear();
+      m_excRates.clear();
+      existing.reset(14);
+      gasok.reset(14);
+    }
+    if (existing[15] && gasok[15] && !ionMatch) {
+      std::cerr << "    Ionisation levels of the two datasets don't match.\n"
+                << "    Deleting ionisation data.\n";
+      m_ionLevels.clear();
+      m_ionRates.clear();
+      existing.reset(15);
+      gasok.reset(15);
+    }
+    // TODO: if the existing dataset is 1D (B = 0), then there's no need 
+    // to reset the Lorentz angle and the drift velocities || Bt and || ExB.
+  } else {
+    // If the grids are identical, initialise the tables that are only present 
+    // in the new dataset but not in existing one.
+    if (gasok[0] && !existing[0]) InitTable(nE, nB, nA, m_eVelE, 0.);
+    if (gasok[1] && !existing[1]) InitTable(nE, nB, nA, m_iMob, 0.);
+    if (gasok[2] && !existing[2]) InitTable(nE, nB, nA, m_eDifL, 0.);
+    if (gasok[3] && !existing[3]) {
+      InitTable(nE, nB, nA, m_eAlp, -30.);
+      InitTable(nE, nB, nA, m_eAlp0, -30.);
+    }
+    if (gasok[5] && !existing[5]) InitTable(nE, nB, nA, m_eAtt, -30.);
+    if (gasok[6] && !existing[6]) InitTable(nE, nB, nA, m_eLor, -30.);
+    if (gasok[7] && !existing[7]) InitTable(nE, nB, nA, m_eDifT, 0.);
+    if (gasok[8] && !existing[8]) InitTable(nE, nB, nA, m_eVelB, 0.);
+    if (gasok[9] && !existing[9]) InitTable(nE, nB, nA, m_eVelX, 0.);
+    if (gasok[10] && !existing[10]) InitTensor(nE, nB, nA, 6, m_eDifM, 0.);
+    if (gasok[11] && !existing[11]) InitTable(nE, nB, nA, m_iDis, -30.);
+    if (gasok[14] && (!existing[14] || replaceOld)) {
+      InitTensor(nE, nB, nA, nexc, m_excRates, 0.);
+    }
+    if (gasok[15] && (!existing[15] || replaceOld)) {
+      InitTensor(nE, nB, nA, nion, m_ionRates, 0.);
+    }
+  }
+
+  // Initialise the "new" flags.
+  std::vector<bool> newE(nE, false);
+  std::vector<bool> newA(nA, false);
+  std::vector<bool> newB(nB, false);
+  // Extend the existing tables.
+  std::cout << m_className << "::MergeGasFile: Extending the tables.\n";
+  // Insert room in the tables for new columns in E.
+  if (iemode == 0) {
+    // Loop over the new values.
+    for (const auto efield : efields) {
+      // Loop over the old values.
+      bool found = false;
+      for (unsigned int j = 0; j < nE; ++j) {
+        // If it overlaps with existing E, either keep old or new data.
+        if (Similar(efield, m_eFields[j], eps)) {
+          if (replaceOld) {
+            std::cout << "    Replacing existing data for E = " 
+                      << m_eFields[j] << " V/cm by data from file.\n";
+            m_eFields[j] = efield;
+            newE[j] = true;
+            ZeroRowE(j, nB, nA);
+          } else {
+            std::cout << "    Keeping existing data for E = " << m_eFields[j]
+                      << " V/cm, not using data from the file.\n";
+          }
+          found = true;
+          break;
+        } else if (efield < m_eFields[j]) {
+          // Otherwise shift all data at higher E values.
+          if (m_debug) {
+            std::cout << "    Inserting E = " << efield  
+                      << " V/cm at slot " << j << ".\n";
+          }
+          InsertE(j, nE, nB, nA);
+          m_eFields.insert(m_eFields.begin() + j, efield);
+          newE.insert(newE.begin() + j, true);
+          ZeroRowE(j, nB, nA);
+          ++nE;
+          found = true;
+          break;
+        }
+      }
+      if (found) continue;
+      // If there is no higher E, then add the line at the end.
+      if (m_debug) {
+        std::cout << "    Adding E = " << efield << " V/cm at the end.\n";
+      }
+      InsertE(nE, nE, nB, nA);
+      m_eFields.push_back(efield);
+      newE.push_back(true);
+      ZeroRowE(nE, nB, nA);
+      ++nE;
+    }
+  }
+  // Insert room in the tables for new columns in B.
+  if (ibmode == 0) {
+    // Loop over the new values. 
+    for (const auto bfield : bfields) {
+      // Loop over the old values.
+      bool found = false;
+      for (unsigned int j = 0; j < nB; ++j) {
+        // If it overlaps with existing B, either keep old or new data.
+        if (Similar(bfield, m_bFields[j], eps)) {
+          if (replaceOld) {
+            std::cout << "    Replacing old data for B = " << m_bFields[j] 
+                      << " T by data from file.\n";
+            m_bFields[j] = bfield;
+            newB[j] = true;
+            ZeroRowB(j, nE, nA);
+          } else {
+            std::cout << "    Keeping old data for B = " << m_bFields[j]
+                      << " T, not using data from file.\n";
+          }
+          found = true;
+          break;
+        } else if (bfield < m_bFields[j]) {
+          // Otherwise shift all data at higher B values.
+          if (m_debug) {
+              std::cout << "    Inserting B = " << bfield << " T at slot "
+                        << j << ".\n";
+          }
+          InsertB(j, nE, nB, nA);
+          m_bFields.insert(m_bFields.begin() + j, bfield);
+          newB.insert(newB.begin() + j, true);
+          ZeroRowB(j, nE, nA);
+          ++nB;
+          found = true;
+          break;
+        }
+      }
+      if (found) continue;
+      // If there is no higher B, then add the line at the end.
+      if (m_debug) {
+        std::cout << "    Adding B = " << bfield << " T at the end.\n";
+      }
+      InsertB(nB, nE, nB, nA);
+      m_bFields.push_back(bfield);
+      newB.push_back(true);
+      ZeroRowB(nB, nE, nA);
+      ++nB;
+    }
+  }
+  // Insert room in the tables for new columns in angle.
+  if (iamode == 0) {
+    // Loop over the new values.
+    for (const auto angle : angles) {
+      // Loop over the old values.
+      bool found = false;
+      for (unsigned int j = 0; j < nA; ++j) {
+        // If it overlaps with an existing angle, either keep old or new data.
+        if (Similar(angle, m_bAngles[j], eps)) {
+          if (replaceOld) {
+            std::cout << "    Replacing old data for angle(E,B) = " 
+                      << m_bAngles[j] * RadToDegree
+                      << " degrees by data from the file.\n";
+            m_bAngles[j] = angle;
+            newA[j] = true;
+            ZeroRowA(j, nE, nB);
+          } else {
+            std::cout << "    Keeping old data for angle(E,B) = "
+                      << m_bAngles[j] * RadToDegree
+                      << " degrees, not using data from file.\n"; 
+          }
+          found = true;
+          break;
+        } else if (angle < m_bAngles[j]) {
+          // Otherwise shift all data at higher angles.
+          if (m_debug) {
+            std::cout << "    Inserting angle = " << angle * RadToDegree
+                      << " degrees at slot " << j << ".\n";
+          }
+          InsertA(j, nE, nB, nA);
+          m_bAngles.insert(m_bAngles.begin() + j, angle);
+          newA.insert(newA.begin() + j, true);
+          ZeroRowA(j, nE, nB);
+          ++nA;
+          found = true;
+          break;
+        }
+      }
+      if (found) continue;
+      // If there is no higher angle, then add the line at the end.
+      if (m_debug) {
+        std::cout << "    Adding angle = " << angle * RadToDegree
+                  << " degrees at the end.\n";
+      }
+      InsertA(nA, nE, nB, nA);
+      m_bAngles.push_back(angle);
+      newA.push_back(true);
+      ZeroRowA(nA, nE, nB);
+      ++nA;
+    }
+  }
+
+  const double sqrp = sqrt(pgas);
+  const double logp = log(pgas);
+
+  // Read the gas table.
+  for (const auto efield : efields) {
+    // Locate the index at which these values are to be stored.
+    const int inde = FindIndex(efield, m_eFields, eps);
+    for (const auto angle : angles) {
+      const int inda = FindIndex(angle, m_bAngles, eps);
+      for (const auto bfield : bfields) {
+        // Read the record.
+        if (is3d) {
+          ReadRecord3D(gasfile, ve, vb, vx, dl, dt, alpha, alpha0, eta, mu, 
+                       lor, dis, diff, rexc, rion);
+        } else {
+          ReadRecord1D(gasfile, ve, vb, vx, dl, dt, alpha, alpha0, eta, mu, 
+                       lor, dis, diff, rexc, rion);
+        }
+        const int indb = FindIndex(bfield, m_bFields, eps);
+        if (inde < 0 || inda < 0 || indb < 0) {
+          std::cerr << m_className << "::MergeGasFile:\n    Unable to locate"
+                    << " the (E,angle,B) insertion point; no gas data read.\n";
+          std::cout << "BFIELD = " << bfield << ", IB = " << indb << "\n";
+          ResetTables();
+          gasfile.close();
+          return false;
+        }
+        const bool update = newE[inde] || newA[inda] || newB[indb] || replaceOld; 
+        // Store the data.
+        if (gasok[0] && (update || !existing[0])) {
+          m_eVelE[inda][indb][inde] = ve;
+        }
+        if (gasok[1] && (update || !existing[1])) {
+          m_iMob[inda][indb][inde] = mu;
+        }
+        if (gasok[2] && (update || !existing[2])) {
+          m_eDifL[inda][indb][inde] = dl / sqrp;
+        }
+        if (gasok[3] && (update || !existing[3])) {
+          m_eAlp[inda][indb][inde] = alpha + logp;
+          m_eAlp0[inda][indb][inde] = alpha0 + logp;
+        }
+        if (gasok[5] && (update || !existing[5])) {
+          m_eAtt[inda][indb][inde] = eta + logp;
+        }
+        if (gasok[6] && (update || !existing[6])) {
+          m_eLor[inda][indb][inde] = lor; 
+        }
+        if (gasok[7] && (update || !existing[7])) {
+          m_eDifT[inda][indb][inde] = dt / sqrp;
+        }
+        if (gasok[8] && (update || !existing[8])) {
+          m_eVelB[inda][indb][inde] = vb;
+        }
+        if (gasok[9] && (update || !existing[9])) {
+          m_eVelX[inda][indb][inde] = vx;
+        }
+        if (gasok[10] && (update || !existing[10])) {
+          for (unsigned int l = 0; l < 6; ++l) {
+            m_eDifM[l][inda][indb][inde] = diff[l] / pgas;
+          }
+        }
+        if (gasok[11] && (update || !existing[11])) {
+          m_iDis[inda][indb][inde] = dis + logp;
+        }
+        if (gasok[14] && (update || !existing[14])) {
+          for (unsigned int l = 0; l < nexc; ++l) {
+            m_excRates[l][inda][indb][inde] = rexc[l];
+          }
+        }
+        if (gasok[15] && (update || !existing[15])) {
+          for (unsigned int l = 0; l < nion; ++l) {
+            m_ionRates[l][inda][indb][inde] = rion[l];
+          }
+        }
+      }
+    }
+  }
+  // if (iemode + iamode + ibmode == 3) { ... }
+  if (replaceOld) {
+    if (m_debug) {
+      std::cout << m_className << "::MergeGasFile: "
+                << "Replacing extrapolation and interpolation data.\n";
+    }
+    if (gasok[0]) m_extrVel = {extrapL[0], extrapH[0]};
+    if (gasok[1]) m_extrMob = {extrapL[6], extrapH[6]};
+    if (gasok[2]) m_extrDif = {extrapL[3], extrapH[3]};
+    if (gasok[3]) m_extrAlp = {extrapL[4], extrapH[4]};
+    if (gasok[5]) m_extrAtt = {extrapL[5], extrapH[5]};
+    if (gasok[6]) m_extrLor = {extrapL[7], extrapH[7]};
+    if (gasok[11]) m_extrDis = {extrapL[9], extrapH[9]};
+    if (gasok[14]) m_extrExc = {extrapL[11], extrapH[11]};
+    if (gasok[15]) m_extrIon = {extrapL[12], extrapH[12]};
+
+    if (gasok[0]) m_intpVel = interp[0];
+    if (gasok[1]) m_intpMob = interp[6]; 
+    if (gasok[2]) m_intpDif = interp[3];
+    if (gasok[3]) m_intpAlp = interp[4];
+    if (gasok[5]) m_intpAtt = interp[5];
+    if (gasok[6]) m_intpLor = interp[7];
+    if (gasok[11]) m_intpDis = interp[9];
+    if (gasok[14]) m_intpExc = interp[11];
+    if (gasok[15]) m_intpIon = interp[12];
+
+    // Townsend and attachment thresholds.
+    /*
+    READ(12,'(13X,BN,3I10)',IOSTAT=IOS,ERR=2010)IATHRN,IBTHRN,IHTHRN
+    IF(GASOKN(4))IATHR=IATHRN
+    IF(GASOKN(6))IBTHR=IBTHRN
+    IF(GASOKN(12))IHTHR=IHTHRN
+    */
+
+    // Ion diffusion.
+    if (m_debug && (ionDiffL > 0. || ionDiffT > 0.)) {
+      std::cout << m_className << "::MergeGasFile: Replacing ion diffusion.\n";
+    }
+    if (ionDiffL > 0.) InitTable(nE, nB, nA, m_iDifL, ionDiffL);
+    if (ionDiffT > 0.) InitTable(nE, nB, nA, m_iDifT, ionDiffT);
+  }
   return true;
 }
 
+void MediumGas::InsertE(const int ie, const int ne, const int nb, 
+                        const int na) {
+  for (int k = 0; k < na; ++k) {
+    for (int j = 0; j < nb; ++j) {
+      if (!m_eVelE.empty()) m_eVelE[k][j].resize(ne + 1, 0.);
+      if (!m_eVelB.empty()) m_eVelB[k][j].resize(ne + 1, 0.);
+      if (!m_eVelX.empty()) m_eVelX[k][j].resize(ne + 1, 0.);
+      if (!m_eDifL.empty()) m_eDifL[k][j].resize(ne + 1, 0.);
+      if (!m_eDifT.empty()) m_eDifT[k][j].resize(ne + 1, 0.);
+      if (!m_eAlp.empty())  m_eAlp[k][j].resize(ne + 1, 0.);
+      if (!m_eAlp0.empty()) m_eAlp0[k][j].resize(ne + 1, 0.);
+      if (!m_eAtt.empty())  m_eAtt[k][j].resize(ne + 1, 0.);
+      if (!m_eLor.empty())  m_eLor[k][j].resize(ne + 1, 0.);
+      if (!m_iMob.empty())  m_iMob[k][j].resize(ne + 1, 0.);
+      if (!m_iDis.empty())  m_iDis[k][j].resize(ne + 1, 0.);
+      if (!m_iDifL.empty()) m_iDifL[k][j].resize(ne + 1, 0.);
+      if (!m_iDifT.empty()) m_iDifT[k][j].resize(ne + 1, 0.);
+      for (auto& dif : m_eDifM) dif[k][j].resize(ne + 1, 0.);
+      for (auto& exc : m_excRates) exc[k][j].resize(ne + 1, 0.);
+      for (auto& ion : m_ionRates) ion[k][j].resize(ne + 1, 0.);
+      for (int i = ne; i > ie; --i) {
+        if (!m_eVelE.empty()) m_eVelE[k][j][i] = m_eVelE[k][j][i - 1];
+        if (!m_eVelB.empty()) m_eVelB[k][j][i] = m_eVelB[k][j][i - 1];
+        if (!m_eVelX.empty()) m_eVelX[k][j][i] = m_eVelX[k][j][i - 1];
+        if (!m_eDifL.empty()) m_eDifL[k][j][i] = m_eDifL[k][j][i - 1];
+        if (!m_eDifT.empty()) m_eDifT[k][j][i] = m_eDifT[k][j][i - 1];
+        if (!m_eAlp.empty())  m_eAlp[k][j][i] = m_eAlp[k][j][i - 1];
+        if (!m_eAlp0.empty()) m_eAlp0[k][j][i] = m_eAlp0[k][j][i - 1];
+        if (!m_eAtt.empty())  m_eAtt[k][j][i] = m_eAtt[k][j][i - 1];
+        if (!m_eLor.empty())  m_eLor[k][j][i] = m_eLor[k][j][i - 1];
+        if (!m_iMob.empty())  m_iMob[k][j][i] = m_iMob[k][j][i - 1];
+        if (!m_iDis.empty())  m_iDis[k][j][i] = m_iDis[k][j][i - 1];
+        if (!m_iDifL.empty()) m_iDifL[k][j][i] = m_iDifL[k][j][i - 1];
+        if (!m_iDifT.empty()) m_iDifT[k][j][i] = m_iDifT[k][j][i - 1];
+        for (auto& dif : m_eDifM) dif[k][j][i] = dif[k][j][i - 1];
+        for (auto& exc : m_excRates) exc[k][j][i] = exc[k][j][i - 1];
+        for (auto& ion : m_ionRates) ion[k][j][i] = ion[k][j][i - 1];
+       }
+    }
+  }
+}
+
+void MediumGas::InsertB(const int ib, const int ne, const int nb, 
+                        const int na) {
+  for (int k = 0; k < na; ++k) {
+    if (!m_eVelE.empty()) m_eVelE[k].resize(nb + 1, std::vector<double>(ne, 0.));
+    if (!m_eVelB.empty()) m_eVelB[k].resize(nb + 1, std::vector<double>(ne, 0.));
+    if (!m_eVelX.empty()) m_eVelX[k].resize(nb + 1, std::vector<double>(ne, 0.));
+    if (!m_eDifL.empty()) m_eDifL[k].resize(nb + 1, std::vector<double>(ne, 0.));
+    if (!m_eDifT.empty()) m_eDifT[k].resize(nb + 1, std::vector<double>(ne, 0.));
+    if (!m_eAlp.empty())  m_eAlp[k].resize(nb + 1, std::vector<double>(ne, 0.));
+    if (!m_eAlp0.empty()) m_eAlp0[k].resize(nb + 1, std::vector<double>(ne, 0.));
+    if (!m_eAtt.empty())  m_eAtt[k].resize(nb + 1, std::vector<double>(ne, 0.));
+    if (!m_eLor.empty())  m_eLor[k].resize(nb + 1, std::vector<double>(ne, 0.));
+    if (!m_iMob.empty())  m_iMob[k].resize(nb + 1, std::vector<double>(ne, 0.));
+    if (!m_iDis.empty())  m_iDis[k].resize(nb + 1, std::vector<double>(ne, 0.));
+    if (!m_iDifL.empty()) m_iDifL[k].resize(nb + 1, std::vector<double>(ne, 0.));
+    if (!m_iDifT.empty()) m_iDifT[k].resize(nb + 1, std::vector<double>(ne, 0.));
+    for (auto& dif : m_eDifM) {
+      dif[k].resize(nb + 1, std::vector<double>(ne, 0.));
+    }
+    for (auto& exc : m_excRates) {
+      exc[k].resize(nb + 1, std::vector<double>(ne, 0.));
+    }
+    for (auto& ion : m_ionRates) {
+      ion[k].resize(nb + 1, std::vector<double>(ne, 0.));
+    }
+    for (int i = 0; i < ne; ++i) {
+      for (int j = nb; j > ib; j--) {
+        if (!m_eVelE.empty()) m_eVelE[k][j][i] = m_eVelE[k][j - 1][i];
+        if (!m_eVelB.empty()) m_eVelB[k][j][i] = m_eVelB[k][j - 1][i];
+        if (!m_eVelX.empty()) m_eVelX[k][j][i] = m_eVelX[k][j - 1][i];
+        if (!m_eDifL.empty()) m_eDifL[k][j][i] = m_eDifL[k][j - 1][i];
+        if (!m_eDifT.empty()) m_eDifT[k][j][i] = m_eDifT[k][j - 1][i];
+        if (!m_eAlp.empty())  m_eAlp[k][j][i]  = m_eAlp[k][j - 1][i];
+        if (!m_eAlp0.empty()) m_eAlp0[k][j][i] = m_eAlp0[k][j - 1][i];
+        if (!m_eAtt.empty())  m_eAtt[k][j][i]  = m_eAtt[k][j - 1][i];
+        if (!m_eLor.empty())  m_eLor[k][j][i]  = m_eLor[k][j - 1][i];
+        if (!m_iMob.empty())  m_iMob[k][j][i]  = m_iMob[k][j - 1][i];
+        if (!m_iDis.empty())  m_iDis[k][j][i]  = m_iDis[k][j - 1][i];
+        if (!m_iDifL.empty()) m_iDifL[k][j][i] = m_iDifL[k][j - 1][i];
+        if (!m_iDifT.empty()) m_iDifT[k][j][i] = m_iDifT[k][j - 1][i];
+        for (auto& dif : m_eDifM) dif[k][j][i] = dif[k][j - 1][i];
+        for (auto& exc : m_excRates) exc[k][j][i] = exc[k][j - 1][i];
+        for (auto& ion : m_ionRates) ion[k][j][i] = ion[k][j - 1][i];
+      }
+    }
+  } 
+}
+
+void MediumGas::InsertA(const int ia, const int ne, const int nb,
+                        const int na) {
+  ResizeA(m_eVelE, ne, nb, na + 1);
+  ResizeA(m_eVelB, ne, nb, na + 1);
+  ResizeA(m_eVelX, ne, nb, na + 1);
+  ResizeA(m_eDifL, ne, nb, na + 1);
+  ResizeA(m_eDifT, ne, nb, na + 1);
+  ResizeA(m_eAlp, ne, nb, na + 1);
+  ResizeA(m_eAlp0, ne, nb, na + 1);
+  ResizeA(m_eAtt, ne, nb, na + 1);
+  ResizeA(m_eLor, ne, nb, na + 1);
+  ResizeA(m_iMob, ne, nb, na + 1);
+  ResizeA(m_iDis, ne, nb, na + 1);
+  ResizeA(m_iDifL, ne, nb, na + 1);
+  ResizeA(m_iDifT, ne, nb, na + 1);
+  for (auto& dif : m_eDifM) ResizeA(dif, ne, nb, na + 1);
+  for (auto& exc : m_excRates) ResizeA(exc, ne, nb, na + 1);
+  for (auto& ion : m_ionRates) ResizeA(ion, ne, nb, na + 1);
+  for (int j = 0; j < nb; ++j) {
+    for (int i = 0; i < ne; ++i) {
+      for (int k = na; k > ia; k--) {
+        if (!m_eVelE.empty()) m_eVelE[k][j][i] = m_eVelE[k - 1][j][i];
+        if (!m_eVelB.empty()) m_eVelB[k][j][i] = m_eVelB[k - 1][j][i];
+        if (!m_eVelX.empty()) m_eVelX[k][j][i] = m_eVelX[k - 1][j][i];
+        if (!m_eDifL.empty()) m_eDifL[k][j][i] = m_eDifL[k - 1][j][i];
+        if (!m_eDifT.empty()) m_eDifT[k][j][i] = m_eDifT[k - 1][j][i];
+        if (!m_eAlp.empty()) m_eAlp[k][j][i] = m_eAlp[k - 1][j][i];
+        if (!m_eAlp0.empty()) m_eAlp0[k][j][i] = m_eAlp0[k - 1][j][i];
+        if (!m_eAtt.empty()) m_eAtt[k][j][i] = m_eAtt[k - 1][j][i];
+        if (!m_eLor.empty()) m_eLor[k][j][i] = m_eLor[k - 1][j][i];
+        if (!m_iMob.empty()) m_iMob[k][j][i] = m_iMob[k - 1][j][i];
+        if (!m_iDis.empty()) m_iDis[k][j][i] = m_iDis[k - 1][j][i];
+        if (!m_iDifL.empty()) m_iDifL[k][j][i] = m_iDifL[k - 1][j][i];
+        if (!m_iDifT.empty()) m_iDifT[k][j][i] = m_iDifT[k - 1][j][i];
+        for (auto& dif : m_eDifM) dif[k][j][i] = dif[k - 1][j][i];
+        for (auto& exc : m_excRates) exc[k][j][i] = exc[k - 1][j][i];
+        for (auto& ion : m_ionRates) ion[k][j][i] = ion[k - 1][j][i];
+      }
+    }
+  }
+}
+ 
+void MediumGas::ZeroRowE(const int ie, const int nb, const int na) {
+  for (int k = 0; k < na; ++k) {
+    for (int j = 0; j < nb; ++j) {
+      if (!m_eVelE.empty()) m_eVelE[k][j][ie] = 0.;
+    }
+  }
+}
+
+void MediumGas::ZeroRowB(const int ib, const int ne, const int na) {
+  for (int k = 0; k < na; ++k) {
+    for (int i = 0; i < ne; ++i) {
+      if (!m_eVelE.empty()) m_eVelE[k][ib][i] = 0.;
+    }
+  }
+}
+
+void MediumGas::ZeroRowA(const int ia, const int ne, const int nb) {
+  for (int j = 0; j < nb; ++j) {
+    for (int i = 0; i < ne; ++i) {
+      if (!m_eVelE.empty()) m_eVelE[ia][j][i] = 0.;
+    }
+  }
+}
+
 bool MediumGas::WriteGasFile(const std::string& filename) {
+
+  // -----------------------------------------------------------------------
+  //    GASWRT
+  // -----------------------------------------------------------------------
+
   // Set the gas mixture.
   constexpr int nMagboltzGases = 60;
   std::vector<double> mixture(nMagboltzGases, 0.);
@@ -877,23 +1773,13 @@ bool MediumGas::WriteGasFile(const std::string& filename) {
   }
 
   // Assemble the GASOK bits.
-  std::string gasBits = "FFFFFFFFFFFFFFFFFFFF";
-  if (!m_eVelE.empty()) gasBits[0]  = 'T';
-  if (!m_iMob.empty())  gasBits[1]  = 'T';
-  if (!m_eDifL.empty()) gasBits[2]  = 'T';
-  if (!m_eAlp.empty())  gasBits[3]  = 'T';
-  // Cluster size distribution; skipped
-  if (!m_eAtt.empty())  gasBits[5]  = 'T';
-  if (!m_eLor.empty())  gasBits[6]  = 'T';
-  if (!m_eDifT.empty()) gasBits[7]  = 'T';
-  if (!m_eVelB.empty()) gasBits[8]  = 'T';
-  if (!m_eVelX.empty()) gasBits[9]  = 'T';
-  if (!m_eDifM.empty()) gasBits[10] = 'T';
-  if (!m_iDis.empty())  gasBits[11] = 'T';
-  // SRIM, HEED; skipped
-  if (!m_excRates.empty()) gasBits[14] = 'T';
-  if (!m_ionRates.empty()) gasBits[15] = 'T';
-
+  std::bitset<20> gasok;
+  GetGasBits(gasok);
+  std::string okstr(20, 'F');
+  for (unsigned int i = 0; i < 20; ++i) {
+    if (gasok[i]) okstr[i] = 'T';
+  }
+  if (m_debug) std::cout << "    GASOK bits: " << okstr << "\n";
   // Get the current time.
   time_t rawtime = time(0);
   tm timeinfo = *localtime(&rawtime);
@@ -915,7 +1801,7 @@ bool MediumGas::WriteGasFile(const std::string& filename) {
   outfile << "\"none" << std::string(25, ' ') << "\"\n";
   const int version = 12;
   outfile << " Version   : " << version << "\n";
-  outfile << " GASOK bits: " << gasBits << "\n";
+  outfile << " GASOK bits: " << okstr << "\n";
   std::stringstream ids;
   ids.str("");
   for (unsigned int i = 0; i < m_nComponents; ++i) {
@@ -935,13 +1821,20 @@ bool MediumGas::WriteGasFile(const std::string& filename) {
   const unsigned int nE = m_eFields.size();
   const unsigned int nB = m_bFields.size();
   const unsigned int nA = m_bAngles.size();
+  if (m_debug) {
+    std::cout << m_className << "::WriteGasFile:\n    "
+              << "Dataset has the following dimensions:\n    "
+              << "3D = " << m_tab2d << " nE = " << nE << ", nB = " << nB 
+              << ", nA = " << nA << ", nExc = "
+              << m_excLevels.size() << ", nIon = " << m_ionLevels.size() << "\n";
+  } 
   outfile << FmtInt(nE, 9) << " " << FmtInt(nA, 9) << " "
           << FmtInt(nB, 9) << " " << FmtInt(m_excLevels.size(), 9) << " "
           << FmtInt(m_ionLevels.size(), 9) << "\n";
   // Store reduced electric fields (E/p).
   outfile << " E fields   \n";
   std::vector<double> efields = m_eFields;
-  for (auto& field : efields) field /= m_pressure;
+  for (auto& field : efields) field /= m_pressureTable;
   int cnt = 0;
   // List 5 values, then new line.
   PrintArray(efields, outfile, cnt, 5);
@@ -981,7 +1874,6 @@ bool MediumGas::WriteGasFile(const std::string& filename) {
 
   const double sqrp = sqrt(m_pressureTable);
   const double logp = log(m_pressureTable);
-
   outfile << " The gas tables follow:\n";
   cnt = 0;
   for (unsigned int i = 0; i < nE; ++i) {
@@ -1008,7 +1900,7 @@ bool MediumGas::WriteGasFile(const std::string& filename) {
         double dt = m_eDifT.empty() ? 0. : m_eDifT[j][k][i] * sqrp;
         // Get the Townsend and attachment coefficients.
         double alpha = m_eAlp.empty() ? -30. : m_eAlp[j][k][i] - logp;
-        double alpha0 = m_eAlpNoPenning.empty() ? -30. : m_eAlpNoPenning[j][k][i] - logp;
+        double alpha0 = m_eAlp0.empty() ? -30. : m_eAlp0[j][k][i] - logp;
         double eta = m_eAtt.empty() ? -30. : m_eAtt[j][k][i] - logp;
         // Add them to the list.
         if (m_tab2d) {
@@ -1055,48 +1947,48 @@ bool MediumGas::WriteGasFile(const std::string& filename) {
   }
 
   // Extrapolation methods
-  int hExtrap[13], lExtrap[13];
-  int interpMeth[13];
+  int extrapH[13], extrapL[13];
+  int interp[13];
 
-  lExtrap[0] = lExtrap[1] = lExtrap[2] = m_extrVel.first;
-  hExtrap[0] = hExtrap[1] = hExtrap[2] = m_extrVel.second;
-  interpMeth[0] = interpMeth[1] = interpMeth[2] = m_intpVel;
-  lExtrap[3] = lExtrap[8] = lExtrap[10] = m_extrDif.first;
-  hExtrap[3] = hExtrap[8] = hExtrap[10] = m_extrDif.second;
-  interpMeth[3] = interpMeth[8] = interpMeth[10] = m_intpDif;
-  lExtrap[4] = m_extrAlp.first;
-  hExtrap[4] = m_extrAlp.second;
-  interpMeth[4] = m_intpAlp;
-  lExtrap[5] = m_extrAtt.first;
-  hExtrap[5] = m_extrAtt.second;
-  interpMeth[5] = m_intpAtt;
-  lExtrap[6] = m_extrMob.first;
-  hExtrap[6] = m_extrMob.second;
-  interpMeth[6] = m_intpMob;
+  extrapL[0] = extrapL[1] = extrapL[2] = m_extrVel.first;
+  extrapH[0] = extrapH[1] = extrapH[2] = m_extrVel.second;
+  interp[0] = interp[1] = interp[2] = m_intpVel;
+  extrapL[3] = extrapL[8] = extrapL[10] = m_extrDif.first;
+  extrapH[3] = extrapH[8] = extrapH[10] = m_extrDif.second;
+  interp[3] = interp[8] = interp[10] = m_intpDif;
+  extrapL[4] = m_extrAlp.first;
+  extrapH[4] = m_extrAlp.second;
+  interp[4] = m_intpAlp;
+  extrapL[5] = m_extrAtt.first;
+  extrapH[5] = m_extrAtt.second;
+  interp[5] = m_intpAtt;
+  extrapL[6] = m_extrMob.first;
+  extrapH[6] = m_extrMob.second;
+  interp[6] = m_intpMob;
   // Lorentz angle
-  lExtrap[7] = m_extrLor.first;
-  hExtrap[7] = m_extrLor.second;
-  interpMeth[7] = m_intpLor;
-  lExtrap[9] = m_extrDis.first;
-  hExtrap[9] = m_extrDis.second;
-  interpMeth[9] = m_intpDis;
-  lExtrap[11] = m_extrExc.first;
-  hExtrap[11] = m_extrExc.second;
-  interpMeth[11] = m_intpExc;
-  lExtrap[12] = m_extrIon.first;
-  hExtrap[12] = m_extrIon.second;
-  interpMeth[12] = m_intpIon;
+  extrapL[7] = m_extrLor.first;
+  extrapH[7] = m_extrLor.second;
+  interp[7] = m_intpLor;
+  extrapL[9] = m_extrDis.first;
+  extrapH[9] = m_extrDis.second;
+  interp[9] = m_intpDis;
+  extrapL[11] = m_extrExc.first;
+  extrapH[11] = m_extrExc.second;
+  interp[11] = m_intpExc;
+  extrapL[12] = m_extrIon.first;
+  extrapH[12] = m_extrIon.second;
+  interp[12] = m_intpIon;
 
   outfile << " H Extr: ";
-  for (int i = 0; i < 13; i++) outfile << FmtInt(hExtrap[i], 5);
+  for (int i = 0; i < 13; i++) outfile << FmtInt(extrapH[i], 5);
   outfile << "\n";
   outfile << " L Extr: ";
-  for (int i = 0; i < 13; i++) outfile << FmtInt(lExtrap[i], 5);
+  for (int i = 0; i < 13; i++) outfile << FmtInt(extrapL[i], 5);
   outfile << "\n";
   outfile << " Thresholds: " << FmtInt(m_eThrAlp, 10)
           << FmtInt(m_eThrAtt, 10) << FmtInt(m_iThrDis, 10) << "\n";
   outfile << " Interp: ";
-  for (int i = 0; i < 13; i++) outfile << FmtInt(interpMeth[i], 5);
+  for (int i = 0; i < 13; i++) outfile << FmtInt(interp[i], 5);
   outfile << "\n";
   outfile << " A     =" << FmtFloat(0.) << ", Z     =" << FmtFloat(0.) << ","
           << " EMPROB=" << FmtFloat(0.) << ", EPAIR =" << FmtFloat(0.) << "\n";
@@ -1115,6 +2007,26 @@ bool MediumGas::WriteGasFile(const std::string& filename) {
   outfile.close();
 
   return true;
+}
+
+void MediumGas::GetGasBits(std::bitset<20>& gasok) const {
+
+  gasok.reset();
+  if (!m_eVelE.empty()) gasok.set(0);
+  if (!m_iMob.empty())  gasok.set(1);
+  if (!m_eDifL.empty()) gasok.set(2);
+  if (!m_eAlp.empty())  gasok.set(3);
+  // Cluster size distribution; skipped
+  if (!m_eAtt.empty())  gasok.set(5);
+  if (!m_eLor.empty())  gasok.set(6);
+  if (!m_eDifT.empty()) gasok.set(7);
+  if (!m_eVelB.empty()) gasok.set(8);
+  if (!m_eVelX.empty()) gasok.set(9);
+  if (!m_eDifM.empty()) gasok.set(10);
+  if (!m_iDis.empty())  gasok.set(11);
+  // SRIM, HEED; skipped
+  if (!m_excRates.empty()) gasok.set(14);
+  if (!m_ionRates.empty()) gasok.set(15);
 }
 
 void MediumGas::PrintGas() {
@@ -1364,7 +2276,7 @@ bool MediumGas::LoadIonMobility(const std::string& filename) {
 void MediumGas::ResetTables() {
 
   Medium::ResetTables();
-  m_eAlpNoPenning.clear();
+  m_eAlp0.clear();
   m_excLevels.clear();
   m_ionLevels.clear();
   m_excRates.clear();
@@ -1557,10 +2469,12 @@ bool MediumGas::DisablePenningTransfer(std::string gasname) {
 
 bool MediumGas::AdjustTownsendCoefficient() {
 
-  // GASSPT
+  // -----------------------------------------------------------------------
+  //    GASSPT
+  // -----------------------------------------------------------------------
 
   // Make sure there are Townsend coefficients.
-  if (m_eAlp.empty() || m_eAlpNoPenning.empty()) {
+  if (m_eAlp.empty() || m_eAlp0.empty()) {
     std::cerr << m_className << "::AdjustTownsendCoefficient:\n    "
               << "Present gas table does not include Townsend coefficients.\n";
     return false;
@@ -1602,7 +2516,7 @@ bool MediumGas::AdjustTownsendCoefficient() {
                     << FmtFloat(rexc, 12, 5) << FmtFloat(rion, 12, 5) << "\n"; 
         }
         // Adjust the Townsend coefficient.
-        double alpha0 = m_eAlpNoPenning[j][k][i];
+        double alpha0 = m_eAlp0[j][k][i];
         if (alpha0 < -20.) {
           alpha0 = 0.;
         } else {

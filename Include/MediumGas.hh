@@ -4,6 +4,7 @@
 #include <array>
 #include <cmath>
 #include <vector>
+#include <bitset>
 
 #include "Medium.hh"
 
@@ -48,6 +49,8 @@ class MediumGas : public Medium {
   bool LoadGasFile(const std::string& filename);
   /// Save the present table of gas properties (transport parameters) to a file.
   bool WriteGasFile(const std::string& filename);
+  /// Read table of gas properties from and merge with the existing dataset.
+  bool MergeGasFile(const std::string& filename, const bool replaceOld);
 
   /** Switch on simulation of Penning transfers by means of
     * transfer probabilities, for all excitation levels in the mixture.
@@ -146,7 +149,7 @@ class MediumGas : public Medium {
   double m_temperatureTable;
 
   // Table of Townsend coefficients without Penning transfer
-  std::vector<std::vector<std::vector<double> > > m_eAlpNoPenning;
+  std::vector<std::vector<std::vector<double> > > m_eAlp0;
 
   // Tables for excitation and ionisation rates
   std::vector<std::vector<std::vector<std::vector<double> > > > m_excRates;
@@ -174,6 +177,41 @@ class MediumGas : public Medium {
   unsigned int m_intpExc = 2;
   unsigned int m_intpIon = 2;
 
+  bool ReadHeader(std::ifstream& gasfile, int& version,
+                  std::bitset<20>& gasok, bool& is3d, 
+                  std::vector<double>& mixture,
+                  std::vector<double>& efields, std::vector<double>& bfields,
+                  std::vector<double>& angles, std::vector<ExcLevel>& excLevels,
+                  std::vector<IonLevel>& ionLevels);
+  void ReadFooter(std::ifstream& gasfile,
+                  std::array<unsigned int, 13>& extrapH,
+                  std::array<unsigned int, 13>& extrapL,
+                  std::array<unsigned int, 13>& interp, 
+                  unsigned int& thrAlp, unsigned int& thrAtt, 
+                  unsigned int& thrDis, 
+                  double& ionDiffL, double& ionDiffT,
+                  double& pgas, double& tgas);
+  void ReadRecord3D(std::ifstream& gasfile, double& ve, double& vb, double& vx,
+                    double& dl, double& dt, double& alpha, double& alpha0, 
+                    double& eta, double& mu, double& lor,
+                    double& dis, std::array<double, 6>& dif, 
+                    std::vector<double>& rexc, std::vector<double>& rion);
+  void ReadRecord1D(std::ifstream& gasfile, double& ve, double& vb, double& vx,
+                    double& dl, double& dt, double& alpha, double& alpha0, 
+                    double& eta, double& mu, double& lor,
+                    double& dis, std::array<double, 6>& dif, 
+                    std::vector<double>& rexc, std::vector<double>& rion);
+  void InsertE(const int ie, const int ne, const int nb, const int na);
+  void InsertB(const int ib, const int ne, const int nb, const int na);
+  void InsertA(const int ia, const int ne, const int nb, const int na);
+  void ZeroRowE(const int ie, const int nb, const int na);
+  void ZeroRowB(const int ib, const int ne, const int na);
+  void ZeroRowA(const int ia, const int ne, const int nb);
+  bool GetMixture(const std::vector<double>& mixture, const int version,
+                  std::vector<std::string>& gasnames,
+                  std::vector<double>& percentages) const;
+  void GetGasBits(std::bitset<20>& gasok) const;
+ 
   bool GetGasInfo(const std::string& gasname, double& a, double& z) const;
   std::string GetGasName(const int gasnumber, const int version) const;
   std::string GetGasName(std::string input) const;
