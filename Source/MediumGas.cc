@@ -684,7 +684,7 @@ bool MediumGas::ReadHeader(std::ifstream& gasfile, int& version,
         token = strtok(NULL, " :,%");
         if (strcmp(token, "fields") == 0) {
           double bstore = 0.;
-          const int nB = angles.size();
+          const int nB = bfields.size();
           for (int i = 0; i < nB; i++) {
             gasfile >> bstore;
             bfields[i] = bstore / 100.;
