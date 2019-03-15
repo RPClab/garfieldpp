@@ -910,7 +910,7 @@ void Medium::Clone(std::vector<std::vector<std::vector<double> > >& tab,
 
   // Create a temporary table to store the values at the new grid points.
   std::vector<std::vector<std::vector<double> > > tabClone;
-  InitTable(nE, nB, nA, tabClone, init);
+  Init(nE, nB, nA, tabClone, init);
 
   // Fill the temporary table.
   for (size_t i = 0; i < nE; ++i) {
@@ -952,7 +952,7 @@ void Medium::Clone(
 
   // Create a temporary table to store the values at the new grid points.
   std::vector<std::vector<std::vector<std::vector<double> > > > tabClone;
-  InitTensor(nE, nB, nA, n, tabClone, init);
+  Init(nE, nB, nA, n, tabClone, init);
 
   // Fill the temporary table.
   for (unsigned int l = 0; l < n; ++l) {
@@ -1024,7 +1024,7 @@ bool Medium::SetIonMobility(const std::vector<double>& efields,
   const unsigned int nEfields = m_eFields.size();
   const unsigned int nBfields = m_bFields.size();
   const unsigned int nAngles = m_bAngles.size();
-  InitTable(nEfields, nBfields, nAngles, m_iMob, 0.);
+  Init(nEfields, nBfields, nAngles, m_iMob, 0.);
   for (unsigned int i = 0; i < nEfields; ++i) {
     const double e = m_eFields[i];
     const double mu = Interpolate1D(e, mobs, efields, m_intpMob, m_extrMob);
@@ -1110,6 +1110,30 @@ bool Medium::GetExtrapolationIndex(std::string str, unsigned int& nb) const {
   }
 
   return true;
+}
+
+unsigned int Medium::SetThreshold(
+    const std::vector<std::vector<std::vector<double> > >& tab) const {
+
+  if (tab.empty()) return 0;
+  const unsigned int nE = m_eFields.size();
+  const unsigned int nB = m_bFields.size();
+  const unsigned int nA = m_bAngles.size();
+  for (unsigned int i = 0; i < nE; ++i) {
+    bool below = false;
+    for (unsigned int k = 0; k < nA; ++k) {
+      for (unsigned int j = 0; j < nB; ++j) {
+        if (tab[k][j][i] < -20.) {
+          below = true;
+          break;
+        } 
+      }
+      if (below) break; 
+    }
+    if (below) continue;
+    return i;
+  } 
+  return nE - 1; 
 }
 
 void Medium::SetInterpolationMethodVelocity(const unsigned int intrp) {
@@ -1246,23 +1270,23 @@ double Medium::Interpolate1D(
   return result;
 }
 
-void Medium::InitTable(const size_t nE, const size_t nB, const size_t nA,
-                       std::vector<std::vector<std::vector<double> > >& tab,
-                       const double val) {
+void Medium::Init(const size_t nE, const size_t nB, const size_t nA,
+                  std::vector<std::vector<std::vector<double> > >& tab,
+                  const double val) {
   if (nE == 0 || nB == 0 || nA == 0) {
-    std::cerr << m_className << "::InitTable: Invalid grid.\n";
+    std::cerr << m_className << "::Init: Invalid grid.\n";
     return;
   }
   tab.assign(
       nA, std::vector<std::vector<double> >(nB, std::vector<double>(nE, val)));
 }
 
-void Medium::InitTensor(
+void Medium::Init(
     const size_t nE, const size_t nB, const size_t nA, const size_t nT,
     std::vector<std::vector<std::vector<std::vector<double> > > >& tab,
     const double val) {
   if (nE == 0 || nB == 0 || nA == 0 || nT == 0) {
-    std::cerr << m_className << "::InitTensor: Invalid grid.\n";
+    std::cerr << m_className << "::Init: Invalid grid.\n";
     return;
   }
 

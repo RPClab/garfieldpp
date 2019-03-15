@@ -514,6 +514,8 @@ class Medium {
                               std::pair<unsigned int, unsigned int>& extr,
                               const std::string& fcn);
   bool GetExtrapolationIndex(std::string str, unsigned int& nb) const;
+  unsigned int SetThreshold(
+      const std::vector<std::vector<std::vector<double> > >& tab) const;
 
   void Clone(std::vector<std::vector<std::vector<double> > >& tab,
              const std::vector<double>& efields,
@@ -529,10 +531,10 @@ class Medium {
       const std::pair<unsigned int, unsigned int>& extr, const double init,
       const std::string& label);
 
-  void InitTable(const size_t nE, const size_t nB, const size_t nA,
-                 std::vector<std::vector<std::vector<double> > >& tab,
-                 const double val);
-  void InitTensor(
+  void Init(const size_t nE, const size_t nB, const size_t nA,
+            std::vector<std::vector<std::vector<double> > >& tab,
+            const double val);
+  void Init(
       const size_t nE, const size_t nB, const size_t nA, const size_t nT,
       std::vector<std::vector<std::vector<std::vector<double> > > >& tab,
       const double val);

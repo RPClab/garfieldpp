@@ -398,22 +398,22 @@ bool MediumGas::LoadGasFile(const std::string& filename) {
   // (15) excitation rates
   // (16) ionisation rates
 
-  if (gasok[0]) InitTable(nE, nB, nA, m_eVelE, 0.);
-  if (gasok[1]) InitTable(nE, nB, nA, m_iMob, 0.);
-  if (gasok[2]) InitTable(nE, nB, nA, m_eDifL, 0.);
+  if (gasok[0]) Init(nE, nB, nA, m_eVelE, 0.);
+  if (gasok[1]) Init(nE, nB, nA, m_iMob, 0.);
+  if (gasok[2]) Init(nE, nB, nA, m_eDifL, 0.);
   if (gasok[3]) {
-    InitTable(nE, nB, nA, m_eAlp, -30.);
-    InitTable(nE, nB, nA, m_eAlp0, -30.);
+    Init(nE, nB, nA, m_eAlp, -30.);
+    Init(nE, nB, nA, m_eAlp0, -30.);
   }
-  if (gasok[5]) InitTable(nE, nB, nA, m_eAtt, -30.);
-  if (gasok[6]) InitTable(nE, nB, nA, m_eLor, -30.);
-  if (gasok[7]) InitTable(nE, nB, nA, m_eDifT, 0.);
-  if (gasok[8]) InitTable(nE, nB, nA, m_eVelB, 0.);
-  if (gasok[9]) InitTable(nE, nB, nA, m_eVelX, 0.);
-  if (gasok[10]) InitTensor(nE, nB, nA, 6, m_eDifM, 0.);
-  if (gasok[11]) InitTable(nE, nB, nA, m_iDis, -30.);
-  if (gasok[14]) InitTensor(nE, nB, nA, m_excLevels.size(), m_excRates, 0.);
-  if (gasok[15]) InitTensor(nE, nB, nA, m_ionLevels.size(), m_ionRates, 0.);
+  if (gasok[5]) Init(nE, nB, nA, m_eAtt, -30.);
+  if (gasok[6]) Init(nE, nB, nA, m_eLor, -30.);
+  if (gasok[7]) Init(nE, nB, nA, m_eDifT, 0.);
+  if (gasok[8]) Init(nE, nB, nA, m_eVelB, 0.);
+  if (gasok[9]) Init(nE, nB, nA, m_eVelX, 0.);
+  if (gasok[10]) Init(nE, nB, nA, 6, m_eDifM, 0.);
+  if (gasok[11]) Init(nE, nB, nA, m_iDis, -30.);
+  if (gasok[14]) Init(nE, nB, nA, m_excLevels.size(), m_excRates, 0.);
+  if (gasok[15]) Init(nE, nB, nA, m_ionLevels.size(), m_ionRates, 0.);
 
   // Force re-initialisation of collision rates etc.
   m_isChanged = true;
@@ -500,6 +500,11 @@ bool MediumGas::LoadGasFile(const std::string& filename) {
              m_eThrAlp, m_eThrAtt, m_iThrDis, ionDiffL, ionDiffT, pgas, tgas);
   gasfile.close();
 
+  // Decrement the threshold indices (compatibility with Fortran).
+  if (m_eThrAlp > 0) --m_eThrAlp;
+  if (m_eThrAtt > 0) --m_eThrAtt;
+  if (m_iThrDis > 0) --m_iThrDis;
+
   // Set the reference pressure and temperature.
   if (pgas > 0.) m_pressure = m_pressureTable = pgas;
   if (tgas > 0.) m_temperature = m_temperatureTable = tgas;
@@ -560,8 +565,8 @@ bool MediumGas::LoadGasFile(const std::string& filename) {
   m_intpIon = interp[12];
 
   // Ion diffusion
-  if (ionDiffL > 0.) InitTable(nE, nB, nA, m_iDifL, ionDiffL);
-  if (ionDiffT > 0.) InitTable(nE, nB, nA, m_iDifT, ionDiffT);
+  if (ionDiffL > 0.) Init(nE, nB, nA, m_iDifL, ionDiffL);
+  if (ionDiffT > 0.) Init(nE, nB, nA, m_iDifT, ionDiffT);
 
   if (m_debug) std::cout << m_className << "::LoadGasFile: Done.\n";
 
@@ -1285,25 +1290,25 @@ bool MediumGas::MergeGasFile(const std::string& filename,
   } else {
     // If the grids are identical, initialise the tables that are only present 
     // in the new dataset but not in existing one.
-    if (gasok[0] && !existing[0]) InitTable(nE, nB, nA, m_eVelE, 0.);
-    if (gasok[1] && !existing[1]) InitTable(nE, nB, nA, m_iMob, 0.);
-    if (gasok[2] && !existing[2]) InitTable(nE, nB, nA, m_eDifL, 0.);
+    if (gasok[0] && !existing[0]) Init(nE, nB, nA, m_eVelE, 0.);
+    if (gasok[1] && !existing[1]) Init(nE, nB, nA, m_iMob, 0.);
+    if (gasok[2] && !existing[2]) Init(nE, nB, nA, m_eDifL, 0.);
     if (gasok[3] && !existing[3]) {
-      InitTable(nE, nB, nA, m_eAlp, -30.);
-      InitTable(nE, nB, nA, m_eAlp0, -30.);
+      Init(nE, nB, nA, m_eAlp, -30.);
+      Init(nE, nB, nA, m_eAlp0, -30.);
     }
-    if (gasok[5] && !existing[5]) InitTable(nE, nB, nA, m_eAtt, -30.);
-    if (gasok[6] && !existing[6]) InitTable(nE, nB, nA, m_eLor, -30.);
-    if (gasok[7] && !existing[7]) InitTable(nE, nB, nA, m_eDifT, 0.);
-    if (gasok[8] && !existing[8]) InitTable(nE, nB, nA, m_eVelB, 0.);
-    if (gasok[9] && !existing[9]) InitTable(nE, nB, nA, m_eVelX, 0.);
-    if (gasok[10] && !existing[10]) InitTensor(nE, nB, nA, 6, m_eDifM, 0.);
-    if (gasok[11] && !existing[11]) InitTable(nE, nB, nA, m_iDis, -30.);
+    if (gasok[5] && !existing[5]) Init(nE, nB, nA, m_eAtt, -30.);
+    if (gasok[6] && !existing[6]) Init(nE, nB, nA, m_eLor, -30.);
+    if (gasok[7] && !existing[7]) Init(nE, nB, nA, m_eDifT, 0.);
+    if (gasok[8] && !existing[8]) Init(nE, nB, nA, m_eVelB, 0.);
+    if (gasok[9] && !existing[9]) Init(nE, nB, nA, m_eVelX, 0.);
+    if (gasok[10] && !existing[10]) Init(nE, nB, nA, 6, m_eDifM, 0.);
+    if (gasok[11] && !existing[11]) Init(nE, nB, nA, m_iDis, -30.);
     if (gasok[14] && (!existing[14] || replaceOld)) {
-      InitTensor(nE, nB, nA, nexc, m_excRates, 0.);
+      Init(nE, nB, nA, nexc, m_excRates, 0.);
     }
     if (gasok[15] && (!existing[15] || replaceOld)) {
-      InitTensor(nE, nB, nA, nion, m_ionRates, 0.);
+      Init(nE, nB, nA, nion, m_ionRates, 0.);
     }
   }
 
@@ -1565,21 +1570,16 @@ bool MediumGas::MergeGasFile(const std::string& filename,
     if (gasok[14]) m_intpExc = interp[11];
     if (gasok[15]) m_intpIon = interp[12];
 
-    // Townsend and attachment thresholds.
-    /*
-    READ(12,'(13X,BN,3I10)',IOSTAT=IOS,ERR=2010)IATHRN,IBTHRN,IHTHRN
-    IF(GASOKN(4))IATHR=IATHRN
-    IF(GASOKN(6))IBTHR=IBTHRN
-    IF(GASOKN(12))IHTHR=IHTHRN
-    */
-
     // Ion diffusion.
     if (m_debug && (ionDiffL > 0. || ionDiffT > 0.)) {
       std::cout << m_className << "::MergeGasFile: Replacing ion diffusion.\n";
     }
-    if (ionDiffL > 0.) InitTable(nE, nB, nA, m_iDifL, ionDiffL);
-    if (ionDiffT > 0.) InitTable(nE, nB, nA, m_iDifT, ionDiffT);
+    if (ionDiffL > 0.) Init(nE, nB, nA, m_iDifL, ionDiffL);
+    if (ionDiffT > 0.) Init(nE, nB, nA, m_iDifT, ionDiffT);
   }
+  // Update the Townsend and attachment threshold indices.
+  SetThreshold(m_eAlp);
+  SetThreshold(m_eAtt);
   return true;
 }
 
@@ -1985,8 +1985,9 @@ bool MediumGas::WriteGasFile(const std::string& filename) {
   outfile << " L Extr: ";
   for (int i = 0; i < 13; i++) outfile << FmtInt(extrapL[i], 5);
   outfile << "\n";
-  outfile << " Thresholds: " << FmtInt(m_eThrAlp, 10)
-          << FmtInt(m_eThrAtt, 10) << FmtInt(m_iThrDis, 10) << "\n";
+  // Increment the threshold indices for compatibility with Fortran.
+  outfile << " Thresholds: " << FmtInt(m_eThrAlp + 1, 10)
+          << FmtInt(m_eThrAtt + 1, 10) << FmtInt(m_iThrDis + 1, 10) << "\n";
   outfile << " Interp: ";
   for (int i = 0; i < 13; i++) outfile << FmtInt(interp[i], 5);
   outfile << "\n";
@@ -2528,6 +2529,8 @@ bool MediumGas::AdjustTownsendCoefficient() {
       }
     }
   }
+  // Update the threshold index.
+  SetThreshold(m_eAlp);
   return true;
 }
 

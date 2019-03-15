@@ -3442,16 +3442,16 @@ void MediumMagboltz::GenerateGasTable(const int numColl, const bool verbose) {
   const unsigned int nEfields = m_eFields.size();
   const unsigned int nBfields = m_bFields.size();
   const unsigned int nAngles = m_bAngles.size();
-  InitTable(nEfields, nBfields, nAngles, m_eVelE, 0.);
-  InitTable(nEfields, nBfields, nAngles, m_eVelB, 0.);
-  InitTable(nEfields, nBfields, nAngles, m_eVelX, 0.);
-  InitTable(nEfields, nBfields, nAngles, m_eDifL, 0.);
-  InitTable(nEfields, nBfields, nAngles, m_eDifT, 0.);
-  InitTable(nEfields, nBfields, nAngles, m_eLor, 0.);
-  InitTable(nEfields, nBfields, nAngles, m_eAlp, -30.);
-  InitTable(nEfields, nBfields, nAngles, m_eAlp0, -30.);
-  InitTable(nEfields, nBfields, nAngles, m_eAtt, -30.);
-  InitTensor(nEfields, nBfields, nAngles, 6, m_eDifM, 0.);
+  Init(nEfields, nBfields, nAngles, m_eVelE, 0.);
+  Init(nEfields, nBfields, nAngles, m_eVelB, 0.);
+  Init(nEfields, nBfields, nAngles, m_eVelX, 0.);
+  Init(nEfields, nBfields, nAngles, m_eDifL, 0.);
+  Init(nEfields, nBfields, nAngles, m_eDifT, 0.);
+  Init(nEfields, nBfields, nAngles, m_eLor, 0.);
+  Init(nEfields, nBfields, nAngles, m_eAlp, -30.);
+  Init(nEfields, nBfields, nAngles, m_eAlp0, -30.);
+  Init(nEfields, nBfields, nAngles, m_eAtt, -30.);
+  Init(nEfields, nBfields, nAngles, 6, m_eDifM, 0.);
 
   m_excRates.clear();
   m_ionRates.clear();
@@ -3539,10 +3539,10 @@ void MediumMagboltz::GenerateGasTable(const int numColl, const bool verbose) {
             std::cout << "    " << ion.label << ", energy = " << ion.energy
                       << " eV.\n";
           }
-          InitTensor(nEfields, nBfields, nAngles, m_excLevels.size(),
-                     m_excRates, 0.);
-          InitTensor(nEfields, nBfields, nAngles, m_ionLevels.size(),
-                     m_ionRates, 0.);
+          Init(nEfields, nBfields, nAngles, m_excLevels.size(),
+               m_excRates, 0.);
+          Init(nEfields, nBfields, nAngles, m_ionLevels.size(),
+               m_ionRates, 0.);
         }
         // Retrieve the excitation and ionisation rates.
         const unsigned int nExc = m_excLevels.size();
@@ -3558,5 +3558,8 @@ void MediumMagboltz::GenerateGasTable(const int numColl, const bool verbose) {
       }
     }
   }
+  // Set the threshold indices.
+  SetThreshold(m_eAlp);
+  SetThreshold(m_eAtt);
 }
 }
