@@ -868,7 +868,8 @@ bool Medium::GetEntry(const unsigned int i, const unsigned int j,
     if (m_debug) PrintDataNotAvailable(m_className, fcn);
     return false;
   }
-  return tab[k][j][i];
+  val = tab[k][j][i];
+  return true;
 }
 
 void Medium::ResetTables() {
