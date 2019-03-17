@@ -17,8 +17,13 @@ CFLAGS = `root-config --cflags` \
 LDFLAGS = -L$(LIBDIR) -lGarfield
 LDFLAGS += `root-config --glibs` -lGeom -lgfortran -lm
 
-gasfile: gasfile.C
-	$(CXX) $(CFLAGS) -c gasfile.C
-	$(CXX) $(CFLAGS) -o gasfile gasfile.o $(LDFLAGS)
-	rm gasfile.o
+generate: generate.C
+	$(CXX) $(CFLAGS) -c generate.C
+	$(CXX) $(CFLAGS) -o generate generate.o $(LDFLAGS)
+	rm generate.o
+
+read: read.C
+	$(CXX) $(CFLAGS) -c read.C
+	$(CXX) $(CFLAGS) -o read read.o $(LDFLAGS)
+	rm read.o
 
