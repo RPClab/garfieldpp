@@ -381,7 +381,8 @@ bool AvalancheMC::DriftLine(const double x0, const double y0, const double z0,
   unsigned int nHolesOld = m_nHoles;
   unsigned int nIonsOld = m_nIons;
 
-  if ((type == -1 || type == 1) && (aval || m_useAttachment)) {
+  if ((type == -1 || type == 1) && (aval || m_useAttachment) && 
+      (m_sizeCut == 0 || m_nElectrons < m_sizeCut)) {
     ComputeGainLoss(type, status);
     if (status == StatusAttached && m_debug) {
       std::cout << hdr << "Particle attached at (" << m_drift.back().x << ", "

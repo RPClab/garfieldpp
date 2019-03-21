@@ -58,6 +58,12 @@ class AvalancheMC {
   void EnableMagneticField() { m_useBfield = true; }
   void DisableMagneticField() { m_useBfield = false; }
 
+  /** Set a max. avalanche size (i. e. ignore ionising collisions
+      once this size has been reached). */
+  void EnableAvalancheSizeLimit(const unsigned int size) { m_sizeCut = size; }
+  void DisableAvalancheSizeLimit() { m_sizeCut = 0; }
+  int GetAvalancheSizeLimit() const { return m_sizeCut; }
+
   /// Use fixed-time steps (default 20 ps).
   void SetTimeSteps(const double d = 0.02);
   /// Use fixed distance steps (default 10 um).
@@ -179,6 +185,9 @@ class AvalancheMC {
   double m_tMin = 0.;
   /// Upper limit of the time window.
   double m_tMax = 0.;
+
+  /// Max. avalanche size.
+  unsigned int m_sizeCut = 0;
 
   /// Number of electrons produced
   unsigned int m_nElectrons = 0;
