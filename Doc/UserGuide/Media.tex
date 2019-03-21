@@ -2,9 +2,9 @@ Media are derived from the abstract base class \texttt{Medium}.
 
 The name (identifier) of a medium can be read by the function
 \begin{lstlisting}
-const std::string& GetName();
+const std::string& GetName() const;
 \end{lstlisting}
-For compound media (e. g. gas mixtures), 
+For compound media (\textit{e.\,g.} gas mixtures), 
 the identifiers and fractions of the constituents are available via
 \begin{lstlisting}
 unsigned int GetNumberOfComponents();
@@ -78,7 +78,7 @@ along the two remaining axes.
     transport parameter & scaling \\
     \midrule
     drift velocity & \(v\) vs. \(E/p\) \\
-    diffusion      & \(\sigma\sqrt{p}\) vs. \(E/p\) \\
+    diffusion coefficients & \(\sigma\sqrt{p}\) vs. \(E/p\) \\
     Townsend coefficient & \(\alpha / p\) vs. \(E/p\) \\
     attachment coefficient & \(\eta / p\) vs. \(E/p\) \\ 
     \bottomrule
@@ -112,7 +112,7 @@ By default, the field and angular ranges are
   20 electric field points between 100 V\,/\,cm and 100 kV\,/\,cm, 
   with logarithmic spacing
   \item
-  \(\mathbf{B} = 0\), \(\theta = 0\)
+  \(\mathbf{B} = 0\), \(\theta = \pi / 2\)
 \end{itemize}
 
 For specifying the field grid, two functions are available:
@@ -181,9 +181,57 @@ The default settings are
   linear extrapolation towards high values.
 \end{itemize}
 
+\subsection{Visualization}
 For plotting the transport parameters, the class
-\texttt{ViewMedium} can be used. 
+\texttt{ViewMedium} can be used. In the following example the 
+drift velocities of electrons and holes in silicon are plotted as a 
+function of the electric field.
+\begin{lstlisting}
+MediumSilicon si;
 
+ViewMedium view;
+view.SetMedium(&si);
+view.PlotElectronVelocity('e');
+view.PlotHoleVelocity('e', true);
+\end{lstlisting}
+
+The following functions for visualizing transport parameters 
+are currently implemented in \texttt{ViewMedium}.
+\begin{lstlisting}
+void PlotElectronVelocity(const char xaxis, const bool same = false);
+void PlotHoleVelocity(const char xaxis, const bool same = false);
+void PlotIonVelocity(const char xaxis, const bool same = false);
+void PlotElectronDiffusion(const char xaxis, const bool same = false);
+void PlotHoleDiffusion(const char xaxis, const bool same = false);
+void PlotIonDiffusion(const char xaxis, const bool same = false);
+void PlotElectronTownsend(const char xaxis, const bool same = false);
+void PlotHoleTownsend(const char xaxis, const bool same = false);
+void PlotElectronAttachment(const char xaxis, const bool same = false);
+void PlotHoleAttachment(const char xaxis, const bool same = false);
+void PlotElectronLorentzAngle(const char xaxis, const bool same = false);
+\end{lstlisting}
+\begin{description}
+  \item[xaxis] quantity to plot on the $x$-axis (\texttt{'e'}: electric field, 
+  \texttt{'b'}: magnetic field, \texttt{'a'}: angle),
+  \item[same] flag whether to start a new plot (\texttt{false}) or to add the 
+plot to the existing ones.
+\end{description}
+By default, \texttt{ViewMedium} will try to determine the range of the 
+$x$ axis based on the grid of electric fields, magnetic fields, 
+and angles, and the range of the $y$ axis based on the 
+minima and maxima of the function to be plotted. This feature can be 
+switched on or off using the functions
+\begin{lstlisting}
+void EnableAutoRangeX(const bool on = true);
+void EnableAutoRangeY(const bool on = true);
+\end{lstlisting}
+The ranges can be set explicitly using
+\begin{lstlisting}
+void SetRangeE(const double emin, const double emax, const bool logscale);
+void SetRangeB(const double bmin, const double bmax, const bool logscale);
+void SetRangeA(const double amin, const double amax, const bool logscale);
+void SetRangeY(const double ymin, const double ymax, const bool logscale);
+\end{lstlisting} 
 \section{Electron Scattering Rates}
 
 For calculating electron drift lines using ``microscopic tracking'' 

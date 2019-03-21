@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 
+#include "FundamentalConstants.hh"
+
 namespace Garfield {
 
 /// Abstract base class for media.
@@ -173,7 +175,8 @@ class Medium {
   /// Set the range of fields to be covered by the transport tables.
   void SetFieldGrid(double emin, double emax, const size_t ne, bool logE,
                     double bmin = 0., double bmax = 0., const size_t nb = 1,
-                    double amin = 0., double amax = 0., const size_t na = 1);
+                    double amin = HalfPi, double amax = HalfPi, 
+                    const size_t na = 1);
   /// Set the fields and E-B angles to be used in the transport tables.
   void SetFieldGrid(const std::vector<double>& efields,
                     const std::vector<double>& bfields,

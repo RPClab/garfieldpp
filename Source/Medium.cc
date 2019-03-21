@@ -60,10 +60,10 @@ int Medium::m_idCounter = -1;
 Medium::Medium() : m_id(++m_idCounter) {
   // Initialise the transport tables.
   m_bFields.assign(1, 0.);
-  m_bAngles.assign(1, 0.);
+  m_bAngles.assign(1, HalfPi);
 
   // Set the default grid.
-  SetFieldGrid(100., 100000., 20, true, 0., 0., 1, 0., 0., 1);
+  SetFieldGrid(100., 100000., 20, true, 0., 0., 1, HalfPi, HalfPi, 1);
 }
 
 Medium::~Medium() {}
