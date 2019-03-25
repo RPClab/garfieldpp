@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <array>
 
 #include "FundamentalConstants.hh"
 #include "Sensor.hh"
@@ -35,10 +36,15 @@ class AvalancheMC {
   void EnableInducedChargeCalculation() { m_doInducedCharge = true; }
   void DisableInducedChargeCalculation() { m_doInducedCharge = false; }
 
+  /** Switch on Runge-Kutta-Fehlberg stepping (as opposed to simple 
+    * straight-line steps. */
+  void EnableRKFSteps(const bool on = true) { m_doRKF = on; }
+ 
   /** Switch on equilibration of multiplication and attachment
     * over the drift line (default: enabled) */
-  void EnableProjectedPathIntegration() { m_doEquilibration = true; }
-  void DisableProjectedPathIntegration() { m_doEquilibration = false; }
+  void EnableProjectedPathIntegration(const bool on = true) { 
+    m_doEquilibration = on; 
+  }
 
   /// Switch on diffusion (default: enabled)
   void EnableDiffusion() { m_useDiffusion = true; }
@@ -81,17 +87,11 @@ class AvalancheMC {
   void SetIons() { m_useIons = true; }
 
   /// Set multiplication factor for the signal induced by electrons.
-  void SetElectronSignalScalingFactor(const double scale) {
-    m_scaleElectronSignal = scale;
-  }
+  void SetElectronSignalScalingFactor(const double scale) { m_scaleE = scale; }
   /// Set multiplication factor for the signal induced by holes.
-  void SetHoleSignalScalingFactor(const double scale) {
-    m_scaleHoleSignal = scale;
-  }
+  void SetHoleSignalScalingFactor(const double scale) { m_scaleH = scale; }
   /// Set multiplication factor for the signal induced by ions.
-  void SetIonSignalScalingFactor(const double scale) {
-    m_scaleIonSignal = scale;
-  }
+  void SetIonSignalScalingFactor(const double scale) { m_scaleI = scale; }
 
   /// Return the number of electrons and ions/holes in the avalanche.
   void GetAvalancheSize(unsigned int& ne, unsigned int& ni) const {
@@ -162,7 +162,8 @@ class AvalancheMC {
   Sensor* m_sensor = nullptr;
 
   struct DriftPoint {
-    double x, y, z, t;        //< Position.
+    std::array<double, 3> x;  //< Position.
+    double t;                 //< Time.
     unsigned int ne, nh, ni;  //< Number of secondaries produced at this point.
   };
   /// Current drift line
@@ -197,9 +198,10 @@ class AvalancheMC {
   unsigned int m_nIons = 0;
 
   struct EndPoint {
-    double x0, y0, z0, t0;  //< Starting point.
-    double x1, y1, z1, t1;  //< End point.
-    int status;             //< Status flag at the end point.
+    std::array<double, 3> x0; //< Starting point.
+    std::array<double, 3> x1; //< End point.
+    double t0, t1;            //< Start and end time.
+    int status;               //< Status flag at the end point.
   };
   /// Endpoints of all electrons in the avalanche (including captured ones)
   std::vector<EndPoint> m_endpointsElectrons;
@@ -213,13 +215,17 @@ class AvalancheMC {
   bool m_doSignal = false;
   bool m_doInducedCharge = false;
   bool m_doEquilibration = true;
+  bool m_doRKF = false;
   bool m_useDiffusion = true;
   bool m_useAttachment = true;
   bool m_useBfield = false;
   bool m_useIons = true;
-  double m_scaleElectronSignal = 1.;
-  double m_scaleHoleSignal = 1.;
-  double m_scaleIonSignal = 1.;
+  /// Scaling factor for electron signals.
+  double m_scaleE = 1.;
+  /// Scaling factor for hole signals.
+  double m_scaleH = 1.;
+  /// Scaling factor for ion signals.
+  double m_scaleI = 1.;
 
   /// Use traps from the field component (TCAD).
   bool m_useTcadTrapping = false;
@@ -237,13 +243,11 @@ class AvalancheMC {
                  const unsigned int ni, const bool withElectrons,
                  const bool withHoles);
 
-  void AddPoint(const double x, const double y, const double z, const double t,
+  void AddPoint(const std::array<double, 3>& x, const double t,
                 const unsigned int ne, const unsigned int nh,
                 const unsigned int ni, std::vector<DriftPoint>& points) {
     DriftPoint point;
     point.x = x;
-    point.y = y;
-    point.z = z;
     point.t = t;
     point.ne = ne;
     point.nh = nh;
@@ -252,24 +256,29 @@ class AvalancheMC {
   }
 
   /// Compute electric and magnetic field at a given position.
-  int GetField(const double x, const double y, const double z, double& ex,
-               double& ey, double& ez, double& bx, double& by, double& bz,
-               Medium*& medium);
+  int GetField(const std::array<double, 3>& x, 
+               std::array<double, 3>& e, std::array<double, 3>& b,
+               Medium*& medium) const;
   /// Compute the drift velocity.
-  bool GetVelocity(const int type, Medium* medium, const double x,
-                   const double y, const double z, const double ex,
-                   const double ey, const double ez, const double bx,
-                   const double by, const double bz, double& vx, double& vy,
-                   double& vz);
+  bool GetVelocity(const int type, Medium* medium, 
+                   const std::array<double, 3>& x,
+                   const std::array<double, 3>& e,
+                   const std::array<double, 3>& b,
+                   std::array<double, 3>& v) const;
+  /// Compute end point and effective velocity for a step.
+  void StepRKF(const int type, const std::array<double, 3>& x0,
+               const std::array<double, 3>& v0, const double dt,
+               std::array<double, 3>& xf, std::array<double, 3>& vf,
+               int& status) const;
   /// Add a diffusion step.
   bool AddDiffusion(const int type, Medium* medium, const double step,
-                    double& x, double& y, double& z, const double vx,
-                    const double vy, const double vz, const double ex,
-                    const double ey, const double ez, const double bx,
-                    const double by, const double bz);
+                    std::array<double, 3>& x,
+                    const std::array<double, 3>& v,
+                    const std::array<double, 3>& e,
+                    const std::array<double, 3>& b);
   /// Terminate a drift line close to the boundary.
-  void TerminateLine(double x0, double y0, double z0, double t0, double& x,
-                     double& y, double& z, double& t) const;
+  void Terminate(const std::array<double, 3>& x0, const double t0,
+                 std::array<double, 3>& x, double& t) const;
   /// Compute multiplication and losses along the current drift line.
   bool ComputeGainLoss(const int type, int& status);
   /// Compute Townsend and attachment coefficients along the current drift line.
@@ -282,6 +291,9 @@ class AvalancheMC {
   /// Compute the induced charge for the current drift line.
   void ComputeInducedCharge(const double q,
                             const std::vector<DriftPoint>& driftLine) const;
+  void PrintError(const std::string& fcn, const std::string& par, 
+                  const int type, const std::array<double, 3>& x) const;
+
 };
 }
 
