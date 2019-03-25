@@ -95,6 +95,7 @@ in a three-dimensional table (as a function of \textbf{E}, \textbf{B},
 and the angle \(\theta\) between \textbf{E} and \textbf{B}). 
 If only a one-dimensional table is present and the 
 drift velocity at \(B \ne 0\) is requested, the Laue-Langevin equation
+\cite{BlumRieglerRolandi2008}
 \begin{equation*}
   \mathbf{v} = \frac{\mu}{1 + \mu^2 B^2} \left(
   \mathbf{E} + \mu \mathbf{E} \times \mathbf{B} + 
@@ -566,7 +567,7 @@ accordingly when calling \texttt{EnablePenningTransfer}
 (or \texttt{DisablePenningTransfer}). More precisely,  
 the adjusted Townsend coefficient is given by
 \begin{equation*}
-  \alpha = \alpha_{0} \frac{\sum_{i} {\text{exc}, i} + \sum_{i} {\text{ion}, i}}{\sum_{i} {\text{ion}, i}},
+  \alpha = \alpha_{0} \frac{\sum_{i} r_{\text{exc}, i} + \sum_{i} r_{\text{ion}, i}}{\sum_{i} r_{\text{ion}, i}},
 \end{equation*}
 where $\alpha_{0}$ is the Townsend coefficient calculated without Penning 
 transfers,
