@@ -265,6 +265,11 @@ class AvalancheMC {
                    const std::array<double, 3>& e,
                    const std::array<double, 3>& b,
                    std::array<double, 3>& v) const;
+  /// Compute the attachment coefficient.
+  double GetAttachment(const int type, Medium* medium, 
+                       const std::array<double, 3>& x,
+                       const std::array<double, 3>& e,
+                       const std::array<double, 3>& b) const;
   /// Compute end point and effective velocity for a step.
   void StepRKF(const int type, const std::array<double, 3>& x0,
                const std::array<double, 3>& v0, const double dt,
@@ -280,9 +285,12 @@ class AvalancheMC {
   void Terminate(const std::array<double, 3>& x0, const double t0,
                  std::array<double, 3>& x, double& t) const;
   /// Compute multiplication and losses along the current drift line.
-  bool ComputeGainLoss(const int type, int& status);
+  bool ComputeGainLoss(const int type, std::vector<DriftPoint>& driftLine,
+                       int& status);
   /// Compute Townsend and attachment coefficients along the current drift line.
-  bool ComputeAlphaEta(const int q, std::vector<double>& alphas,
+  bool ComputeAlphaEta(const int q, 
+                       const std::vector<DriftPoint>& driftLine,
+                       std::vector<double>& alphas,
                        std::vector<double>& etas) const;
   bool Equilibrate(std::vector<double>& alphas) const;
   /// Compute the induced signal for the current drift line.

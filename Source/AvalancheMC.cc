@@ -379,7 +379,7 @@ bool AvalancheMC::DriftLine(const double xi, const double yi, const double zi,
 
   if ((type == -1 || type == 1) && (aval || m_useAttachment) && 
       (m_sizeCut == 0 || m_nElectrons < m_sizeCut)) {
-    ComputeGainLoss(type, status);
+    ComputeGainLoss(type, m_drift, status);
     if (status == StatusAttached && m_debug) {
       std::cout << m_className + "::DriftLine: Attached at " 
                 << PrintVec(m_drift.back().x) + ".\n";
@@ -434,8 +434,8 @@ bool AvalancheMC::DriftLine(const double xi, const double yi, const double zi,
     }
     // Set the points along the trajectory.
     for (unsigned int i = 0; i < nPoints; ++i) {
-      m_viewer->SetDriftLinePoint(id, i, m_drift[i].x[0], m_drift[i].x[1],
-                                  m_drift[i].x[2]);
+      const auto& x = m_drift[i].x;
+      m_viewer->SetDriftLinePoint(id, i, x[0], x[1], x[2]);
     }
   }
 
@@ -625,10 +625,36 @@ bool AvalancheMC::GetVelocity(const int type, Medium* medium,
   return true;
 }
 
+double AvalancheMC::GetAttachment(const int type, Medium* medium, 
+                                  const std::array<double, 3>& x,
+                                  const std::array<double, 3>& e,
+                                  const std::array<double, 3>& b) const {
+
+  double eta = 0.;
+  if (m_useTcadTrapping) {
+    const unsigned int nComponents = m_sensor->GetNumberOfComponents();
+    for (unsigned int i = 0; i < nComponents; ++i) {
+      ComponentBase* cmp = m_sensor->GetComponent(i);
+      if (!cmp->IsTrapActive()) continue;
+      if (type < 0) {
+        cmp->ElectronAttachment(x[0], x[1], x[2], eta);
+      } else {
+        cmp->HoleAttachment(x[0], x[1], x[2], eta);
+      }
+      return eta;
+    }
+  }
+  if (type < 0) {
+    medium->ElectronAttachment(e[0], e[1], e[2], b[0], b[1], b[2], eta);
+  } else {
+    medium->HoleAttachment(e[0], e[1], e[2], b[0], b[1], b[2], eta);
+  }
+  return eta;
+}
+
 void AvalancheMC::StepRKF(const int type, const std::array<double, 3>& x0, 
                           const std::array<double, 3>& v0, const double dt,
-                          std::array<double, 3>& xf,
-                          std::array<double, 3>& vf,
+                          std::array<double, 3>& xf, std::array<double, 3>& vf,
                           int& status) const {
   
   // Constants appearing in the RKF formulas.
@@ -752,25 +778,27 @@ void AvalancheMC::Terminate(const std::array<double, 3>& x0, const double t0,
   t1 += dt;
 }
 
-bool AvalancheMC::ComputeGainLoss(const int type, int& status) {
-  const unsigned int nPoints = m_drift.size();
-  std::vector<double> alphas(nPoints, 0.);
+bool AvalancheMC::ComputeGainLoss(const int type, 
+    std::vector<DriftPoint>& driftLine, int& status) {
+
+  const unsigned int nPoints = driftLine.size();
+  std::vector<double> alps(nPoints, 0.);
   std::vector<double> etas(nPoints, 0.);
   // Compute the integrated Townsend and attachment coefficients.
-  if (!ComputeAlphaEta(type, alphas, etas)) return false;
+  if (!ComputeAlphaEta(type, driftLine, alps, etas)) return false;
 
   // Subdivision of a step
   constexpr double probth = 0.01;
 
   // Loop over the drift line.
   for (unsigned int i = 0; i < nPoints - 1; ++i) {
-    m_drift[i].ne = 0;
-    m_drift[i].nh = 0;
-    m_drift[i].ni = 0;
+    driftLine[i].ne = 0;
+    driftLine[i].nh = 0;
+    driftLine[i].ni = 0;
     // Compute the number of subdivisions.
-    const int nDiv = std::max(int((alphas[i] + etas[i]) / probth), 1);
+    const int nDiv = std::max(int((alps[i] + etas[i]) / probth), 1);
     // Compute the probabilities for gain and loss.
-    const double p = std::max(alphas[i] / nDiv, 0.);
+    const double p = std::max(alps[i] / nDiv, 0.);
     const double q = std::max(etas[i] / nDiv, 0.);
     // Set initial number of electrons/ions.
     int ne = 1;
@@ -803,10 +831,10 @@ bool AvalancheMC::ComputeGainLoss(const int type, int& status) {
         } else {
           --m_nIons;
         }
-        m_drift.resize(i + 2);
-        m_drift[i + 1].x[0] = 0.5 * (m_drift[i].x[0] + m_drift[i + 1].x[0]);
-        m_drift[i + 1].x[1] = 0.5 * (m_drift[i].x[1] + m_drift[i + 1].x[1]);
-        m_drift[i + 1].x[2] = 0.5 * (m_drift[i].x[2] + m_drift[i + 1].x[2]);
+        driftLine.resize(i + 2);
+        driftLine[i + 1].x[0] = 0.5 * (driftLine[i].x[0] + driftLine[i + 1].x[0]);
+        driftLine[i + 1].x[1] = 0.5 * (driftLine[i].x[1] + driftLine[i + 1].x[1]);
+        driftLine[i + 1].x[2] = 0.5 * (driftLine[i].x[2] + driftLine[i + 1].x[2]);
         break;
       }
     }
@@ -814,26 +842,26 @@ bool AvalancheMC::ComputeGainLoss(const int type, int& status) {
     // add the new electrons to the table.
     if (ne > 1) {
       if (type == -1) {
-        m_drift[i].ne = ne - 1;
+        driftLine[i].ne = ne - 1;
         m_nElectrons += ne - 1;
       } else if (type == 1) {
-        m_drift[i].nh = ne - 1;
+        driftLine[i].nh = ne - 1;
         m_nHoles += ne - 1;
       } else {
-        m_drift[i].ni = ne - 1;
+        driftLine[i].ni = ne - 1;
       }
     }
     if (ni > 0) {
       if (type == -1) {
         if (m_useIons) {
-          m_drift[i].ni = ni;
+          driftLine[i].ni = ni;
           m_nIons += ni;
         } else {
-          m_drift[i].nh = ni;
+          driftLine[i].nh = ni;
           m_nHoles += ni;
         }
       } else {
-        m_drift[i].ne = ni;
+        driftLine[i].ne = ni;
         m_nElectrons += ni;
       }
     }
@@ -843,7 +871,9 @@ bool AvalancheMC::ComputeGainLoss(const int type, int& status) {
   return true;
 }
 
-bool AvalancheMC::ComputeAlphaEta(const int type, std::vector<double>& alphas,
+bool AvalancheMC::ComputeAlphaEta(const int type, 
+                                  const std::vector<DriftPoint>& driftLine, 
+                                  std::vector<double>& alps,
                                   std::vector<double>& etas) const {
 
   // -----------------------------------------------------------------------
@@ -859,14 +889,14 @@ bool AvalancheMC::ComputeAlphaEta(const int type, std::vector<double>& alphas,
                             0.467913934572691047, 0.467913934572691047,
                             0.360761573048138608, 0.171324492379170345};
 
-  const unsigned int nPoints = m_drift.size();
-  alphas.assign(nPoints, 0.);
+  const unsigned int nPoints = driftLine.size();
+  alps.assign(nPoints, 0.);
   etas.assign(nPoints, 0.);
   if (nPoints < 2) return true;
   // Loop over the drift line.
   for (unsigned int i = 0; i < nPoints - 1; ++i) {
-    const auto& x0 = m_drift[i].x;
-    const auto& x1 = m_drift[i + 1].x;
+    const auto& x0 = driftLine[i].x;
+    const auto& x1 = driftLine[i + 1].x;
     // Compute the step length.
     const std::array<double, 3> del = {x1[0] - x0[0], x1[1] - x0[1], 
                                        x1[2] - x0[2]}; 
@@ -898,33 +928,15 @@ bool AvalancheMC::ComputeAlphaEta(const int type, std::vector<double>& alphas,
       std::array<double, 3> v;
       if (!GetVelocity(type, medium, x, e, b, v)) continue;
       // Get Townsend and attachment coefficients.
-      double alpha = 0., eta = 0.;
-      if (m_useTcadTrapping) {
-        const unsigned int nComponents = m_sensor->GetNumberOfComponents();
-        for (unsigned int k = 0; k < nComponents; ++k) {
-          ComponentBase* cmp = m_sensor->GetComponent(k);
-          if (!cmp->IsTrapActive()) continue;
-          Medium* med = cmp->GetMedium(x[0], x[1], x[2]);
-          if (type < 0) {
-            med->ElectronTownsend(e[0], e[1], e[2], b[0], b[1], b[2], alpha);
-            cmp->ElectronAttachment(x[0], x[1], x[2], eta);
-          } else {
-            med->HoleTownsend(e[0], e[1], e[2], b[0], b[1], b[2], alpha);
-            cmp->HoleAttachment(x[0], x[1], x[2], eta);
-          }
-          break;
-        }
+      double alpha = 0.;
+      if (type < 0) {
+        medium->ElectronTownsend(e[0], e[1], e[2], b[0], b[1], b[2], alpha);
       } else {
-        if (type < 0) {
-          medium->ElectronTownsend(e[0], e[1], e[2], b[0], b[1], b[2], alpha);
-          medium->ElectronAttachment(e[0], e[1], e[2], b[0], b[1], b[2], eta);
-        } else {
-          medium->HoleTownsend(e[0], e[1], e[2], b[0], b[1], b[2], alpha);
-          medium->HoleAttachment(e[0], e[1], e[2], b[0], b[1], b[2], eta);
-        }
+        medium->HoleTownsend(e[0], e[1], e[2], b[0], b[1], b[2], alpha);
       }
+      const double eta = GetAttachment(type, medium, x, e, b);
       for (unsigned int k = 0; k < 3; ++k) vd[k] += wg[j] * v[k];
-      alphas[i] += wg[j] * alpha;
+      alps[i] += wg[j] * alpha;
       etas[i] += wg[j] * eta;
     }
 
@@ -939,13 +951,13 @@ bool AvalancheMC::ComputeAlphaEta(const int type, std::vector<double>& alphas,
         scale = dinv < 0. ? 0. : dinv / (vdmag * delmag);
       }
     }
-    alphas[i] *= 0.5 * delmag * scale;
+    alps[i] *= 0.5 * delmag * scale;
     etas[i] *= 0.5 * delmag * scale;
   }
 
   // Skip equilibration if projection has not been requested.
   if (!m_doEquilibration) return true;
-  if (!Equilibrate(alphas)) {
+  if (!Equilibrate(alps)) {
     if (m_debug) {
       std::cerr << m_className << "::ComputeAlphaEta:\n    Unable to even out "
                 << "alpha steps. Calculation is probably inaccurate.\n";
