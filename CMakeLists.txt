@@ -29,12 +29,16 @@ ELSEIF(DEFINED ROOTSYS)
 ELSEIF(DEFINED ROOT_CMAKE_DIR)
     list(APPEND CMAKE_PREFIX_PATH ${ROOT_CMAKE_DIR} )
 ELSE()
-    MESSAGE(FATAL_ERROR "Please consider to set ROOTSYS or use -DROOTSYS=..."
+    FIND_PACKAGE( ROOT 5.0 REQUIRED COMPONENTS Geom Gdml QUIET)
+    if(NOT ROOT_FOUND)
+        MESSAGE(FATAL_ERROR "Please consider to set ROOTSYS or use -DROOTSYS=..."
                         "If still there is a proplem, point to the directory which includes FindROOT.cmake using -DROOT_CMAKE_DIR=...")
+    endif()
 ENDIF(DEFINED ENV{ROOTSYS})
 
-
+if(NOT ROOT_FOUND)
 FIND_PACKAGE( ROOT 5.0 REQUIRED COMPONENTS Geom Gdml)
+endif()
 
 if(ROOT_cxx17_FOUND AND "${CMAKE_CXX_STANDARD}" STREQUAL "11" OR "${CMAKE_CXX_STANDARD}" STREQUAL "14")
 	message(WARNING "DQM4hep will be compiled with CXX17")
@@ -147,7 +151,7 @@ TARGET_LINK_LIBRARIES( ${PROJECT_NAME} ${ROOT_LIBRARIES} ${ROOT_COMPONENT_LIBRAR
 SET_TARGET_PROPERTIES( ${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_VERSION})
 
 ## BUILD examples             ##########################
-option(WITH_EXAMPLES "Build Garfield++ examples" ON)
+option(WITH_EXAMPLES "Build Garfield++ examples" OFF)
 if(WITH_EXAMPLES)
     MESSAGE(STATUS "Garfield++ exmaples will be build. In order disable this option use -DWITH_EXAMPLES=OFF")
     add_subdirectory(Examples)
