@@ -10,7 +10,6 @@ namespace Garfield {
 /// %Sensor
 
 class Sensor {
-
  public:
   /// Constructor
   Sensor() = default;
@@ -85,27 +84,28 @@ class Sensor {
     * \param tstart start time [ns]
     * \param tstep bin width [ns]
     * \param nstep number of bins
-    */ 
-  void SetTimeWindow(const double tstart, const double tstep, 
+    */
+  void SetTimeWindow(const double tstart, const double tstep,
                      const unsigned int nsteps);
   /// Retrieve the time window and binning.
-  void GetTimeWindow(double& tstart, double& tstep, unsigned int& nsteps) const {
+  void GetTimeWindow(double& tstart, double& tstep,
+                     unsigned int& nsteps) const {
     tstart = m_tStart;
     tstep = m_tStep;
     nsteps = m_nTimeBins;
   }
-  /// Retrieve the total signal for a given electrode and time bin. 
+  /// Retrieve the total signal for a given electrode and time bin.
   double GetSignal(const std::string& label, const unsigned int bin);
   /// Retrieve the electron signal for a given electrode and time bin.
   double GetElectronSignal(const std::string& label, const unsigned int bin);
   /// Retrieve the ion or hole signal for a given electrode and time bin.
   double GetIonSignal(const std::string& label, const unsigned int bin);
-  /// Retrieve the total induced charge for a given electrode, 
-  /// calculated using the weighting potentials at the start and end points. 
+  /// Retrieve the total induced charge for a given electrode,
+  /// calculated using the weighting potentials at the start and end points.
   double GetInducedCharge(const std::string& label);
   /// Set the function to be used for evaluating the transfer function.
   void SetTransferFunction(double (*f)(double t));
-  /// Set the points to be used for interpolating the transfer function. 
+  /// Set the points to be used for interpolating the transfer function.
   void SetTransferFunction(const std::vector<double>& times,
                            const std::vector<double>& values);
   /// Evaluate the transfer function at a given time.
@@ -117,21 +117,21 @@ class Sensor {
   /// Set the function to be used for evaluating the noise component.
   void SetNoiseFunction(double (*f)(double t));
   /// Add noise to the induced signal.
-  void AddNoise(const bool total = true, const bool electron = false, 
+  void AddNoise(const bool total = true, const bool electron = false,
                 const bool ion = false);
-  /** Determine the threshold crossings of the current signal curve. 
+  /** Determine the threshold crossings of the current signal curve.
     * \param thr threshold value
     * \param label electrode for which to compute the threshold crossings
     * \param n number of threshold crossings
-    */ 
+    */
   bool ComputeThresholdCrossings(const double thr, const std::string& label,
                                  int& n);
-  /// Get the number of threshold crossings 
+  /// Get the number of threshold crossings
   /// (after having called ComputeThresholdCrossings).
-  unsigned int GetNumberOfThresholdCrossings() const { 
-    return m_thresholdCrossings.size(); 
+  unsigned int GetNumberOfThresholdCrossings() const {
+    return m_thresholdCrossings.size();
   }
-  /** Retrieve the time and type of a given threshold crossing (after having 
+  /** Retrieve the time and type of a given threshold crossing (after having
     * called ComputeThresholdCrossings.
     * \param i index
     * \param time threshold crossing time [ns]
@@ -147,7 +147,7 @@ class Sensor {
   bool IsWireCrossed(const double x0, const double y0, const double z0,
                      const double x1, const double y1, const double z1,
                      double& xc, double& yc, double& zc);
-  bool IsInTrapRadius(const double q0, const double x0, const double y0, 
+  bool IsInTrapRadius(const double q0, const double x0, const double y0,
                       const double z0, double& xw, double& yw, double& rw);
 
  private:

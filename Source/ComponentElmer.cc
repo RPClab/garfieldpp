@@ -1,24 +1,22 @@
 // Copied and modified ComponentAnsys123.cc
 
-#include <iostream>
-#include <fstream>
-#include <stdlib.h>
 #include <math.h>
+#include <stdlib.h>
+#include <fstream>
+#include <iostream>
 
 #include "ComponentElmer.hh"
 
 namespace {
 
 void PrintErrorReadingFile(const std::string& hdr, const std::string& file,
-                           const int line) { 
-  std::cerr << hdr << "\n    Error reading file " << file << " (line " 
-            << line << ").\n";
+                           const int line) {
+  std::cerr << hdr << "\n    Error reading file " << file << " (line " << line
+            << ").\n";
 }
 
-void PrintErrorOpeningFile(const std::string& hdr, 
-                           const std::string& filetype, 
+void PrintErrorOpeningFile(const std::string& hdr, const std::string& filetype,
                            const std::string& filename) {
-
   std::cerr << hdr << "\n    Could not open " << filetype << " file "
             << filename << " for reading.\n";
   std::cerr << "    The file perhaps does not exist.\n";
@@ -28,29 +26,25 @@ void PrintErrorOpeningFile(const std::string& hdr,
 namespace Garfield {
 
 ComponentElmer::ComponentElmer() : ComponentFieldMap() {
-
   m_className = "ComponentElmer";
 }
 
-ComponentElmer::ComponentElmer(const std::string& header, 
+ComponentElmer::ComponentElmer(const std::string& header,
                                const std::string& elist,
-                               const std::string& nlist, 
+                               const std::string& nlist,
                                const std::string& mplist,
-                               const std::string& volt, 
-                               const std::string& unit)
+                               const std::string& volt, const std::string& unit)
     : ComponentFieldMap() {
-
   m_className = "ComponentElmer";
   Initialise(header, elist, nlist, mplist, volt, unit);
 }
 
-bool ComponentElmer::Initialise(const std::string& header, 
+bool ComponentElmer::Initialise(const std::string& header,
                                 const std::string& elist,
-                                const std::string& nlist, 
+                                const std::string& nlist,
                                 const std::string& mplist,
-                                const std::string& volt, 
+                                const std::string& volt,
                                 const std::string& unit) {
-
   const std::string hdr = m_className + "::Initialise:";
   m_debug = false;
   m_ready = false;
@@ -124,7 +118,6 @@ bool ComponentElmer::Initialise(const std::string& header,
 
   // Read the nodes from the file.
   for (il = 0; il < nNodes; il++) {
-
     // Get a line from the nodes file.
     fnodes.getline(line, size, '\n');
 
@@ -176,7 +169,7 @@ bool ComponentElmer::Initialise(const std::string& header,
 
   // Should have stopped: if not, print error message.
   if (!readstop) {
-    std::cerr << hdr << "\n    Error reading past header of potentials file " 
+    std::cerr << hdr << "\n    Error reading past header of potentials file "
               << volt << ".\n";
     fvolt.close();
     return false;
@@ -216,7 +209,7 @@ bool ComponentElmer::Initialise(const std::string& header,
   fmplist.getline(line, size, '\n');
   token = strtok(line, " ");
   if (readerror) {
-    std::cerr << hdr << "\n    Error reading number of materials from " 
+    std::cerr << hdr << "\n    Error reading number of materials from "
               << mplist << ".\n";
     fmplist.close();
     ok = false;
@@ -242,7 +235,7 @@ bool ComponentElmer::Initialise(const std::string& header,
       return false;
     }
     materials[il - 2].eps = dc;
-    std::cout << hdr << "\n    Set material " << il - 2 << " of " 
+    std::cout << hdr << "\n    Set material " << il - 2 << " of "
               << m_nMaterials << " to eps " << dc << ".\n";
   }
 
@@ -287,7 +280,6 @@ bool ComponentElmer::Initialise(const std::string& header,
   int highestnode = 0;
   Element newElement;
   for (il = 0; il < nElements; il++) {
-
     // Get a line
     felems.getline(line, size, '\n');
 
@@ -349,8 +341,8 @@ bool ComponentElmer::Initialise(const std::string& header,
       ok = false;
     }
     if (materials[imat].eps < 0) {
-      std::cerr << hdr << "\n    Element " << il << " in element list " 
-                << elist << "\n    uses material " << imat
+      std::cerr << hdr << "\n    Element " << il << " in element list " << elist
+                << "\n    uses material " << imat
                 << " which has not been assigned a positive permittivity in "
                 << mplist << ".\n";
       ok = false;
@@ -359,12 +351,12 @@ bool ComponentElmer::Initialise(const std::string& header,
     // Check the node numbers.
     if (in0 < 1 || in1 < 1 || in2 < 1 || in3 < 1 || in4 < 1 || in5 < 1 ||
         in6 < 1 || in7 < 1 || in8 < 1 || in9 < 1) {
-      std::cerr << hdr << "\n    Found a node number < 1 on file " << elist 
-                << " (line " << il << ").\n    Element: " << il 
-                << ", material: " << imat << "\n    nodes: (" 
-                << in0 << ", " << in1 << ", " << in2 << ", " << in3 << ", " 
-                << in4 << ", " << in5 << ", " << in6 << ", " << in7 << ", " 
-                << in8 << ", " << in9 << ")\n";
+      std::cerr << hdr << "\n    Found a node number < 1 on file " << elist
+                << " (line " << il << ").\n    Element: " << il
+                << ", material: " << imat << "\n    nodes: (" << in0 << ", "
+                << in1 << ", " << in2 << ", " << in3 << ", " << in4 << ", "
+                << in5 << ", " << in6 << ", " << in7 << ", " << in8 << ", "
+                << in9 << ")\n";
       ok = false;
     }
     if (in0 > highestnode) highestnode = in0;
@@ -388,7 +380,7 @@ bool ComponentElmer::Initialise(const std::string& header,
         in4 == in5 || in4 == in6 || in4 == in7 || in4 == in8 || in4 == in9 ||
         in5 == in6 || in5 == in7 || in5 == in8 || in5 == in9 || in6 == in7 ||
         in6 == in8 || in6 == in9 || in7 == in8 || in7 == in9 || in8 == in9) {
-      std::cerr << hdr << "\n    Element " << il << " of file " << elist 
+      std::cerr << hdr << "\n    Element " << il << " of file " << elist
                 << " is degenerate,\n"
                 << "    no such elements are allowed in this type of map.\n";
       ok = false;
@@ -439,8 +431,7 @@ bool ComponentElmer::Initialise(const std::string& header,
 }
 
 bool ComponentElmer::SetWeightingField(std::string wvolt, std::string label) {
-
-  const std::string hdr = m_className + "::SetWeightingField:"; 
+  const std::string hdr = m_className + "::SetWeightingField:";
   if (!m_ready) {
     PrintNotReady("SetWeightingField");
     std::cerr << "    Weighting field cannot be added.\n";
@@ -474,8 +465,8 @@ bool ComponentElmer::SetWeightingField(std::string wvolt, std::string label) {
       nodes[j].w.resize(nWeightingFields);
     }
   } else {
-    std::cout << hdr << "\n    Replacing existing weighting field " 
-              << label << ".\n";
+    std::cout << hdr << "\n    Replacing existing weighting field " << label
+              << ".\n";
   }
   wfields[iw] = label;
   wfieldsOk[iw] = false;
@@ -497,7 +488,7 @@ bool ComponentElmer::SetWeightingField(std::string wvolt, std::string label) {
 
   // Should have stopped: if not, print error message.
   if (!readstop) {
-    std::cerr << hdr << "\n    Error reading past header of potentials file " 
+    std::cerr << hdr << "\n    Error reading past header of potentials file "
               << wvolt << ".\n";
     fwvolt.close();
     ok = false;
@@ -543,7 +534,6 @@ bool ComponentElmer::SetWeightingField(std::string wvolt, std::string label) {
 void ComponentElmer::ElectricField(const double x, const double y,
                                    const double z, double& ex, double& ey,
                                    double& ez, Medium*& m, int& status) {
-
   double v = 0.;
   ElectricField(x, y, z, ex, ey, ez, v, m, status);
 }
@@ -552,7 +542,6 @@ void ComponentElmer::ElectricField(const double xin, const double yin,
                                    const double zin, double& ex, double& ey,
                                    double& ez, double& volt, Medium*& m,
                                    int& status) {
-
   // Copy the coordinates
   double x = xin, y = yin, z = zin;
 
@@ -580,8 +569,8 @@ void ComponentElmer::ElectricField(const double xin, const double yin,
   const int imap = FindElement13(x, y, z, t1, t2, t3, t4, jac, det);
   if (imap < 0) {
     if (m_debug) {
-      std::cout << m_className << "::ElectricField:\n    Point ("
-                << x << ", " << y << ", " << z << ") is not in the mesh.\n";
+      std::cout << m_className << "::ElectricField:\n    Point (" << x << ", "
+                << y << ", " << z << ") is not in the mesh.\n";
     }
     status = -6;
     return;
@@ -619,7 +608,8 @@ void ComponentElmer::ElectricField(const double xin, const double yin,
          n6.v * (fourt4 * jac[0][1] + fourt1 * jac[3][1]) +
          n7.v * (fourt3 * jac[1][1] + fourt2 * jac[2][1]) +
          n8.v * (fourt4 * jac[1][1] + fourt2 * jac[3][1]) +
-         n9.v * (fourt4 * jac[2][1] + fourt3 * jac[3][1])) * invdet;
+         n9.v * (fourt4 * jac[2][1] + fourt3 * jac[3][1])) *
+       invdet;
   ey = -(n0.v * (fourt1 - 1) * jac[0][2] + n1.v * (fourt2 - 1) * jac[1][2] +
          n2.v * (fourt3 - 1) * jac[2][2] + n3.v * (fourt4 - 1) * jac[3][2] +
          n4.v * (fourt2 * jac[0][2] + fourt1 * jac[1][2]) +
@@ -627,7 +617,8 @@ void ComponentElmer::ElectricField(const double xin, const double yin,
          n6.v * (fourt4 * jac[0][2] + fourt1 * jac[3][2]) +
          n7.v * (fourt3 * jac[1][2] + fourt2 * jac[2][2]) +
          n8.v * (fourt4 * jac[1][2] + fourt2 * jac[3][2]) +
-         n9.v * (fourt4 * jac[2][2] + fourt3 * jac[3][2])) * invdet;
+         n9.v * (fourt4 * jac[2][2] + fourt3 * jac[3][2])) *
+       invdet;
   ez = -(n0.v * (fourt1 - 1) * jac[0][3] + n1.v * (fourt2 - 1) * jac[1][3] +
          n2.v * (fourt3 - 1) * jac[2][3] + n3.v * (fourt4 - 1) * jac[3][3] +
          n4.v * (fourt2 * jac[0][3] + fourt1 * jac[1][3]) +
@@ -635,13 +626,14 @@ void ComponentElmer::ElectricField(const double xin, const double yin,
          n6.v * (fourt4 * jac[0][3] + fourt1 * jac[3][3]) +
          n7.v * (fourt3 * jac[1][3] + fourt2 * jac[2][3]) +
          n8.v * (fourt4 * jac[1][3] + fourt2 * jac[3][3]) +
-         n9.v * (fourt4 * jac[2][3] + fourt3 * jac[3][3])) * invdet;
+         n9.v * (fourt4 * jac[2][3] + fourt3 * jac[3][3])) *
+       invdet;
 
   // Transform field to global coordinates
   UnmapFields(ex, ey, ez, x, y, z, xmirr, ymirr, zmirr, rcoordinate, rotation);
 
   // Drift medium?
-  const Material& mat = materials[element.matmap]; 
+  const Material& mat = materials[element.matmap];
   if (m_debug) {
     std::cout << m_className << "::ElectricField:\n    Material "
               << element.matmap << ", drift flag " << mat.driftmedium << ".\n";
@@ -654,7 +646,6 @@ void ComponentElmer::ElectricField(const double xin, const double yin,
 void ComponentElmer::WeightingField(const double xin, const double yin,
                                     const double zin, double& wx, double& wy,
                                     double& wz, const std::string& label) {
-
   // Initial values
   wx = wy = wz = 0;
 
@@ -723,7 +714,8 @@ void ComponentElmer::WeightingField(const double xin, const double yin,
          n6.w[iw] * (fourt4 * jac[0][1] + fourt1 * jac[3][1]) +
          n7.w[iw] * (fourt3 * jac[1][1] + fourt2 * jac[2][1]) +
          n8.w[iw] * (fourt4 * jac[1][1] + fourt2 * jac[3][1]) +
-         n9.w[iw] * (fourt4 * jac[2][1] + fourt3 * jac[3][1])) * invdet;
+         n9.w[iw] * (fourt4 * jac[2][1] + fourt3 * jac[3][1])) *
+       invdet;
   wy = -(n0.w[iw] * (fourt1 - 1) * jac[0][2] +
          n1.w[iw] * (fourt2 - 1) * jac[1][2] +
          n2.w[iw] * (fourt3 - 1) * jac[2][2] +
@@ -733,7 +725,8 @@ void ComponentElmer::WeightingField(const double xin, const double yin,
          n6.w[iw] * (fourt4 * jac[0][2] + fourt1 * jac[3][2]) +
          n7.w[iw] * (fourt3 * jac[1][2] + fourt2 * jac[2][2]) +
          n8.w[iw] * (fourt4 * jac[1][2] + fourt2 * jac[3][2]) +
-         n9.w[iw] * (fourt4 * jac[2][2] + fourt3 * jac[3][2])) * invdet;
+         n9.w[iw] * (fourt4 * jac[2][2] + fourt3 * jac[3][2])) *
+       invdet;
   wz = -(n0.w[iw] * (fourt1 - 1) * jac[0][3] +
          n1.w[iw] * (fourt2 - 1) * jac[1][3] +
          n2.w[iw] * (fourt3 - 1) * jac[2][3] +
@@ -743,7 +736,8 @@ void ComponentElmer::WeightingField(const double xin, const double yin,
          n6.w[iw] * (fourt4 * jac[0][3] + fourt1 * jac[3][3]) +
          n7.w[iw] * (fourt3 * jac[1][3] + fourt2 * jac[2][3]) +
          n8.w[iw] * (fourt4 * jac[1][3] + fourt2 * jac[3][3]) +
-         n9.w[iw] * (fourt4 * jac[2][3] + fourt3 * jac[3][3])) * invdet;
+         n9.w[iw] * (fourt4 * jac[2][3] + fourt3 * jac[3][3])) *
+       invdet;
 
   // Transform field to global coordinates
   UnmapFields(wx, wy, wz, x, y, z, xmirr, ymirr, zmirr, rcoordinate, rotation);
@@ -752,7 +746,6 @@ void ComponentElmer::WeightingField(const double xin, const double yin,
 double ComponentElmer::WeightingPotential(const double xin, const double yin,
                                           const double zin,
                                           const std::string& label) {
-
   // Do not proceed if not properly initialised.
   if (!m_ready) return 0.;
 
@@ -789,7 +782,8 @@ double ComponentElmer::WeightingPotential(const double xin, const double yin,
 
   const Element& element = elements[imap];
   if (m_debug) {
-    PrintElement("WeightingPotential", x, y, z, t1, t2, t3, t4, element, 10, iw);
+    PrintElement("WeightingPotential", x, y, z, t1, t2, t3, t4, element, 10,
+                 iw);
   }
   const Node& n0 = nodes[element.emap[0]];
   const Node& n1 = nodes[element.emap[1]];
@@ -811,7 +805,6 @@ double ComponentElmer::WeightingPotential(const double xin, const double yin,
 
 Medium* ComponentElmer::GetMedium(const double xin, const double yin,
                                   const double zin) {
-
   // Copy the coordinates
   double x = xin, y = yin, z = zin;
 
@@ -832,17 +825,17 @@ Medium* ComponentElmer::GetMedium(const double xin, const double yin,
   const int imap = FindElement13(x, y, z, t1, t2, t3, t4, jac, det);
   if (imap < 0) {
     if (m_debug) {
-      std::cout << m_className << "::GetMedium:\n    Point ("
-                << x << ", " << y << ", " << z << ") is not in the mesh.\n";
+      std::cout << m_className << "::GetMedium:\n    Point (" << x << ", " << y
+                << ", " << z << ") is not in the mesh.\n";
     }
     return nullptr;
   }
   const Element& element = elements[imap];
   if (element.matmap >= m_nMaterials) {
     if (m_debug) {
-      std::cerr << m_className << "::GetMedium:\n    Point (" 
-                << x << ", " << y << ", " << z 
-                << ") has out of range material number " << imap << ".\n";
+      std::cerr << m_className << "::GetMedium:\n    Point (" << x << ", " << y
+                << ", " << z << ") has out of range material number " << imap
+                << ".\n";
     }
     return nullptr;
   }
@@ -853,7 +846,6 @@ Medium* ComponentElmer::GetMedium(const double xin, const double yin,
 }
 
 double ComponentElmer::GetElementVolume(const unsigned int i) {
-
   if (i >= elements.size()) return 0.;
   const Element& element = elements[i];
   const Node& n0 = nodes[element.emap[0]];
@@ -876,7 +868,6 @@ double ComponentElmer::GetElementVolume(const unsigned int i) {
 
 void ComponentElmer::GetAspectRatio(const unsigned int i, double& dmin,
                                     double& dmax) {
-
   if (i >= elements.size()) {
     dmin = dmax = 0.;
     return;

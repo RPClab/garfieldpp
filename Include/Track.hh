@@ -1,8 +1,8 @@
 #ifndef G_TRACK_H
 #define G_TRACK_H
 
-#include <string>
 #include <cmath>
+#include <string>
 
 namespace Garfield {
 
@@ -12,7 +12,6 @@ class ViewDrift;
 /// Abstract base class for track generation.
 
 class Track {
-
  public:
   /// Constructor
   Track();
@@ -29,7 +28,7 @@ class Track {
   /// - kaon,K-
   /// - K+
   /// - proton,p
-  /// - anti-proton,p-bar 
+  /// - anti-proton,p-bar
   /// - deuteron,d
   /// - alpha
   virtual void SetParticle(const std::string& part);
@@ -65,7 +64,7 @@ class Track {
   /// Get the mass [eV / c2] of the projectile.
   double GetMass() const { return m_mass; }
 
-  /// Set the sensor through which to transport the particle. 
+  /// Set the sensor through which to transport the particle.
   void SetSensor(Sensor* s);
 
   /// Calculate a new track starting from (x0, y0, z0) at time t0
@@ -79,7 +78,7 @@ class Track {
     * \param n number of electrons produced
     * \param e deposited energy
     * \param extra additional information (not always implemented)
-    */ 
+    */
   virtual bool GetCluster(double& xcls, double& ycls, double& zcls,
                           double& tcls, int& n, double& e, double& extra) = 0;
 
@@ -91,7 +90,7 @@ class Track {
 
   /// Switch on plotting.
   void EnablePlotting(ViewDrift* viewer);
-  /// Switch off plotting. 
+  /// Switch off plotting.
   void DisablePlotting();
 
   void EnableDebugging() { m_debug = true; }

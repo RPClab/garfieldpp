@@ -1,20 +1,16 @@
 #include <iostream>
 
-#include "Sensor.hh"
-#include "TrackSimple.hh"
 #include "FundamentalConstants.hh"
 #include "GarfieldConstants.hh"
 #include "Random.hh"
+#include "Sensor.hh"
+#include "TrackSimple.hh"
 
 namespace Garfield {
 
-TrackSimple::TrackSimple() : Track() {
-
-  m_className = "TrackSimple";
-}
+TrackSimple::TrackSimple() : Track() { m_className = "TrackSimple"; }
 
 void TrackSimple::SetClusterDensity(const double d) {
-
   if (d < Small) {
     std::cerr << m_className << "::SetClusterDensity:\n"
               << "    Cluster density (number of clusters per cm)"
@@ -28,7 +24,6 @@ void TrackSimple::SetClusterDensity(const double d) {
 double TrackSimple::GetClusterDensity() { return 1. / m_mfp; }
 
 void TrackSimple::SetStoppingPower(const double dedx) {
-
   if (dedx < Small) {
     std::cerr << m_className << "::SetStoppingPower:\n"
               << "    Stopping power (average energy loss [eV] per cm)"
@@ -44,7 +39,6 @@ double TrackSimple::GetStoppingPower() { return m_eloss; }
 bool TrackSimple::NewTrack(const double x0, const double y0, const double z0,
                            const double t0, const double dx0, const double dy0,
                            const double dz0) {
-
   // Check if a sensor has been defined
   if (!m_sensor) {
     std::cerr << m_className << "::NewTrack:\n"
@@ -84,7 +78,6 @@ bool TrackSimple::NewTrack(const double x0, const double y0, const double z0,
 
 bool TrackSimple::GetCluster(double& xcls, double& ycls, double& zcls,
                              double& tcls, int& n, double& e, double& extra) {
-
   extra = 0.;
   if (!m_isReady) return false;
 

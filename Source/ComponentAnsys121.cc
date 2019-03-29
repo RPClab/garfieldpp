@@ -1,14 +1,13 @@
-#include <iostream>
-#include <fstream>
-#include <stdlib.h>
 #include <math.h>
+#include <stdlib.h>
+#include <fstream>
+#include <iostream>
 
 #include "ComponentAnsys121.hh"
 
 namespace Garfield {
 
 ComponentAnsys121::ComponentAnsys121() : ComponentFieldMap() {
-
   m_className = "ComponentAnsys121";
   m_is3d = false;
   // Default bounding box
@@ -19,7 +18,6 @@ ComponentAnsys121::ComponentAnsys121() : ComponentFieldMap() {
 bool ComponentAnsys121::Initialise(std::string elist, std::string nlist,
                                    std::string mplist, std::string prnsol,
                                    std::string unit) {
-
   m_ready = false;
   m_warning = false;
   m_nWarnings = 0;
@@ -593,7 +591,6 @@ bool ComponentAnsys121::Initialise(std::string elist, std::string nlist,
 
 bool ComponentAnsys121::SetWeightingField(std::string prnsol,
                                           std::string label) {
-
   if (!m_ready) {
     PrintNotReady("SetWeightingField");
     std::cerr << "    Weighting field cannot be added.\n";
@@ -708,7 +705,6 @@ bool ComponentAnsys121::SetWeightingField(std::string prnsol,
 void ComponentAnsys121::ElectricField(const double x, const double y,
                                       const double z, double& ex, double& ey,
                                       double& ez, Medium*& m, int& status) {
-
   double v;
   ElectricField(x, y, z, ex, ey, ez, v, m, status);
 }
@@ -717,7 +713,6 @@ void ComponentAnsys121::ElectricField(const double xin, const double yin,
                                       const double zin, double& ex, double& ey,
                                       double& ez, double& volt, Medium*& m,
                                       int& status) {
-
   // Copy the coordinates
   double x = xin, y = yin, z = 0.;
 
@@ -774,37 +769,41 @@ void ComponentAnsys121::ElectricField(const double xin, const double yin,
     volt = n0.v * t1 * (2 * t1 - 1) + n1.v * t2 * (2 * t2 - 1) +
            n2.v * t3 * (2 * t3 - 1) + 4 * n3.v * t1 * t2 + 4 * n4.v * t1 * t3 +
            4 * n5.v * t2 * t3;
-    ex = -(n0.v * (4 * t1 - 1) * jac[0][1] + 
-           n1.v * (4 * t2 - 1) * jac[1][1] +
+    ex = -(n0.v * (4 * t1 - 1) * jac[0][1] + n1.v * (4 * t2 - 1) * jac[1][1] +
            n2.v * (4 * t3 - 1) * jac[2][1] +
            n3.v * (4 * t2 * jac[0][1] + 4 * t1 * jac[1][1]) +
            n4.v * (4 * t3 * jac[0][1] + 4 * t1 * jac[2][1]) +
-           n5.v * (4 * t3 * jac[1][1] + 4 * t2 * jac[2][1])) * invdet;
-    ey = -(n0.v * (4 * t1 - 1) * jac[0][2] + 
-           n1.v * (4 * t2 - 1) * jac[1][2] +
+           n5.v * (4 * t3 * jac[1][1] + 4 * t2 * jac[2][1])) *
+         invdet;
+    ey = -(n0.v * (4 * t1 - 1) * jac[0][2] + n1.v * (4 * t2 - 1) * jac[1][2] +
            n2.v * (4 * t3 - 1) * jac[2][2] +
            n3.v * (4 * t2 * jac[0][2] + 4 * t1 * jac[1][2]) +
            n4.v * (4 * t3 * jac[0][2] + 4 * t1 * jac[2][2]) +
-           n5.v * (4 * t3 * jac[1][2] + 4 * t2 * jac[2][2])) * invdet;
+           n5.v * (4 * t3 * jac[1][2] + 4 * t2 * jac[2][2])) *
+         invdet;
   } else {
     const Node& n6 = nodes[element.emap[6]];
     const Node& n7 = nodes[element.emap[7]];
     volt = -n0.v * (1 - t1) * (1 - t2) * (1 + t1 + t2) * 0.25 -
-            n1.v * (1 + t1) * (1 - t2) * (1 - t1 + t2) * 0.25 -
-            n2.v * (1 + t1) * (1 + t2) * (1 - t1 - t2) * 0.25 -
-            n3.v * (1 - t1) * (1 + t2) * (1 + t1 - t2) * 0.25 +
-            n4.v * (1 - t1) * (1 + t1) * (1 - t2) * 0.5 +
-            n5.v * (1 + t1) * (1 + t2) * (1 - t2) * 0.5 +
-            n6.v * (1 - t1) * (1 + t1) * (1 + t2) * 0.5 +
-            n7.v * (1 - t1) * (1 + t2) * (1 - t2) * 0.5;
+           n1.v * (1 + t1) * (1 - t2) * (1 - t1 + t2) * 0.25 -
+           n2.v * (1 + t1) * (1 + t2) * (1 - t1 - t2) * 0.25 -
+           n3.v * (1 - t1) * (1 + t2) * (1 + t1 - t2) * 0.25 +
+           n4.v * (1 - t1) * (1 + t1) * (1 - t2) * 0.5 +
+           n5.v * (1 + t1) * (1 + t2) * (1 - t2) * 0.5 +
+           n6.v * (1 - t1) * (1 + t1) * (1 + t2) * 0.5 +
+           n7.v * (1 - t1) * (1 + t2) * (1 - t2) * 0.5;
     ex = -(n0.v * ((1 - t2) * (2 * t1 + t2) * jac[0][0] +
-                   (1 - t1) * (t1 + 2 * t2) * jac[1][0]) * 0.25 +
+                   (1 - t1) * (t1 + 2 * t2) * jac[1][0]) *
+               0.25 +
            n1.v * ((1 - t2) * (2 * t1 - t2) * jac[0][0] -
-                   (1 + t1) * (t1 - 2 * t2) * jac[1][0]) * 0.25 +
+                   (1 + t1) * (t1 - 2 * t2) * jac[1][0]) *
+               0.25 +
            n2.v * ((1 + t2) * (2 * t1 + t2) * jac[0][0] +
-                   (1 + t1) * (t1 + 2 * t2) * jac[1][0]) * 0.25 +
+                   (1 + t1) * (t1 + 2 * t2) * jac[1][0]) *
+               0.25 +
            n3.v * ((1 + t2) * (2 * t1 - t2) * jac[0][0] -
-                   (1 - t1) * (t1 - 2 * t2) * jac[1][0]) * 0.25 +
+                   (1 - t1) * (t1 - 2 * t2) * jac[1][0]) *
+               0.25 +
            n4.v * (t1 * (t2 - 1) * jac[0][0] +
                    (t1 - 1) * (t1 + 1) * jac[1][0] * 0.5) +
            n5.v * ((1 - t2) * (1 + t2) * jac[0][0] * 0.5 -
@@ -812,15 +811,20 @@ void ComponentAnsys121::ElectricField(const double xin, const double yin,
            n6.v * (-t1 * (1 + t2) * jac[0][0] +
                    (1 - t1) * (1 + t1) * jac[1][0] * 0.5) +
            n7.v * ((t2 - 1) * (t2 + 1) * jac[0][0] * 0.5 +
-                   (t1 - 1) * t2 * jac[1][0])) * invdet; 
+                   (t1 - 1) * t2 * jac[1][0])) *
+         invdet;
     ey = -(n0.v * ((1 - t2) * (2 * t1 + t2) * jac[0][1] +
-                   (1 - t1) * (t1 + 2 * t2) * jac[1][1]) * 0.25 +
+                   (1 - t1) * (t1 + 2 * t2) * jac[1][1]) *
+               0.25 +
            n1.v * ((1 - t2) * (2 * t1 - t2) * jac[0][1] -
-                   (1 + t1) * (t1 - 2 * t2) * jac[1][1]) * 0.25 +
+                   (1 + t1) * (t1 - 2 * t2) * jac[1][1]) *
+               0.25 +
            n2.v * ((1 + t2) * (2 * t1 + t2) * jac[0][1] +
-                   (1 + t1) * (t1 + 2 * t2) * jac[1][1]) * 0.25 +
+                   (1 + t1) * (t1 + 2 * t2) * jac[1][1]) *
+               0.25 +
            n3.v * ((1 + t2) * (2 * t1 - t2) * jac[0][1] -
-                   (1 - t1) * (t1 - 2 * t2) * jac[1][1]) * 0.25 +
+                   (1 - t1) * (t1 - 2 * t2) * jac[1][1]) *
+               0.25 +
            n4.v * (t1 * (t2 - 1) * jac[0][1] +
                    (t1 - 1) * (t1 + 1) * jac[1][1] * 0.5) +
            n5.v * ((1 - t2) * (1 + t2) * jac[0][1] * 0.5 -
@@ -828,7 +832,8 @@ void ComponentAnsys121::ElectricField(const double xin, const double yin,
            n6.v * (-t1 * (1 + t2) * jac[0][1] +
                    (1 - t1) * (1 + t1) * jac[1][1] * 0.5) +
            n7.v * ((t2 - 1) * (t2 + 1) * jac[0][1] * 0.5 +
-                   (t1 - 1) * t2 * jac[1][1])) * invdet;
+                   (t1 - 1) * t2 * jac[1][1])) *
+         invdet;
   }
 
   // Transform field to global coordinates
@@ -850,7 +855,6 @@ void ComponentAnsys121::ElectricField(const double xin, const double yin,
 void ComponentAnsys121::WeightingField(const double xin, const double yin,
                                        const double zin, double& wx, double& wy,
                                        double& wz, const std::string& label) {
-
   // Initial values
   wx = wy = wz = 0;
 
@@ -907,24 +911,30 @@ void ComponentAnsys121::WeightingField(const double xin, const double yin,
            n2.w[iw] * (4 * t3 - 1) * jac[2][1] +
            n3.w[iw] * (4 * t2 * jac[0][1] + 4 * t1 * jac[1][1]) +
            n4.w[iw] * (4 * t3 * jac[0][1] + 4 * t1 * jac[2][1]) +
-           n5.w[iw] * (4 * t3 * jac[1][1] + 4 * t2 * jac[2][1])) * invdet;
+           n5.w[iw] * (4 * t3 * jac[1][1] + 4 * t2 * jac[2][1])) *
+         invdet;
     wy = -(n0.w[iw] * (4 * t1 - 1) * jac[0][2] +
            n1.w[iw] * (4 * t2 - 1) * jac[1][2] +
            n2.w[iw] * (4 * t3 - 1) * jac[2][2] +
            n3.w[iw] * (4 * t2 * jac[0][2] + 4 * t1 * jac[1][2]) +
            n4.w[iw] * (4 * t3 * jac[0][2] + 4 * t1 * jac[2][2]) +
-           n5.w[iw] * (4 * t3 * jac[1][2] + 4 * t2 * jac[2][2])) * invdet;
+           n5.w[iw] * (4 * t3 * jac[1][2] + 4 * t2 * jac[2][2])) *
+         invdet;
   } else {
     const Node& n6 = nodes[element.emap[6]];
     const Node& n7 = nodes[element.emap[7]];
     wx = -(n0.w[iw] * ((1 - t2) * (2 * t1 + t2) * jac[0][0] +
-                       (1 - t1) * (t1 + 2 * t2) * jac[1][0]) * 0.25 +
+                       (1 - t1) * (t1 + 2 * t2) * jac[1][0]) *
+               0.25 +
            n1.w[iw] * ((1 - t2) * (2 * t1 - t2) * jac[0][0] -
-                       (1 + t1) * (t1 - 2 * t2) * jac[1][0]) * 0.25 +
+                       (1 + t1) * (t1 - 2 * t2) * jac[1][0]) *
+               0.25 +
            n2.w[iw] * ((1 + t2) * (2 * t1 + t2) * jac[0][0] +
-                       (1 + t1) * (t1 + 2 * t2) * jac[1][0]) * 0.25 +
+                       (1 + t1) * (t1 + 2 * t2) * jac[1][0]) *
+               0.25 +
            n3.w[iw] * ((1 + t2) * (2 * t1 - t2) * jac[0][0] -
-                       (1 - t1) * (t1 - 2 * t2) * jac[1][0]) * 0.25 +
+                       (1 - t1) * (t1 - 2 * t2) * jac[1][0]) *
+               0.25 +
            n4.w[iw] * (t1 * (t2 - 1) * jac[0][0] +
                        (t1 - 1) * (t1 + 1) * jac[1][0] * 0.5) +
            n5.w[iw] * ((1 - t2) * (1 + t2) * jac[0][0] * 0.5 -
@@ -932,15 +942,20 @@ void ComponentAnsys121::WeightingField(const double xin, const double yin,
            n6.w[iw] * (-t1 * (1 + t2) * jac[0][0] +
                        (1 - t1) * (1 + t1) * jac[1][0] * 0.5) +
            n7.w[iw] * ((t2 - 1) * (1 + t2) * jac[0][0] * 0.5 +
-                       (t1 - 1) * t2 * jac[1][0])) * invdet;
+                       (t1 - 1) * t2 * jac[1][0])) *
+         invdet;
     wy = -(n0.w[iw] * ((1 - t2) * (2 * t1 + t2) * jac[0][1] +
-                       (1 - t1) * (t1 + 2 * t2) * jac[1][1]) * 0.25 +
+                       (1 - t1) * (t1 + 2 * t2) * jac[1][1]) *
+               0.25 +
            n1.w[iw] * ((1 - t2) * (2 * t1 - t2) * jac[0][1] -
-                       (1 + t1) * (t1 - 2 * t2) * jac[1][1]) * 0.25 +
+                       (1 + t1) * (t1 - 2 * t2) * jac[1][1]) *
+               0.25 +
            n2.w[iw] * ((1 + t2) * (2 * t1 + t2) * jac[0][1] +
-                       (1 + t1) * (t1 + 2 * t2) * jac[1][1]) * 0.25 +
+                       (1 + t1) * (t1 + 2 * t2) * jac[1][1]) *
+               0.25 +
            n3.w[iw] * ((1 + t2) * (2 * t1 - t2) * jac[0][1] -
-                       (1 - t1) * (t1 - 2 * t2) * jac[1][1]) * 0.25 +
+                       (1 - t1) * (t1 - 2 * t2) * jac[1][1]) *
+               0.25 +
            n4.w[iw] * (t1 * (t2 - 1) * jac[0][1] +
                        (t1 - 1) * (t1 + 1) * jac[1][1] * 0.5) +
            n5.w[iw] * ((1 - t2) * (1 + t2) * jac[0][1] * 0.5 -
@@ -948,7 +963,8 @@ void ComponentAnsys121::WeightingField(const double xin, const double yin,
            n6.w[iw] * (-t1 * (1 + t2) * jac[0][1] +
                        (1 - t1) * (1 + t1) * jac[1][1] * 0.5) +
            n7.w[iw] * ((t2 - 1) * (t2 + 1) * jac[0][1] * 0.5 +
-                       (t1 - 1) * t2 * jac[1][1])) * invdet;
+                       (t1 - 1) * t2 * jac[1][1])) *
+         invdet;
   }
 
   // Transform field to global coordinates
@@ -958,7 +974,6 @@ void ComponentAnsys121::WeightingField(const double xin, const double yin,
 double ComponentAnsys121::WeightingPotential(const double xin, const double yin,
                                              const double zin,
                                              const std::string& label) {
-
   // Do not proceed if not properly initialised.
   if (!m_ready) return 0.;
 
@@ -1014,18 +1029,17 @@ double ComponentAnsys121::WeightingPotential(const double xin, const double yin,
   const Node& n6 = nodes[element.emap[6]];
   const Node& n7 = nodes[element.emap[7]];
   return -n0.w[iw] * (1 - t1) * (1 - t2) * (1 + t1 + t2) * 0.25 -
-          n1.w[iw] * (1 + t1) * (1 - t2) * (1 - t1 + t2) * 0.25 -
-          n2.w[iw] * (1 + t1) * (1 + t2) * (1 - t1 - t2) * 0.25 -
-          n3.w[iw] * (1 - t1) * (1 + t2) * (1 + t1 - t2) * 0.25 +
-          n4.w[iw] * (1 - t1) * (1 + t1) * (1 - t2) * 0.5 +
-          n5.w[iw] * (1 + t1) * (1 + t2) * (1 - t2) * 0.5 +
-          n6.w[iw] * (1 - t1) * (1 + t1) * (1 + t2) * 0.5 +
-          n7.w[iw] * (1 - t1) * (1 + t2) * (1 - t2) * 0.5;
+         n1.w[iw] * (1 + t1) * (1 - t2) * (1 - t1 + t2) * 0.25 -
+         n2.w[iw] * (1 + t1) * (1 + t2) * (1 - t1 - t2) * 0.25 -
+         n3.w[iw] * (1 - t1) * (1 + t2) * (1 + t1 - t2) * 0.25 +
+         n4.w[iw] * (1 - t1) * (1 + t1) * (1 - t2) * 0.5 +
+         n5.w[iw] * (1 + t1) * (1 + t2) * (1 - t2) * 0.5 +
+         n6.w[iw] * (1 - t1) * (1 + t1) * (1 + t2) * 0.5 +
+         n7.w[iw] * (1 - t1) * (1 + t2) * (1 - t2) * 0.5;
 }
 
 Medium* ComponentAnsys121::GetMedium(const double xin, const double yin,
                                      const double zin) {
-
   // Copy the coordinates.
   double x = xin, y = yin, z = 0.;
 
@@ -1074,7 +1088,6 @@ Medium* ComponentAnsys121::GetMedium(const double xin, const double yin,
 }
 
 void ComponentAnsys121::SetRangeZ(const double zmin, const double zmax) {
-
   if (fabs(zmax - zmin) <= 0.) {
     std::cerr << m_className << "::SetRangeZ: Zero range is not permitted.\n";
     return;
@@ -1084,20 +1097,19 @@ void ComponentAnsys121::SetRangeZ(const double zmin, const double zmax) {
 }
 
 void ComponentAnsys121::UpdatePeriodicity() {
-
   UpdatePeriodicity2d();
   UpdatePeriodicityCommon();
 }
 
 double ComponentAnsys121::GetElementVolume(const unsigned int i) {
-
   if (i >= elements.size()) return 0.;
   const Element& element = elements[i];
   const Node& n0 = nodes[element.emap[0]];
   const Node& n1 = nodes[element.emap[1]];
   const Node& n2 = nodes[element.emap[2]];
   const Node& n3 = nodes[element.emap[3]];
-  const double surf = 0.5 *
+  const double surf =
+      0.5 *
       (fabs((n1.x - n0.x) * (n2.y - n0.y) - (n2.x - n0.x) * (n1.y - n0.y)) +
        fabs((n3.x - n0.x) * (n2.y - n0.y) - (n2.x - n0.x) * (n3.y - n0.y)));
   return surf;
@@ -1105,7 +1117,6 @@ double ComponentAnsys121::GetElementVolume(const unsigned int i) {
 
 void ComponentAnsys121::GetAspectRatio(const unsigned int i, double& dmin,
                                        double& dmax) {
-
   if (i >= elements.size()) {
     dmin = dmax = 0.;
     return;

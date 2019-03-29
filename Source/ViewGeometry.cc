@@ -1,28 +1,23 @@
-#include <iostream>
 #include <cmath>
+#include <iostream>
 
-#include "GeometrySimple.hh"
-#include "Solid.hh"
-#include "Plotting.hh"
 #include "FundamentalConstants.hh"
 #include "GarfieldConstants.hh"
+#include "GeometrySimple.hh"
+#include "Plotting.hh"
+#include "Solid.hh"
 #include "ViewGeometry.hh"
 
 namespace Garfield {
 
-ViewGeometry::ViewGeometry() {
-
-  plottingEngine.SetDefaultStyle();
-}
+ViewGeometry::ViewGeometry() { plottingEngine.SetDefaultStyle(); }
 
 ViewGeometry::~ViewGeometry() {
-
   if (!m_hasExternalCanvas && m_canvas) delete m_canvas;
   Reset();
 }
 
 void ViewGeometry::SetGeometry(GeometrySimple* geo) {
-
   if (!geo) {
     std::cerr << m_className << "::SetGeometry: Null pointer.\n";
     return;
@@ -32,7 +27,6 @@ void ViewGeometry::SetGeometry(GeometrySimple* geo) {
 }
 
 void ViewGeometry::SetCanvas(TCanvas* c) {
-
   if (!c) return;
   if (!m_hasExternalCanvas && m_canvas) {
     delete m_canvas;
@@ -43,7 +37,6 @@ void ViewGeometry::SetCanvas(TCanvas* c) {
 }
 
 void ViewGeometry::Plot() {
-
   if (!m_geometry) {
     std::cerr << m_className << "::Plot: Geometry is not defined.\n";
     return;
@@ -63,7 +56,7 @@ void ViewGeometry::Plot() {
 
   // Get the bounding box.
   double xMin = 0., yMin = 0., zMin = 0.;
-  double xMax = 0., yMax = 0., zMax = 0.; 
+  double xMax = 0., yMax = 0., zMax = 0.;
   if (!m_geometry->GetBoundingBox(xMin, yMin, zMin, xMax, yMax, zMax)) {
     std::cerr << m_className << "::Plot: Cannot retrieve bounding box.\n";
     return;
@@ -74,11 +67,10 @@ void ViewGeometry::Plot() {
   m_media.push_back(medVacuum);
   // Use silicon as "default" material.
   TGeoMaterial* matDefault = new TGeoMaterial("Default", 28.085, 14., 2.329);
-  TGeoMedium* medDefault = new TGeoMedium("Default", 1, matDefault); 
-  TGeoVolume* world = m_geoManager->MakeBox("World", medVacuum,
-                                            std::max(fabs(xMin), fabs(xMax)),
-                                            std::max(fabs(yMin), fabs(yMax)),
-                                            std::max(fabs(zMin), fabs(zMax)));
+  TGeoMedium* medDefault = new TGeoMedium("Default", 1, matDefault);
+  TGeoVolume* world = m_geoManager->MakeBox(
+      "World", medVacuum, std::max(fabs(xMin), fabs(xMax)),
+      std::max(fabs(yMin), fabs(yMax)), std::max(fabs(zMin), fabs(zMax)));
   m_geoManager->SetTopVolume(world);
   m_volumes.push_back(world);
 
@@ -104,8 +96,8 @@ void ViewGeometry::Plot() {
       continue;
     }
     double matrix[9] = {cphi * ctheta, -sphi, cphi * stheta,
-                        sphi * ctheta,  cphi, sphi * stheta,
-                              -stheta,     0,        ctheta};
+                        sphi * ctheta, cphi,  sphi * stheta,
+                        -stheta,       0,     ctheta};
     TGeoVolume* volume = nullptr;
     if (solid->IsTube()) {
       double rmin = 0., rmax = 0., lz = 0.;
@@ -130,7 +122,7 @@ void ViewGeometry::Plot() {
                   << "    Could not determine sphere dimensions.\n";
         continue;
       }
-      volume = m_geoManager->MakeSphere("Sphere", medDefault, rmin, rmax); 
+      volume = m_geoManager->MakeSphere("Sphere", medDefault, rmin, rmax);
     } else {
       std::cerr << m_className << "::Plot: Unknown type of solid.\n";
       continue;
@@ -148,7 +140,7 @@ void ViewGeometry::Plot() {
     } else {
       volume->SetLineColor(kViolet + medium->GetId());
       volume->SetTransparency(0);
-    } 
+    }
     TGeoRotation r;
     r.SetMatrix(matrix);
     TGeoTranslation t(x0, y0, z0);
@@ -158,12 +150,10 @@ void ViewGeometry::Plot() {
   }
   m_geoManager->CloseGeometry();
   m_geoManager->GetTopNode()->Draw("ogl");
-
 }
 
 void ViewGeometry::Reset() {
-
- for (auto it = m_volumes.begin(), end = m_volumes.end(); it != end; ++it) {
+  for (auto it = m_volumes.begin(), end = m_volumes.end(); it != end; ++it) {
     if (*it) {
       TGeoShape* shape = (*it)->GetShape();
       if (shape) delete shape;
@@ -182,5 +172,4 @@ void ViewGeometry::Reset() {
 
   m_geoManager.reset(nullptr);
 }
-
 }

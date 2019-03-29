@@ -1,14 +1,14 @@
 #ifndef G_TRACK_HEED_H
 #define G_TRACK_HEED_H
 
-#include <vector>
 #include <list>
 #include <memory>
+#include <vector>
 
 #include "Track.hh"
 #ifndef __CINT__
-#include "heed++/code/HeedParticle.h"
 #include "heed++/code/HeedCondElectron.h"
+#include "heed++/code/HeedParticle.h"
 #endif /* __CINT __ */
 
 namespace Heed {
@@ -36,7 +36,6 @@ class Medium;
 /// Generate tracks using Heed++.
 
 class TrackHeed : public Track {
-
  public:
   /// Constructor
   TrackHeed();
@@ -50,24 +49,23 @@ class TrackHeed : public Track {
                   int& n, double& e, double& extra) override;
   bool GetCluster(double& xcls, double& ycls, double& zcls, double& tcls,
                   int& ne, int& ni, double& e, double& extra);
-  /** Retrieve the properties of a conduction or delta electron 
+  /** Retrieve the properties of a conduction or delta electron
     * in the current cluster.
     * \param i index of the electron
     * \param x,y,z coordinates of the electron
     * \param t time
     * \param e kinetic energy (only meaningful for delta-electrons)
     * \param dx,dy,dz direction vector (only meaningful for delta-electrons)
-    **/ 
-  bool GetElectron(const unsigned int i, 
-                   double& x, double& y, double& z, double& t,
-                   double& e, double& dx, double& dy, double& dz);
+    **/
+  bool GetElectron(const unsigned int i, double& x, double& y, double& z,
+                   double& t, double& e, double& dx, double& dy, double& dz);
   /** Retrieve the properties of an ion in the current cluster.
     * \param i index of the ion
     * \param x,y,z coordinates of the ion
     * \param t time
-    **/ 
-  bool GetIon(const unsigned int i, 
-              double& x, double& y, double& z, double& t) const;
+    **/
+  bool GetIon(const unsigned int i, double& x, double& y, double& z,
+              double& t) const;
 
   double GetClusterDensity() override;
   double GetStoppingPower() override;
@@ -82,7 +80,7 @@ class TrackHeed : public Track {
     * \param e0 initial kinetic energy of the delta electron
     * \param dx0,dy0,dz0 initial direction of the delta electron
     * \param ne,ni number of electrons/ions produced by the delta electron
-    **/ 
+    **/
   void TransportDeltaElectron(const double x0, const double y0, const double z0,
                               const double t0, const double e0,
                               const double dx0, const double dy0,
@@ -93,7 +91,7 @@ class TrackHeed : public Track {
     * \param e0 initial kinetic energy of the delta electron
     * \param dx0,dy0,dz0 initial direction of the delta electron
     * \param ne number of electrons produced by the delta electron
-    **/ 
+    **/
   void TransportDeltaElectron(const double x0, const double y0, const double z0,
                               const double t0, const double e0,
                               const double dx0, const double dy0,
@@ -130,24 +128,24 @@ class TrackHeed : public Track {
   void DisableMagneticField();
 
   /** Set parameters for calculating the particle trajectory.
-    * \param maxStep 
+    * \param maxStep
     *        maximum step length
-    * \param radStraight 
+    * \param radStraight
     *        radius beyond which to approximate circles by polylines.
     * \param stepAngleStraight
     *        max. angular step (in radian) when using polyline steps.
     * \param stepAngleCurved
     *        max. angular step (in radian) when using circular steps.
-    **/ 
-  void SetSteppingLimits(const double maxStep, const double radStraight, 
-                         const double stepAngleStraight, 
+    **/
+  void SetSteppingLimits(const double maxStep, const double radStraight,
+                         const double stepAngleStraight,
                          const double stepAngleCurved) {
     m_maxStep = maxStep;
     m_radStraight = radStraight;
     m_stepAngleStraight = stepAngleStraight;
     m_stepAngleCurved = stepAngleCurved;
   }
-  void GetSteppingLimits(double& maxStep, double& radStraight, 
+  void GetSteppingLimits(double& maxStep, double& radStraight,
                          double& stepAngleStraight, double& stepAngleCurved) {
     maxStep = m_maxStep;
     radStraight = m_radStraight;
@@ -161,13 +159,13 @@ class TrackHeed : public Track {
   void DisableDeltaElectronTransport() { m_doDeltaTransport = false; }
 
   /// Simulate (or not) the photons produced in the atomic relaxation cascade.
-  void EnablePhotonReabsorption(const bool on = true) { 
-    m_usePhotonReabsorption = on; 
+  void EnablePhotonReabsorption(const bool on = true) {
+    m_usePhotonReabsorption = on;
   }
 
   /// Write the photoabsorption cross-sections used to a text file.
-  void EnablePhotoAbsorptionCrossSectionOutput(const bool on) { 
-    m_usePacsOutput = on; 
+  void EnablePhotoAbsorptionCrossSectionOutput(const bool on) {
+    m_usePacsOutput = on;
   }
   /** Specify the energy mesh to be used.
     * \param e0,e1 lower/higher limit of the energy range [eV]
@@ -248,7 +246,7 @@ class TrackHeed : public Track {
   bool SetupMaterial(Medium* medium);
   bool SetupDelta(const std::string& databasePath);
   std::string FindUnusedMaterialName(const std::string& namein);
-  void ClearParticleBank(); 
+  void ClearParticleBank();
   bool IsInside(const double x, const double y, const double z);
   bool UpdateBoundingBox(bool& update);
 };

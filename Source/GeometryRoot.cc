@@ -1,21 +1,17 @@
-#include <iostream>
 #include <cmath>
+#include <iostream>
 
-#include <TGeoNode.h>
 #include <TGeoBBox.h>
+#include <TGeoNode.h>
 #include <TList.h>
 
 #include "GeometryRoot.hh"
 
 namespace Garfield {
 
-GeometryRoot::GeometryRoot() : GeometryBase() { 
-
-  m_className = "GeometryRoot";
-}
+GeometryRoot::GeometryRoot() : GeometryBase() { m_className = "GeometryRoot"; }
 
 void GeometryRoot::SetGeometry(TGeoManager* geoman) {
-
   if (!geoman) {
     std::cerr << m_className << "::SetGeometry: Null pointer.\n";
     return;
@@ -25,10 +21,9 @@ void GeometryRoot::SetGeometry(TGeoManager* geoman) {
   m_materials.clear();
 }
 
-Medium* GeometryRoot::GetMedium(const double x, const double y, 
+Medium* GeometryRoot::GetMedium(const double x, const double y,
                                 const double z) const {
-
-  if (!m_geoManager) return nullptr; 
+  if (!m_geoManager) return nullptr;
   m_geoManager->SetCurrentPoint(x, y, z);
   if (m_geoManager->IsOutside()) return nullptr;
   TGeoNode* cnode = m_geoManager->GetCurrentNode();
@@ -44,7 +39,6 @@ Medium* GeometryRoot::GetMedium(const double x, const double y,
 }
 
 unsigned int GeometryRoot::GetNumberOfMaterials() {
-
   if (!m_geoManager) {
     std::cerr << "GeometryRoot::GetNumberOfMaterials:\n"
               << "    ROOT geometry is not defined. Call SetGeometry first.\n";
@@ -55,7 +49,6 @@ unsigned int GeometryRoot::GetNumberOfMaterials() {
 }
 
 TGeoMaterial* GeometryRoot::GetMaterial(const unsigned int i) {
-
   if (!m_geoManager) {
     std::cerr << "GeometryRoot::GetMaterial:\n"
               << "    ROOT geometry is not defined. Call SetGeometry first.\n";
@@ -66,7 +59,6 @@ TGeoMaterial* GeometryRoot::GetMaterial(const unsigned int i) {
 }
 
 TGeoMaterial* GeometryRoot::GetMaterial(const char* name) {
-
   if (!m_geoManager) {
     std::cerr << "GeometryRoot::GetMaterial:\n"
               << "    ROOT geometry is not defined. Call SetGeometry first.\n";
@@ -77,7 +69,6 @@ TGeoMaterial* GeometryRoot::GetMaterial(const char* name) {
 }
 
 void GeometryRoot::SetMedium(const unsigned int imat, Medium* med) {
-
   if (!m_geoManager) {
     std::cerr << "GeometryRoot::SetMedium:\n"
               << "    ROOT geometry is not defined. Call SetGeometry first.\n";
@@ -132,7 +123,6 @@ void GeometryRoot::SetMedium(const unsigned int imat, Medium* med) {
 }
 
 void GeometryRoot::SetMedium(const char* name, Medium* med) {
-
   if (!m_geoManager) {
     std::cerr << "GeometryRoot::SetMedium:\n"
               << "    ROOT geometry is not defined. Call SetGeometry first.\n";
@@ -156,7 +146,6 @@ void GeometryRoot::SetMedium(const char* name, Medium* med) {
 
 bool GeometryRoot::GetBoundingBox(double& xmin, double& ymin, double& zmin,
                                   double& xmax, double& ymax, double& zmax) {
-
   if (!m_geoManager) return false;
   TGeoBBox* box = (TGeoBBox*)m_geoManager->GetTopVolume()->GetShape();
   const double dx = box->GetDX();

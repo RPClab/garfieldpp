@@ -5,10 +5,9 @@
 
 namespace Garfield {
 
-/// Generate tracks based on a cluster density given by the user. 
+/// Generate tracks based on a cluster density given by the user.
 
 class TrackSimple : public Track {
-
  public:
   /// Constructor
   TrackSimple();
@@ -30,7 +29,7 @@ class TrackSimple : public Track {
   virtual bool NewTrack(const double x0, const double y0, const double z0,
                         const double t0, const double dx0, const double dy0,
                         const double dz0);
-  virtual bool GetCluster(double& xcls, double& ycls, double& zcls, 
+  virtual bool GetCluster(double& xcls, double& ycls, double& zcls,
                           double& tcls, int& n, double& e, double& extra);
 
  protected:

@@ -1,9 +1,9 @@
 #ifndef G_VIEW_GEOMETRY
 #define G_VIEW_GEOMETRY
 
+#include <memory>
 #include <string>
 #include <vector>
-#include <memory>
 
 #include <TCanvas.h>
 #include <TGeoManager.h>
@@ -15,7 +15,6 @@ class GeometrySimple;
 /// Visualize a geometry defined using the "native" shapes.
 
 class ViewGeometry {
-
  public:
   /// Constructor
   ViewGeometry();
@@ -50,7 +49,6 @@ class ViewGeometry {
   std::unique_ptr<TGeoManager> m_geoManager;
 
   void Reset();
-
 };
 }
 #endif

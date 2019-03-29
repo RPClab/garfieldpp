@@ -1,8 +1,8 @@
-#include <iostream>
 #include <iomanip>
+#include <iostream>
 
-#include <TCanvas.h>
 #include <TAxis.h>
+#include <TCanvas.h>
 
 #include "PlottingEngineRoot.hh"
 
@@ -10,16 +10,12 @@ namespace Garfield {
 
 PlottingEngineRoot plottingEngine;
 
-PlottingEngineRoot::PlottingEngineRoot() 
-    : PlottingEngine(), 
-      m_garfieldStyle("Garfield", "Garfield Style") {
-
-}
+PlottingEngineRoot::PlottingEngineRoot()
+    : PlottingEngine(), m_garfieldStyle("Garfield", "Garfield Style") {}
 
 PlottingEngineRoot::~PlottingEngineRoot() {}
 
 void PlottingEngineRoot::SetDefaultStyle() {
-
   m_garfieldStyle.Reset();
   m_garfieldStyle.SetFillColor(1);
   m_garfieldStyle.SetFillStyle(1001);
@@ -102,7 +98,6 @@ void PlottingEngineRoot::SetDefaultStyle() {
 }
 
 int PlottingEngineRoot::GetRootColorLine1() {
-
   int rootcol = 0;
   if (!GetRootColor(m_colorLine1, rootcol)) {
     m_colorLine1 = m_colorLine1Default;
@@ -112,7 +107,6 @@ int PlottingEngineRoot::GetRootColorLine1() {
 }
 
 int PlottingEngineRoot::GetRootColorLine2() {
-
   int rootcol = 0;
   if (!GetRootColor(m_colorLine2, rootcol)) {
     m_colorLine2 = m_colorLine2Default;
@@ -122,7 +116,6 @@ int PlottingEngineRoot::GetRootColorLine2() {
 }
 
 int PlottingEngineRoot::GetRootColorElectron() {
-
   int rootcol = 0;
   if (!GetRootColor(m_colorElectron, rootcol)) {
     m_colorElectron = m_colorElectronDefault;
@@ -132,7 +125,6 @@ int PlottingEngineRoot::GetRootColorElectron() {
 }
 
 int PlottingEngineRoot::GetRootColorHole() {
-
   int rootcol = 0;
   if (!GetRootColor(m_colorHole, rootcol)) {
     m_colorHole = m_colorHoleDefault;
@@ -142,7 +134,6 @@ int PlottingEngineRoot::GetRootColorHole() {
 }
 
 int PlottingEngineRoot::GetRootColorIon() {
-
   int rootcol = 0;
   if (!GetRootColor(m_colorIon, rootcol)) {
     m_colorIon = m_colorIonDefault;
@@ -152,7 +143,6 @@ int PlottingEngineRoot::GetRootColorIon() {
 }
 
 int PlottingEngineRoot::GetRootColorPhoton() {
-
   int rootcol = 0;
   if (!GetRootColor(m_colorPhoton, rootcol)) {
     m_colorPhoton = m_colorPhotonDefault;
@@ -162,7 +152,6 @@ int PlottingEngineRoot::GetRootColorPhoton() {
 }
 
 int PlottingEngineRoot::GetRootColorChargedParticle() {
-
   int rootcol = 0;
   if (!GetRootColor(m_colorChargedParticle, rootcol)) {
     m_colorChargedParticle = m_colorChargedParticleDefault;
@@ -172,7 +161,6 @@ int PlottingEngineRoot::GetRootColorChargedParticle() {
 }
 
 bool PlottingEngineRoot::GetRootColor(std::string color, int& rootcol) {
-
   rootcol = kBlack;
 
   // Convert to upper-case.

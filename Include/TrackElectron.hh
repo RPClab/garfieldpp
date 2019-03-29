@@ -11,7 +11,6 @@ namespace Garfield {
 /// Ionization calculation based on MIP program (S. Biagi).
 
 class TrackElectron : public Track {
-
  public:
   // Constructor
   TrackElectron();
@@ -24,8 +23,8 @@ class TrackElectron : public Track {
                         const double t0, const double dx0, const double dy0,
                         const double dz0);
 
-  virtual bool GetCluster(double& xcls, double& ycls, double& zcls, double& tcls,
-                          int& ncls, double& ecls, double& extra);
+  virtual bool GetCluster(double& xcls, double& ycls, double& zcls,
+                          double& tcls, int& ncls, double& ecls, double& extra);
 
   virtual double GetClusterDensity();
   virtual double GetStoppingPower();

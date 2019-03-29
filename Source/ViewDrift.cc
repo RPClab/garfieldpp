@@ -9,7 +9,6 @@
 namespace Garfield {
 
 ViewDrift::ViewDrift() {
-
   m_driftLines.reserve(1000);
   m_driftLinePlots.reserve(1000);
   m_tracks.reserve(100);
@@ -20,13 +19,11 @@ ViewDrift::ViewDrift() {
 }
 
 ViewDrift::~ViewDrift() {
-
   if (!m_hasExternalCanvas && m_canvas) delete m_canvas;
   Clear();
 }
 
 void ViewDrift::SetCanvas(TCanvas* c) {
-
   if (!c) return;
   if (!m_hasExternalCanvas && m_canvas) {
     delete m_canvas;
@@ -36,11 +33,9 @@ void ViewDrift::SetCanvas(TCanvas* c) {
   m_hasExternalCanvas = true;
 }
 
-void ViewDrift::SetArea(const double xmin, const double ymin, 
-                        const double zmin, 
+void ViewDrift::SetArea(const double xmin, const double ymin, const double zmin,
                         const double xmax, const double ymax,
                         const double zmax) {
-
   // Check range, assign if non-null
   if (xmin == xmax || ymin == ymax || zmin == zmax) {
     std::cerr << m_className << "::SetArea: Null area range not permitted.\n";
@@ -55,7 +50,6 @@ void ViewDrift::SetArea(const double xmin, const double ymin,
 }
 
 void ViewDrift::Clear() {
-
   m_driftLines.clear();
   m_tracks.clear();
 
@@ -72,7 +66,6 @@ void ViewDrift::Clear() {
 }
 
 void ViewDrift::SetClusterMarkerSize(const double size) {
-
   if (size > 0.) {
     m_markerSizeCluster = size;
   } else {
@@ -81,7 +74,6 @@ void ViewDrift::SetClusterMarkerSize(const double size) {
 }
 
 void ViewDrift::SetCollisionMarkerSize(const double size) {
-
   if (size > 0.) {
     m_markerSizeCollision = size;
   } else {
@@ -92,7 +84,6 @@ void ViewDrift::SetCollisionMarkerSize(const double size) {
 void ViewDrift::NewElectronDriftLine(const unsigned int np, int& id,
                                      const double x0, const double y0,
                                      const double z0) {
-
   // Create a new electron drift line and add it to the list.
   DriftLine d;
   if (np <= 0) {
@@ -118,7 +109,6 @@ void ViewDrift::NewElectronDriftLine(const unsigned int np, int& id,
 void ViewDrift::NewHoleDriftLine(const unsigned int np, int& id,
                                  const double x0, const double y0,
                                  const double z0) {
-
   DriftLine d;
   Marker m0;
   m0.x = x0;
@@ -138,7 +128,6 @@ void ViewDrift::NewHoleDriftLine(const unsigned int np, int& id,
 
 void ViewDrift::NewIonDriftLine(const unsigned int np, int& id, const double x0,
                                 const double y0, const double z0) {
-
   DriftLine d;
   Marker m0;
   m0.x = x0;
@@ -159,7 +148,6 @@ void ViewDrift::NewIonDriftLine(const unsigned int np, int& id, const double x0,
 void ViewDrift::NewPhotonTrack(const double x0, const double y0,
                                const double z0, const double x1,
                                const double y1, const double z1) {
-
   // Create a new photon track (line between start and end point).
   TPolyLine3D p(2);
   p.SetLineColor(plottingEngine.GetRootColorPhoton());
@@ -171,7 +159,6 @@ void ViewDrift::NewPhotonTrack(const double x0, const double y0,
 void ViewDrift::NewChargedParticleTrack(const unsigned int np, int& id,
                                         const double x0, const double y0,
                                         const double z0) {
-
   // Create a new track and add it to the list.
   std::vector<Marker> track(std::max(1U, np));
   track[0].x = x0;
@@ -185,7 +172,6 @@ void ViewDrift::NewChargedParticleTrack(const unsigned int np, int& id,
 void ViewDrift::SetDriftLinePoint(const unsigned int iL, const unsigned int iP,
                                   const double x, const double y,
                                   const double z) {
-
   if (iL >= m_driftLines.size()) {
     std::cerr << m_className << "::SetDriftLinePoint: Index out of range.\n";
     return;
@@ -197,7 +183,6 @@ void ViewDrift::SetDriftLinePoint(const unsigned int iL, const unsigned int iP,
 
 void ViewDrift::AddDriftLinePoint(const unsigned int iL, const double x,
                                   const double y, const double z) {
-
   if (iL >= m_driftLines.size()) {
     std::cerr << m_className << "::AddDriftLinePoint: Index out of range.\n";
     return;
@@ -211,7 +196,6 @@ void ViewDrift::AddDriftLinePoint(const unsigned int iL, const double x,
 
 void ViewDrift::SetTrackPoint(const unsigned int iL, const unsigned int iP,
                               const double x, const double y, const double z) {
-
   if (iL >= m_tracks.size()) {
     std::cerr << m_className << "::SetTrackPoint: Index out of range.\n";
     return;
@@ -223,7 +207,6 @@ void ViewDrift::SetTrackPoint(const unsigned int iL, const unsigned int iP,
 
 void ViewDrift::AddTrackPoint(const unsigned int iL, const double x,
                               const double y, const double z) {
-
   if (iL >= m_tracks.size()) {
     std::cerr << m_className << "::AddTrackPoint: Index out of range.\n";
     return;
@@ -231,13 +214,12 @@ void ViewDrift::AddTrackPoint(const unsigned int iL, const double x,
   Marker newPoint;
   newPoint.x = x;
   newPoint.y = y;
-  newPoint.z = z; 
+  newPoint.z = z;
   m_tracks[iL].push_back(std::move(newPoint));
 }
 
 void ViewDrift::AddExcitationMarker(const double x, const double y,
                                     const double z) {
-
   Marker newMarker;
   newMarker.x = x;
   newMarker.y = y;
@@ -247,7 +229,6 @@ void ViewDrift::AddExcitationMarker(const double x, const double y,
 
 void ViewDrift::AddIonisationMarker(const double x, const double y,
                                     const double z) {
-
   Marker newMarker;
   newMarker.x = x;
   newMarker.y = y;
@@ -257,7 +238,6 @@ void ViewDrift::AddIonisationMarker(const double x, const double y,
 
 void ViewDrift::AddAttachmentMarker(const double x, const double y,
                                     const double z) {
-
   Marker newMarker;
   newMarker.x = x;
   newMarker.y = y;
@@ -266,7 +246,6 @@ void ViewDrift::AddAttachmentMarker(const double x, const double y,
 }
 
 void ViewDrift::Plot(const bool twod, const bool axis) {
-
   if (twod) {
     Plot2d(axis);
   } else {
@@ -275,7 +254,6 @@ void ViewDrift::Plot(const bool twod, const bool axis) {
 }
 
 void ViewDrift::Plot2d(const bool axis) {
-
   std::cout << m_className << "::Plot: Plotting in 2D.\n";
   if (!m_canvas) {
     m_canvas = new TCanvas();
@@ -330,11 +308,9 @@ void ViewDrift::Plot2d(const bool axis) {
     }
     m_canvas->Update();
   }
-
 }
 
 void ViewDrift::Plot3d(const bool axis) {
-
   std::cout << m_className << "::Plot: Plotting in 3D.\n";
   if (!m_canvas) {
     m_canvas = new TCanvas();

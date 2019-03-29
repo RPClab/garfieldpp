@@ -1,21 +1,19 @@
-#include <iostream>
-#include <fstream>
-#include <stdlib.h>
 #include <math.h>
+#include <stdlib.h>
+#include <fstream>
+#include <iostream>
 
 #include "ComponentAnsys123.hh"
 
 namespace Garfield {
 
 ComponentAnsys123::ComponentAnsys123() : ComponentFieldMap() {
-
   m_className = "ComponentAnsys123";
 }
 
 bool ComponentAnsys123::Initialise(std::string elist, std::string nlist,
                                    std::string mplist, std::string prnsol,
                                    std::string unit) {
-
   m_ready = false;
   m_warning = false;
   m_nWarnings = 10;
@@ -658,7 +656,6 @@ bool ComponentAnsys123::Initialise(std::string elist, std::string nlist,
 
 bool ComponentAnsys123::SetWeightingField(std::string prnsol,
                                           std::string label) {
-
   if (!m_ready) {
     PrintNotReady("SetWeightingField");
     std::cerr << "    Weighting field cannot be added.\n";
@@ -788,7 +785,6 @@ bool ComponentAnsys123::SetWeightingField(std::string prnsol,
 void ComponentAnsys123::ElectricField(const double x, const double y,
                                       const double z, double& ex, double& ey,
                                       double& ez, Medium*& m, int& status) {
-
   double v = 0.;
   ElectricField(x, y, z, ex, ey, ez, v, m, status);
 }
@@ -797,7 +793,6 @@ void ComponentAnsys123::ElectricField(const double xin, const double yin,
                                       const double zin, double& ex, double& ey,
                                       double& ez, double& volt, Medium*& m,
                                       int& status) {
-
   // Copy the coordinates
   double x = xin, y = yin, z = zin;
 
@@ -825,8 +820,8 @@ void ComponentAnsys123::ElectricField(const double xin, const double yin,
   const int imap = FindElement13(x, y, z, t1, t2, t3, t4, jac, det);
   if (imap < 0) {
     if (m_debug) {
-      std::cerr << m_className << "::ElectricField: Point ("
-                << x << ", " << y << ", " << z << ") not in the mesh.\n";
+      std::cerr << m_className << "::ElectricField: Point (" << x << ", " << y
+                << ", " << z << ") not in the mesh.\n";
     }
     status = -6;
     return;
@@ -864,7 +859,8 @@ void ComponentAnsys123::ElectricField(const double xin, const double yin,
          n6.v * (fourt4 * jac[0][1] + fourt1 * jac[3][1]) +
          n7.v * (fourt3 * jac[1][1] + fourt2 * jac[2][1]) +
          n8.v * (fourt4 * jac[1][1] + fourt2 * jac[3][1]) +
-         n9.v * (fourt4 * jac[2][1] + fourt3 * jac[3][1])) * invdet;
+         n9.v * (fourt4 * jac[2][1] + fourt3 * jac[3][1])) *
+       invdet;
 
   ey = -(n0.v * (fourt1 - 1) * jac[0][2] + n1.v * (fourt2 - 1) * jac[1][2] +
          n2.v * (fourt3 - 1) * jac[2][2] + n3.v * (fourt4 - 1) * jac[3][2] +
@@ -873,7 +869,8 @@ void ComponentAnsys123::ElectricField(const double xin, const double yin,
          n6.v * (fourt4 * jac[0][2] + fourt1 * jac[3][2]) +
          n7.v * (fourt3 * jac[1][2] + fourt2 * jac[2][2]) +
          n8.v * (fourt4 * jac[1][2] + fourt2 * jac[3][2]) +
-         n9.v * (fourt4 * jac[2][2] + fourt3 * jac[3][2])) * invdet;
+         n9.v * (fourt4 * jac[2][2] + fourt3 * jac[3][2])) *
+       invdet;
 
   ez = -(n0.v * (fourt1 - 1) * jac[0][3] + n1.v * (fourt2 - 1) * jac[1][3] +
          n2.v * (fourt3 - 1) * jac[2][3] + n3.v * (fourt4 - 1) * jac[3][3] +
@@ -882,7 +879,8 @@ void ComponentAnsys123::ElectricField(const double xin, const double yin,
          n6.v * (fourt4 * jac[0][3] + fourt1 * jac[3][3]) +
          n7.v * (fourt3 * jac[1][3] + fourt2 * jac[2][3]) +
          n8.v * (fourt4 * jac[1][3] + fourt2 * jac[3][3]) +
-         n9.v * (fourt4 * jac[2][3] + fourt3 * jac[3][3])) * invdet;
+         n9.v * (fourt4 * jac[2][3] + fourt3 * jac[3][3])) *
+       invdet;
 
   // Transform field to global coordinates
   UnmapFields(ex, ey, ez, x, y, z, xmirr, ymirr, zmirr, rcoordinate, rotation);
@@ -903,7 +901,6 @@ void ComponentAnsys123::ElectricField(const double xin, const double yin,
 void ComponentAnsys123::WeightingField(const double xin, const double yin,
                                        const double zin, double& wx, double& wy,
                                        double& wz, const std::string& label) {
-
   // Initial values
   wx = wy = wz = 0;
 
@@ -971,7 +968,8 @@ void ComponentAnsys123::WeightingField(const double xin, const double yin,
          n6.w[iw] * (fourt4 * jac[0][1] + fourt1 * jac[3][1]) +
          n7.w[iw] * (fourt3 * jac[1][1] + fourt2 * jac[2][1]) +
          n8.w[iw] * (fourt4 * jac[1][1] + fourt2 * jac[3][1]) +
-         n9.w[iw] * (fourt4 * jac[2][1] + fourt3 * jac[3][1])) * invdet;
+         n9.w[iw] * (fourt4 * jac[2][1] + fourt3 * jac[3][1])) *
+       invdet;
 
   wy = -(n0.w[iw] * (fourt1 - 1) * jac[0][2] +
          n1.w[iw] * (fourt2 - 1) * jac[1][2] +
@@ -982,7 +980,8 @@ void ComponentAnsys123::WeightingField(const double xin, const double yin,
          n6.w[iw] * (fourt4 * jac[0][2] + fourt1 * jac[3][2]) +
          n7.w[iw] * (fourt3 * jac[1][2] + fourt2 * jac[2][2]) +
          n8.w[iw] * (fourt4 * jac[1][2] + fourt2 * jac[3][2]) +
-         n9.w[iw] * (fourt4 * jac[2][2] + fourt3 * jac[3][2])) * invdet;
+         n9.w[iw] * (fourt4 * jac[2][2] + fourt3 * jac[3][2])) *
+       invdet;
 
   wz = -(n0.w[iw] * (fourt1 - 1) * jac[0][3] +
          n1.w[iw] * (fourt2 - 1) * jac[1][3] +
@@ -993,7 +992,8 @@ void ComponentAnsys123::WeightingField(const double xin, const double yin,
          n6.w[iw] * (fourt4 * jac[0][3] + fourt1 * jac[3][3]) +
          n7.w[iw] * (fourt3 * jac[1][3] + fourt2 * jac[2][3]) +
          n8.w[iw] * (fourt4 * jac[1][3] + fourt2 * jac[3][3]) +
-         n9.w[iw] * (fourt4 * jac[2][3] + fourt3 * jac[3][3])) * invdet;
+         n9.w[iw] * (fourt4 * jac[2][3] + fourt3 * jac[3][3])) *
+       invdet;
 
   // Transform field to global coordinates
   UnmapFields(wx, wy, wz, x, y, z, xmirr, ymirr, zmirr, rcoordinate, rotation);
@@ -1002,7 +1002,6 @@ void ComponentAnsys123::WeightingField(const double xin, const double yin,
 double ComponentAnsys123::WeightingPotential(const double xin, const double yin,
                                              const double zin,
                                              const std::string& label) {
-
   // Do not proceed if not properly initialised.
   if (!m_ready) return 0.;
 
@@ -1039,7 +1038,8 @@ double ComponentAnsys123::WeightingPotential(const double xin, const double yin,
 
   const Element& element = elements[imap];
   if (m_debug) {
-    PrintElement("WeightingPotential", x, y, z, t1, t2, t3, t4, element, 10, iw);
+    PrintElement("WeightingPotential", x, y, z, t1, t2, t3, t4, element, 10,
+                 iw);
   }
   const Node& n0 = nodes[element.emap[0]];
   const Node& n1 = nodes[element.emap[1]];
@@ -1060,7 +1060,6 @@ double ComponentAnsys123::WeightingPotential(const double xin, const double yin,
 
 Medium* ComponentAnsys123::GetMedium(const double xin, const double yin,
                                      const double zin) {
-
   // Copy the coordinates.
   double x = xin, y = yin, z = zin;
 
@@ -1107,7 +1106,6 @@ Medium* ComponentAnsys123::GetMedium(const double xin, const double yin,
 }
 
 double ComponentAnsys123::GetElementVolume(const unsigned int i) {
-
   if (i >= elements.size()) return 0.;
   const Element& element = elements[i];
   const Node& n0 = nodes[element.emap[0]];
@@ -1127,7 +1125,6 @@ double ComponentAnsys123::GetElementVolume(const unsigned int i) {
 
 void ComponentAnsys123::GetAspectRatio(const unsigned int i, double& dmin,
                                        double& dmax) {
-
   if (i >= elements.size()) {
     dmin = dmax = 0.;
     return;

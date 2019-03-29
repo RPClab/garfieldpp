@@ -8,28 +8,26 @@ namespace Garfield {
 /// Cylindrical tube.
 
 class SolidTube : public Solid {
-
  public:
   /// Constructor from centre, inner/outer radii, and half-length.
   SolidTube(const double cx, const double cy, const double cz,
             const double rmin, const double rmax, const double lz);
   /// Constructor from centre, outer radius, and half-length.
-  SolidTube(const double cx, const double cy, const double cz,
-            const double r, const double lz);
+  SolidTube(const double cx, const double cy, const double cz, const double r,
+            const double lz);
   /// Constructor from centre, inner/outer radii, half-length and orientation.
   SolidTube(const double cx, const double cy, const double cz,
             const double rmin, const double rmax, const double lz,
             const double dx, const double dy, const double dz);
   /// Constructor from centre, outer radius, half-length and orientation.
-  SolidTube(const double cx, const double cy, const double cz,
-            const double r, const double lz,
-            const double dx, const double dy, const double dz);
+  SolidTube(const double cx, const double cy, const double cz, const double r,
+            const double lz, const double dx, const double dy, const double dz);
   /// Destructor
   ~SolidTube() {}
 
   bool IsInside(const double x, const double y, const double z) const override;
-  bool GetBoundingBox(double& xmin, double& ymin, double& zmin, 
-                      double& xmax, double& ymax, double& zmax) const override;
+  bool GetBoundingBox(double& xmin, double& ymin, double& zmin, double& xmax,
+                      double& ymax, double& zmax) const override;
   bool IsTube() const override { return true; }
 
   bool GetDimensions(double& l1, double& l2, double& l3) const override;
@@ -43,20 +41,20 @@ class SolidTube : public Solid {
   double GetInnerRadius() const override { return m_rMin; }
   double GetOuterRadius() const override { return m_rMax; }
   double GetRadius() const override { return m_r; }
- 
-  /// When calculating the surface panels, the cylinder is 
-  /// approximated as a polygon with a finite number of panels. 
-  /// The number of corners of the polygon equals \f$4(n - 1)\f$. 
+
+  /// When calculating the surface panels, the cylinder is
+  /// approximated as a polygon with a finite number of panels.
+  /// The number of corners of the polygon equals \f$4(n - 1)\f$.
   /// Thus, \f$n = 2\f$ will produce a square, \f$n = 3\f$ an octagon etc.
   void SetSectors(const unsigned int n);
   /// Specify a rotation angle (radian) of the cylinder.
-  /// Such a rotation is meaningful only if the number of sectors 
+  /// Such a rotation is meaningful only if the number of sectors
   /// (when approximating the circle with a polygon) has been chosen small.
   void SetRotation(const double angle) { m_rot = angle; }
-  /// By default, the polygon used for approximating the cylinder when 
-  /// calculating surface panels is inscribed in a circle 
-  /// of the specified radius. If the "average-radius" flag is activated, 
-  /// then the radius will be interpreted as the mean radius of the polygon 
+  /// By default, the polygon used for approximating the cylinder when
+  /// calculating surface panels is inscribed in a circle
+  /// of the specified radius. If the "average-radius" flag is activated,
+  /// then the radius will be interpreted as the mean radius of the polygon
   /// that approximates the cylinder.
   void SetAverageRadius(const bool average) { m_average = average; }
   /// Request the cylinder to be closed with a (polygonal) lid at +z.

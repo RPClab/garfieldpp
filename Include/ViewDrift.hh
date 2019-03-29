@@ -1,12 +1,12 @@
 #ifndef G_VIEW_DRIFT
 #define G_VIEW_DRIFT
 
+#include <memory>
 #include <string>
 #include <vector>
-#include <memory>
 
-#include <TGraph.h>
 #include <TCanvas.h>
+#include <TGraph.h>
 #include <TPolyLine3D.h>
 #include <TPolyMarker3D.h>
 #include <TView.h>
@@ -16,7 +16,6 @@ namespace Garfield {
 /// Visualize drift lines and tracks.
 
 class ViewDrift {
-
  public:
   /// Constructor
   ViewDrift();
@@ -27,12 +26,12 @@ class ViewDrift {
   void SetCanvas(TCanvas* c);
 
   /// Set the region to be plotted.
-  void SetArea(const double xmin, const double ymin, const double zmin, 
+  void SetArea(const double xmin, const double ymin, const double zmin,
                const double xmax, const double ymax, const double zmax);
   /// Delete existing drift lines, tracks and markers.
   void Clear();
 
-  /// Draw the drift lines. 
+  /// Draw the drift lines.
   void Plot(const bool twod = false, const bool axis = true);
 
   /// Set the size of the cluster markers (see TAttMarker).
@@ -86,7 +85,7 @@ class ViewDrift {
 
   // Box dimensions
   double m_xMin = -1., m_yMin = -1., m_zMin = -1.;
-  double m_xMax =  1., m_yMax =  1., m_zMax =  1.;
+  double m_xMax = 1., m_yMax = 1., m_zMax = 1.;
 
   // View
   std::unique_ptr<TView> m_view;

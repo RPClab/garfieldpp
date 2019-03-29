@@ -1,19 +1,18 @@
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <cmath>
 #include <algorithm>
+#include <cmath>
+#include <fstream>
+#include <iostream>
+#include <sstream>
 #include <vector>
 
+#include "FundamentalConstants.hh"
+#include "GarfieldConstants.hh"
 #include "MediumCdTe.hh"
 #include "Random.hh"
-#include "GarfieldConstants.hh"
-#include "FundamentalConstants.hh"
 
 namespace Garfield {
 
 MediumCdTe::MediumCdTe() : Medium() {
-
   m_className = "MediumCdTe";
   m_name = "CdTe";
 
@@ -31,9 +30,8 @@ MediumCdTe::MediumCdTe() : Medium() {
   m_fano = 0.1;
 }
 
-void MediumCdTe::GetComponent(const unsigned int i, 
-                              std::string& label, double& f) {
-
+void MediumCdTe::GetComponent(const unsigned int i, std::string& label,
+                              double& f) {
   if (i == 0) {
     label = "Cd";
     f = 0.5;
@@ -46,7 +44,6 @@ void MediumCdTe::GetComponent(const unsigned int i,
 }
 
 void MediumCdTe::SetTrapCrossSection(const double ecs, const double hcs) {
-
   if (ecs < 0.) {
     std::cerr << m_className << "::SetTrapCrossSection:\n"
               << "    Capture cross-section [cm2] must positive.\n";
@@ -66,7 +63,6 @@ void MediumCdTe::SetTrapCrossSection(const double ecs, const double hcs) {
 }
 
 void MediumCdTe::SetTrapDensity(const double n) {
-
   if (n < 0.) {
     std::cerr << m_className << "::SetTrapDensity:\n"
               << "    Trap density [cm-3] must be greater than zero.\n";
@@ -80,7 +76,6 @@ void MediumCdTe::SetTrapDensity(const double n) {
 }
 
 void MediumCdTe::SetTrappingTime(const double etau, const double htau) {
-
   if (etau <= 0.) {
     std::cerr << m_className << "::SetTrappingTime:\n"
               << "    Trapping time [ns-1] must be greater than zero.\n";
@@ -103,9 +98,8 @@ bool MediumCdTe::ElectronVelocity(const double ex, const double ey,
                                   const double ez, const double bx,
                                   const double by, const double bz, double& vx,
                                   double& vy, double& vz) {
-
   vx = vy = vz = 0.;
-  if (!m_eVelocityE.empty()) {
+  if (!m_eVelE.empty()) {
     // Interpolation in user table.
     return Medium::ElectronVelocity(ex, ey, ez, bx, by, bz, vx, vy, vz);
   }
@@ -134,9 +128,8 @@ bool MediumCdTe::ElectronTownsend(const double ex, const double ey,
                                   const double ez, const double bx,
                                   const double by, const double bz,
                                   double& alpha) {
-
   alpha = 0.;
-  if (!m_eTownsend.empty()) {
+  if (!m_eAlp.empty()) {
     // Interpolation in user table.
     return Medium::ElectronTownsend(ex, ey, ez, bx, by, bz, alpha);
   }
@@ -147,9 +140,8 @@ bool MediumCdTe::ElectronAttachment(const double ex, const double ey,
                                     const double ez, const double bx,
                                     const double by, const double bz,
                                     double& eta) {
-
   eta = 0.;
-  if (!m_eAttachment.empty()) {
+  if (!m_eAtt.empty()) {
     // Interpolation in user table.
     return Medium::ElectronAttachment(ex, ey, ez, bx, by, bz, eta);
   }
@@ -177,9 +169,8 @@ bool MediumCdTe::ElectronAttachment(const double ex, const double ey,
 bool MediumCdTe::HoleVelocity(const double ex, const double ey, const double ez,
                               const double bx, const double by, const double bz,
                               double& vx, double& vy, double& vz) {
-
   vx = vy = vz = 0.;
-  if (!m_hVelocityE.empty()) {
+  if (!m_hVelE.empty()) {
     // Interpolation in user table.
     return Medium::HoleVelocity(ex, ey, ez, bx, by, bz, vx, vy, vz);
   }
@@ -207,9 +198,8 @@ bool MediumCdTe::HoleVelocity(const double ex, const double ey, const double ez,
 bool MediumCdTe::HoleTownsend(const double ex, const double ey, const double ez,
                               const double bx, const double by, const double bz,
                               double& alpha) {
-
   alpha = 0.;
-  if (!m_hTownsend.empty()) {
+  if (!m_hAlp.empty()) {
     // Interpolation in user table.
     return Medium::HoleTownsend(ex, ey, ez, bx, by, bz, alpha);
   }
@@ -219,9 +209,8 @@ bool MediumCdTe::HoleTownsend(const double ex, const double ey, const double ez,
 bool MediumCdTe::HoleAttachment(const double ex, const double ey,
                                 const double ez, const double bx,
                                 const double by, const double bz, double& eta) {
-
   eta = 0.;
-  if (!m_hAttachment.empty()) {
+  if (!m_hAtt.empty()) {
     // Interpolation in user table.
     return Medium::HoleAttachment(ex, ey, ez, bx, by, bz, eta);
   }
@@ -245,7 +234,6 @@ bool MediumCdTe::HoleAttachment(const double ex, const double ey,
 }
 
 void MediumCdTe::SetLowFieldMobility(const double mue, const double muh) {
-
   if (mue <= 0. || muh <= 0.) {
     std::cerr << m_className << "::SetLowFieldMobility:\n"
               << "    Mobility must be greater than zero.\n";
@@ -259,7 +247,6 @@ void MediumCdTe::SetLowFieldMobility(const double mue, const double muh) {
 }
 
 void MediumCdTe::SetSaturationVelocity(const double vsate, const double vsath) {
-
   if (vsate <= 0. || vsath <= 0.) {
     std::cout << m_className << "::SetSaturationVelocity:\n"
               << "    Restoring default values.\n";
@@ -271,5 +258,4 @@ void MediumCdTe::SetSaturationVelocity(const double vsate, const double vsath) {
   }
   m_isChanged = true;
 }
-
 }

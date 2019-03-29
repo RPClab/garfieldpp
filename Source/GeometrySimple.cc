@@ -1,16 +1,14 @@
-#include <iostream>
-#include <algorithm>
 #include "GeometrySimple.hh"
+#include <algorithm>
+#include <iostream>
 
 namespace Garfield {
 
 GeometrySimple::GeometrySimple() : GeometryBase() {
-
   m_className = "GeometrySimple";
 }
 
 void GeometrySimple::AddSolid(Solid* s, Medium* m) {
-
   // Make sure the solid and the medium are defined.
   if (!s || !m) {
     std::cerr << m_className << "::AddSolid: Null pointer.\n";
@@ -59,18 +57,16 @@ void GeometrySimple::AddSolid(Solid* s, Medium* m) {
   m_solids.emplace_back(std::make_pair(s, n));
 }
 
-Solid* GeometrySimple::GetSolid(const double x, const double y, 
+Solid* GeometrySimple::GetSolid(const double x, const double y,
                                 const double z) const {
-
   for (const auto& solid : m_solids) {
     if (solid.first->IsInside(x, y, z)) return solid.first;
   }
   return nullptr;
 }
 
-Medium* GeometrySimple::GetMedium(const double x, const double y, 
+Medium* GeometrySimple::GetMedium(const double x, const double y,
                                   const double z) const {
-
   for (const auto& solid : m_solids) {
     if (solid.first->IsInside(x, y, z)) {
       if (solid.second < 0) return nullptr;
@@ -81,7 +77,6 @@ Medium* GeometrySimple::GetMedium(const double x, const double y,
 }
 
 Solid* GeometrySimple::GetSolid(const unsigned int i) const {
-
   if (i >= m_solids.size()) {
     std::cerr << m_className << "::GetSolid:\n"
               << "    Requested solid " << i << " does not exist.\n";
@@ -92,7 +87,6 @@ Solid* GeometrySimple::GetSolid(const unsigned int i) const {
 }
 
 Solid* GeometrySimple::GetSolid(const unsigned int i, Medium*& medium) const {
-
   if (i >= m_solids.size()) {
     std::cerr << m_className << "::GetSolid:\n"
               << "    Requested solid " << i << " does not exist.\n";
@@ -104,7 +98,6 @@ Solid* GeometrySimple::GetSolid(const unsigned int i, Medium*& medium) const {
 }
 
 Medium* GeometrySimple::GetMedium(const unsigned int i) const {
-
   if (i >= m_media.size()) {
     std::cerr << m_className << "::GetMedium:\n"
               << "    Requested medium " << i << " does not exist.\n";
@@ -114,13 +107,11 @@ Medium* GeometrySimple::GetMedium(const unsigned int i) const {
 }
 
 void GeometrySimple::Clear() {
-
   m_media.clear();
   m_solids.clear();
 }
 
 void GeometrySimple::PrintSolids() {
-
   std::cout << m_className << "::PrintSolids:\n";
   const unsigned int nSolids = m_solids.size();
   if (nSolids == 1) {
@@ -145,9 +136,8 @@ void GeometrySimple::PrintSolids() {
   }
 }
 
-bool GeometrySimple::IsInside(const double x, const double y, 
+bool GeometrySimple::IsInside(const double x, const double y,
                               const double z) const {
-
   if (!IsInBoundingBox(x, y, z)) return false;
 
   for (const auto& solid : m_solids) {
@@ -158,7 +148,6 @@ bool GeometrySimple::IsInside(const double x, const double y,
 
 bool GeometrySimple::IsInBoundingBox(const double x, const double y,
                                      const double z) const {
-
   if (!m_hasBoundingBox) {
     if (m_debug) {
       std::cerr << m_className << "::IsInBoundingBox:\n"
@@ -167,8 +156,8 @@ bool GeometrySimple::IsInBoundingBox(const double x, const double y,
     return true;
   }
 
-  if (x >= m_xMinBoundingBox && x <= m_xMaxBoundingBox && 
-      y >= m_yMinBoundingBox && y <= m_yMaxBoundingBox && 
+  if (x >= m_xMinBoundingBox && x <= m_xMaxBoundingBox &&
+      y >= m_yMinBoundingBox && y <= m_yMaxBoundingBox &&
       z >= m_zMinBoundingBox && z <= m_zMaxBoundingBox)
     return true;
   return false;

@@ -1,5 +1,5 @@
-#include <iostream>
 #include <cmath>
+#include <iostream>
 
 #include "Numerics.hh"
 
@@ -9,7 +9,6 @@ namespace Numerics {
 
 void Dfact(const int n, std::vector<std::vector<double> >& a,
            std::vector<int>& ir, int& ifail, double& det, int& jfail) {
-
   constexpr double g1 = 1.e-19;
   constexpr double g2 = 1.e-19;
 
@@ -97,7 +96,6 @@ void Dfact(const int n, std::vector<std::vector<double> >& a,
 
 void Dfeqn(const int n, std::vector<std::vector<double> >& a,
            std::vector<int>& ir, std::vector<double>& b) {
-
   double te;
   double s21, s22;
 
@@ -137,7 +135,6 @@ void Dfeqn(const int n, std::vector<std::vector<double> >& a,
 
 void Dfinv(const int n, std::vector<std::vector<double> >& a,
            std::vector<int>& ir) {
-
   double ti;
   double s31, s32, s33, s34;
 
@@ -215,7 +212,6 @@ void Dfinv(const int n, std::vector<std::vector<double> >& a,
 
 void Deqinv(const int n, std::vector<std::vector<double> >& a, int& ifail,
             std::vector<double>& b) {
-
   double t1, t2, t3;
   double det, temp, s;
   double b1, b2, c11, c12, c13, c21, c22, c23, c31, c32, c33;
@@ -330,7 +326,6 @@ void Deqinv(const int n, std::vector<std::vector<double> >& a, int& ifail,
 void Cfact(const int n, std::vector<std::vector<std::complex<double> > >& a,
            std::vector<int>& ir, int& ifail, std::complex<double>& det,
            int& jfail) {
-
   constexpr double g1 = 1.e-19;
   constexpr double g2 = 1.e-19;
 
@@ -420,7 +415,6 @@ void Cfact(const int n, std::vector<std::vector<std::complex<double> > >& a,
 
 void Cfinv(const int n, std::vector<std::vector<std::complex<double> > >& a,
            std::vector<int>& ir) {
-
   std::complex<double> ti;
   std::complex<double> s31, s32, s33, s34;
 
@@ -490,7 +484,6 @@ void Cfinv(const int n, std::vector<std::vector<std::complex<double> > >& a,
 
 void Cinv(const int n, std::vector<std::vector<std::complex<double> > >& a,
           int& ifail) {
-
   double t1, t2, t3;
   std::complex<double> det, temp, s;
   std::complex<double> c11, c12, c13, c21, c22, c23, c31, c32, c33;
@@ -592,23 +585,22 @@ void Cinv(const int n, std::vector<std::vector<std::complex<double> > >& a,
 // Origin: QUADPACK
 double GaussKronrod15(double (*f)(const double), const double a,
                       const double b) {
-
   // Abscissae of the 15-point Kronrod rule
   // xGK[1], xGK[3], ... abscissae of the 7-point Gauss rule
   // xGK[0], xGK[2], ... abscissae which are optimally added
   //                     to the 7-point Gauss rule
   constexpr double xGK[8] = {9.914553711208126e-01, 9.491079123427585e-01,
-                         8.648644233597691e-01, 7.415311855993944e-01,
-                         5.860872354676911e-01, 4.058451513773972e-01,
-                         2.077849550078985e-01, 0.0e+00};
+                             8.648644233597691e-01, 7.415311855993944e-01,
+                             5.860872354676911e-01, 4.058451513773972e-01,
+                             2.077849550078985e-01, 0.0e+00};
   // Weights of the 15-point Kronrod rule
   constexpr double wGK[8] = {2.293532201052922e-02, 6.309209262997855e-02,
-                         1.047900103222502e-01, 1.406532597155259e-01,
-                         1.690047266392679e-01, 1.903505780647854e-01,
-                         2.044329400752989e-01, 2.094821410847278e-01};
+                             1.047900103222502e-01, 1.406532597155259e-01,
+                             1.690047266392679e-01, 1.903505780647854e-01,
+                             2.044329400752989e-01, 2.094821410847278e-01};
   // Weights of the 7-point Gauss rule
   constexpr double wG[4] = {1.294849661688697e-01, 2.797053914892767e-01,
-                        3.818300505051189e-01, 4.179591836734694e-01};
+                            3.818300505051189e-01, 4.179591836734694e-01};
 
   // Mid-point of the interval
   const double center = 0.5 * (a + b);
@@ -643,7 +635,6 @@ double GaussKronrod15(double (*f)(const double), const double a,
 
 double Divdif(const std::vector<double>& f, const std::vector<double>& a,
               int nn, double x, int mm) {
-
   // C++ version of DIVDIF (CERN program library E105) which performs
   // tabular interpolation using symmetrically placed argument points.
 
@@ -762,13 +753,10 @@ double Divdif(const std::vector<double>& f, const std::vector<double>& a,
 }
 
 bool Boxin3(const std::vector<std::vector<std::vector<double> > >& value,
-            const std::vector<double>& xAxis, 
-            const std::vector<double>& yAxis,
-            const std::vector<double>& zAxis, 
-            const int nx, const int ny, const int nz, 
-            const double xx, const double yy, const double zz, 
+            const std::vector<double>& xAxis, const std::vector<double>& yAxis,
+            const std::vector<double>& zAxis, const int nx, const int ny,
+            const int nz, const double xx, const double yy, const double zz,
             double& f, const int iOrder) {
-
   // std::cout << nx << ", " << ny << ", " << nz << "\n";
   //-----------------------------------------------------------------------
   //   BOXIN3 - interpolation of order 1 and 2 in an irregular rectangular
@@ -917,14 +905,14 @@ bool Boxin3(const std::vector<std::vector<std::vector<double> > >& value,
           (x - xAxis[iX0]) * (x - xAxis[iX0 + 1]) /
           ((xAxis[iX0 + 2] - xAxis[iX0]) * (xAxis[iX0 + 2] - xAxis[iX0 + 1]));
       fX[0] *= (1. - xLocal);
-      fX[1] = fX[1] * (1. - xLocal) + xLocal * (x - xAxis[iX0 + 2]) *
-                                          (x - xAxis[iX0 + 3]) /
-                                          ((xAxis[iX0 + 1] - xAxis[iX0 + 2]) *
-                                           (xAxis[iX0 + 1] - xAxis[iX0 + 3]));
-      fX[2] = fX[2] * (1. - xLocal) + xLocal * (x - xAxis[iX0 + 1]) *
-                                          (x - xAxis[iX0 + 3]) /
-                                          ((xAxis[iX0 + 2] - xAxis[iX0 + 1]) *
-                                           (xAxis[iX0 + 2] - xAxis[iX0 + 3]));
+      fX[1] = fX[1] * (1. - xLocal) +
+              xLocal * (x - xAxis[iX0 + 2]) * (x - xAxis[iX0 + 3]) /
+                  ((xAxis[iX0 + 1] - xAxis[iX0 + 2]) *
+                   (xAxis[iX0 + 1] - xAxis[iX0 + 3]));
+      fX[2] = fX[2] * (1. - xLocal) +
+              xLocal * (x - xAxis[iX0 + 1]) * (x - xAxis[iX0 + 3]) /
+                  ((xAxis[iX0 + 2] - xAxis[iX0 + 1]) *
+                   (xAxis[iX0 + 2] - xAxis[iX0 + 3]));
       fX[3] = xLocal * (x - xAxis[iX0 + 1]) * (x - xAxis[iX0 + 2]) /
               ((xAxis[iX0 + 3] - xAxis[iX0 + 1]) *
                (xAxis[iX0 + 3] - xAxis[iX0 + 2]));
@@ -1058,14 +1046,14 @@ bool Boxin3(const std::vector<std::vector<std::vector<double> > >& value,
           ((yAxis[iY0 + 2] - yAxis[iY0]) * (yAxis[iY0 + 2] - yAxis[iY0 + 1]));
 
       fY[0] *= (1. - yLocal);
-      fY[1] = fY[1] * (1. - yLocal) + yLocal * (y - yAxis[iY0 + 2]) *
-                                          (y - yAxis[iY0 + 3]) /
-                                          ((yAxis[iY0 + 1] - yAxis[iY0 + 2]) *
-                                           (yAxis[iY0 + 1] - yAxis[iY0 + 3]));
-      fY[2] = fY[2] * (1. - yLocal) + yLocal * (y - yAxis[iY0 + 1]) *
-                                          (y - yAxis[iY0 + 3]) /
-                                          ((yAxis[iY0 + 2] - yAxis[iY0 + 1]) *
-                                           (yAxis[iY0 + 2] - yAxis[iY0 + 3]));
+      fY[1] = fY[1] * (1. - yLocal) +
+              yLocal * (y - yAxis[iY0 + 2]) * (y - yAxis[iY0 + 3]) /
+                  ((yAxis[iY0 + 1] - yAxis[iY0 + 2]) *
+                   (yAxis[iY0 + 1] - yAxis[iY0 + 3]));
+      fY[2] = fY[2] * (1. - yLocal) +
+              yLocal * (y - yAxis[iY0 + 1]) * (y - yAxis[iY0 + 3]) /
+                  ((yAxis[iY0 + 2] - yAxis[iY0 + 1]) *
+                   (yAxis[iY0 + 2] - yAxis[iY0 + 3]));
       fY[3] = yLocal * (y - yAxis[iY0 + 1]) * (y - yAxis[iY0 + 2]) /
               ((yAxis[iY0 + 3] - yAxis[iY0 + 1]) *
                (yAxis[iY0 + 3] - yAxis[iY0 + 2]));
@@ -1201,14 +1189,14 @@ bool Boxin3(const std::vector<std::vector<std::vector<double> > >& value,
           ((zAxis[iZ0 + 2] - zAxis[iZ0]) * (zAxis[iZ0 + 2] - zAxis[iZ0 + 1]));
 
       fZ[0] *= (1. - zLocal);
-      fZ[1] = fZ[1] * (1. - zLocal) + zLocal * (z - zAxis[iZ0 + 2]) *
-                                          (z - zAxis[iZ0 + 3]) /
-                                          ((zAxis[iZ0 + 1] - zAxis[iZ0 + 2]) *
-                                           (zAxis[iZ0 + 1] - zAxis[iZ0 + 3]));
-      fZ[2] = fZ[2] * (1. - zLocal) + zLocal * (z - zAxis[iZ0 + 1]) *
-                                          (z - zAxis[iZ0 + 3]) /
-                                          ((zAxis[iZ0 + 2] - zAxis[iZ0 + 1]) *
-                                           (zAxis[iZ0 + 2] - zAxis[iZ0 + 3]));
+      fZ[1] = fZ[1] * (1. - zLocal) +
+              zLocal * (z - zAxis[iZ0 + 2]) * (z - zAxis[iZ0 + 3]) /
+                  ((zAxis[iZ0 + 1] - zAxis[iZ0 + 2]) *
+                   (zAxis[iZ0 + 1] - zAxis[iZ0 + 3]));
+      fZ[2] = fZ[2] * (1. - zLocal) +
+              zLocal * (z - zAxis[iZ0 + 1]) * (z - zAxis[iZ0 + 3]) /
+                  ((zAxis[iZ0 + 2] - zAxis[iZ0 + 1]) *
+                   (zAxis[iZ0 + 2] - zAxis[iZ0 + 3]));
       fZ[3] = zLocal * (z - zAxis[iZ0 + 1]) * (z - zAxis[iZ0 + 2]) /
               ((zAxis[iZ0 + 3] - zAxis[iZ0 + 1]) *
                (zAxis[iZ0 + 3] - zAxis[iZ0 + 2]));

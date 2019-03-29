@@ -1,6 +1,6 @@
-#include <iostream>
-#include <iomanip>
 #include <cmath>
+#include <iomanip>
+#include <iostream>
 
 #include "DriftLineRKF.hh"
 #include "FundamentalConstants.hh"
@@ -9,13 +9,11 @@
 namespace Garfield {
 
 DriftLineRKF::DriftLineRKF() {
-
   const unsigned int nMaxPoints = m_maxSteps + m_maxStepsToWire + 10;
   m_path.resize(nMaxPoints);
 }
 
 void DriftLineRKF::SetSensor(Sensor* s) {
-
   if (!s) {
     std::cerr << m_className << "::SetSensor: Null pointer.\n";
     return;
@@ -24,7 +22,6 @@ void DriftLineRKF::SetSensor(Sensor* s) {
 }
 
 void DriftLineRKF::SetIntegrationAccuracy(const double a) {
-
   if (a > 0.) {
     m_accuracy = a;
   } else {
@@ -34,13 +31,12 @@ void DriftLineRKF::SetIntegrationAccuracy(const double a) {
 }
 
 void DriftLineRKF::SetMaximumStepSize(const double ms) {
-
   if (ms > 0.) {
     m_maxStepSize = ms;
     if (!m_useStepSizeLimit) {
       std::cout << m_className << "::SetMaximumStepSize:\n"
                 << "    Don't forget to call EnableStepSizeLimit.\n";
-    } 
+    }
   } else {
     std::cerr << m_className << "::SetMaximumStepSize:\n"
               << "    Step size must be greater than zero.\n";
@@ -48,7 +44,6 @@ void DriftLineRKF::SetMaximumStepSize(const double ms) {
 }
 
 void DriftLineRKF::EnablePlotting(ViewDrift* view) {
-
   if (!view) {
     std::cerr << m_className << "::EnablePlotting: Null pointer.\n";
     return;
@@ -56,14 +51,10 @@ void DriftLineRKF::EnablePlotting(ViewDrift* view) {
   m_view = view;
 }
 
-void DriftLineRKF::DisablePlotting() {
-
-  m_view = nullptr;
-}
+void DriftLineRKF::DisablePlotting() { m_view = nullptr; }
 
 bool DriftLineRKF::DriftElectron(const double x0, const double y0,
                                  const double z0, const double t0) {
-
   m_particleType = ParticleTypeElectron;
   if (!DriftLine(x0, y0, z0, t0)) return false;
   GetGain();
@@ -71,27 +62,24 @@ bool DriftLineRKF::DriftElectron(const double x0, const double y0,
   return true;
 }
 
-bool DriftLineRKF::DriftHole(const double x0, const double y0, 
-                             const double z0, const double t0) {
-
+bool DriftLineRKF::DriftHole(const double x0, const double y0, const double z0,
+                             const double t0) {
   m_particleType = ParticleTypeHole;
   if (!DriftLine(x0, y0, z0, t0)) return false;
   ComputeSignal(1., m_scaleHoleSignal);
   return true;
 }
 
-bool DriftLineRKF::DriftIon(const double x0, const double y0, 
-                            const double z0, const double t0) {
-
+bool DriftLineRKF::DriftIon(const double x0, const double y0, const double z0,
+                            const double t0) {
   m_particleType = ParticleTypeIon;
   if (!DriftLine(x0, y0, z0, t0)) return false;
   ComputeSignal(1., m_scaleIonSignal);
   return true;
 }
 
-bool DriftLineRKF::DriftLine(const double x0, const double y0, 
-                             const double z0, const double t0) {
-
+bool DriftLineRKF::DriftLine(const double x0, const double y0, const double z0,
+                             const double t0) {
   // Increase the size of the drift line vector if needed.
   const unsigned int nMaxPoints = m_maxSteps + m_maxStepsToWire + 10;
   if (nMaxPoints > m_path.size()) m_path.resize(nMaxPoints);
@@ -100,7 +88,7 @@ bool DriftLineRKF::DriftLine(const double x0, const double y0,
   m_nPoints = 0;
   // Reset the status flag.
   m_status = StatusAlive;
-  
+
   // Check if the sensor is defined.
   if (!m_sensor) {
     std::cerr << m_className << "::DriftLine:\n    Sensor is not defined.\n";
@@ -141,19 +129,19 @@ bool DriftLineRKF::DriftLine(const double x0, const double y0,
   }
 
   // Set the numerical constants for the RKF integration.
-  constexpr double c10 = 214. /  891.;
-  constexpr double c11 =   1. /   33.;
-  constexpr double c12 = 650. /  891.;
+  constexpr double c10 = 214. / 891.;
+  constexpr double c11 = 1. / 33.;
+  constexpr double c12 = 650. / 891.;
   constexpr double c20 = 533. / 2106.;
   constexpr double c22 = 800. / 1053.;
-  constexpr double c23 =  -1. /   78.;
+  constexpr double c23 = -1. / 78.;
 
-  constexpr double b10 =    1. /   4.;
+  constexpr double b10 = 1. / 4.;
   constexpr double b20 = -189. / 800.;
-  constexpr double b21 =  729. / 800.;
-  constexpr double b30 =  214. / 891.;
-  constexpr double b31 =    1. /  33.;
-  constexpr double b32 =  650. / 891.;
+  constexpr double b21 = 729. / 800.;
+  constexpr double b30 = 214. / 891.;
+  constexpr double b31 = 1. / 33.;
+  constexpr double b32 = 650. / 891.;
 
   // Set the charge of the drifting particle.
   const double charge = m_particleType == ParticleTypeElectron ? -1 : 1;
@@ -195,10 +183,10 @@ bool DriftLineRKF::DriftLine(const double x0, const double y0,
     if (!GetVelocity(x1, y1, z1, v1[0], v1[1], v1[2], status)) {
       m_status = StatusCalculationAbandoned;
       break;
-    } 
+    }
     if (status != 0) {
       if (status > 0) {
-        if (m_debug) { 
+        if (m_debug) {
           std::cout << m_className << "::DriftLine: Inside wire, halve.\n";
         }
         dt *= 0.5;
@@ -215,10 +203,10 @@ bool DriftLineRKF::DriftLine(const double x0, const double y0,
     if (!GetVelocity(x2, y2, z2, v2[0], v2[1], v2[2], status)) {
       m_status = StatusCalculationAbandoned;
       break;
-    } 
+    }
     if (status != 0) {
       if (status > 0) {
-        if (m_debug) { 
+        if (m_debug) {
           std::cout << m_className << "::DriftLine: Inside wire, halve.\n";
         }
         dt *= 0.5;
@@ -235,10 +223,10 @@ bool DriftLineRKF::DriftLine(const double x0, const double y0,
     if (!GetVelocity(x3, y3, z3, v3[0], v3[1], v3[2], status)) {
       m_status = StatusCalculationAbandoned;
       break;
-    } 
+    }
     if (status != 0) {
       if (status > 0) {
-        if (m_debug) { 
+        if (m_debug) {
           std::cout << m_className << "::DriftLine: Inside wire, halve.\n";
         }
         dt *= 0.5;
@@ -252,8 +240,8 @@ bool DriftLineRKF::DriftLine(const double x0, const double y0,
     double xw = 0., yw = 0., zw = 0.;
     if (m_sensor->IsWireCrossed(x, y, z, x1, y1, z1, xw, yw, zw) ||
         m_sensor->IsWireCrossed(x, y, z, x2, y2, z2, xw, yw, zw) ||
-        m_sensor->IsWireCrossed(x, y, z, x3, y3, z3, xw, yw, zw)) { 
-      if (m_debug) { 
+        m_sensor->IsWireCrossed(x, y, z, x3, y3, z3, xw, yw, zw)) {
+      if (m_debug) {
         std::cout << m_className << "::DriftLine:\n"
                   << "    Drift line crossed wire. Reduce step size.\n";
       }
@@ -315,13 +303,14 @@ bool DriftLineRKF::DriftLine(const double x0, const double y0,
       }
     } else if (m_rejectKinks && m_nPoints > 1) {
       if (phi1[0] * (m_path[m_nPoints - 1].x - m_path[m_nPoints - 2].x) +
-          phi1[1] * (m_path[m_nPoints - 1].y - m_path[m_nPoints - 2].y) +
-          phi1[2] * (m_path[m_nPoints - 1].z - m_path[m_nPoints - 2].z) < 0.) {
+              phi1[1] * (m_path[m_nPoints - 1].y - m_path[m_nPoints - 2].y) +
+              phi1[2] * (m_path[m_nPoints - 1].z - m_path[m_nPoints - 2].z) <
+          0.) {
         std::cerr << m_className << "::DriftLine: Bending angle > 90 degree.\n";
-        m_status = StatusSharpKink; 
+        m_status = StatusSharpKink;
         break;
       }
-    } 
+    }
     if (m_debug) std::cout << m_className << "::DriftLine: Step size ok.\n";
     // Update the position.
     x += dt * phi1[0];
@@ -342,7 +331,7 @@ bool DriftLineRKF::DriftLine(const double x0, const double y0,
       if (m_debug) {
         std::cout << m_className << "::DriftLine:\n"
                   << "     New point is outside. Terminate.\n";
-      } 
+      }
       if (!EndDriftLine()) m_status = StatusCalculationAbandoned;
       break;
     }
@@ -354,8 +343,8 @@ bool DriftLineRKF::DriftLine(const double x0, const double y0,
     if (dphi0 > Small || dphi1 > Small || dphi2 > Small) {
       dt = sqrt(dt * m_accuracy / (dphi0 + dphi1 + dphi2));
       if (m_debug) {
-        std::cout << m_className << "::DriftLine: Adapting step size to "
-                  << dt << " ns (from " << pdt << ").\n";
+        std::cout << m_className << "::DriftLine: Adapting step size to " << dt
+                  << " ns (from " << pdt << ").\n";
       }
     } else {
       dt *= 2.;
@@ -389,7 +378,8 @@ bool DriftLineRKF::DriftLine(const double x0, const double y0,
     if (dt > 10. * pdt) {
       dt = 10. * pdt;
       if (m_debug) {
-        std::cout << m_className << "::DriftLine: Limit step size to " << dt << "\n";
+        std::cout << m_className << "::DriftLine: Limit step size to " << dt
+                  << "\n";
       }
     }
     // Stop in case dt tends to become too small.
@@ -397,7 +387,7 @@ bool DriftLineRKF::DriftLine(const double x0, const double y0,
       std::cerr << m_className << "::DriftLine:\n"
                 << "    Step size has become smaller than int. accuracy.\n"
                 << "    The calculation is abandoned.\n";
-      m_status = StatusCalculationAbandoned; 
+      m_status = StatusCalculationAbandoned;
       break;
     }
     // Update the velocity.
@@ -408,7 +398,7 @@ bool DriftLineRKF::DriftLine(const double x0, const double y0,
     if (m_nPoints > m_maxSteps) {
       m_status = StatusTooManySteps;
       break;
-    } 
+    }
   }
   if (m_verbose) {
     // If requested, print step history.
@@ -417,17 +407,15 @@ bool DriftLineRKF::DriftLine(const double x0, const double y0,
     std::cout << "   Step          time         time step     "
               << "       x               y                 z\n";
     for (unsigned int i = 0; i < m_nPoints; ++i) {
-      std::cout << std::setw(8) << i << " " 
-                << std::fixed << std::setprecision(7) 
-                << std::setw(15) << m_path[i].t << "  ";
+      std::cout << std::setw(8) << i << " " << std::fixed
+                << std::setprecision(7) << std::setw(15) << m_path[i].t << "  ";
       if (i > 0) {
         std::cout << std::setw(15) << m_path[i].t - m_path[i - 1].t << "  ";
       } else {
         std::cout << std::string(17, ' ');
-      } 
-      std::cout << std::setw(15) << m_path[i].x << "  " 
-                << std::setw(15) << m_path[i].y << "  " 
-                << std::setw(15) << m_path[i].z << "\n";
+      }
+      std::cout << std::setw(15) << m_path[i].x << "  " << std::setw(15)
+                << m_path[i].y << "  " << std::setw(15) << m_path[i].z << "\n";
     }
   }
   if (m_view) {
@@ -440,7 +428,6 @@ bool DriftLineRKF::DriftLine(const double x0, const double y0,
 }
 
 double DriftLineRKF::GetArrivalTimeSpread() {
-
   if (m_nPoints < 2) return 0.;
   double sum = 0.;
   for (unsigned int i = 0; i < m_nPoints - 1; ++i) {
@@ -452,7 +439,6 @@ double DriftLineRKF::GetArrivalTimeSpread() {
 }
 
 double DriftLineRKF::GetGain() {
-
   if (m_nPoints < 2) return 0.;
   if (m_status == StatusCalculationAbandoned) return 0.;
   // First get a rough estimate of the result.
@@ -499,8 +485,8 @@ double DriftLineRKF::GetGain() {
   m_path[0].alphaint = 0.;
   for (unsigned int i = 0; i < m_nPoints - 1; ++i) {
     const unsigned int j = i + 1;
-    sum += IntegrateTownsend(m_path[i].x, m_path[i].y, m_path[i].z,
-                             m_path[j].x, m_path[j].y, m_path[j].z, tol);
+    sum += IntegrateTownsend(m_path[i].x, m_path[i].y, m_path[i].z, m_path[j].x,
+                             m_path[j].y, m_path[j].z, tol);
     m_path[j].alphaint = sum;
   }
   return exp(sum);
@@ -509,7 +495,6 @@ double DriftLineRKF::GetGain() {
 bool DriftLineRKF::GetVelocity(const double x, const double y, const double z,
                                double& vx, double& vy, double& vz,
                                int& status) {
-
   double ex = 0., ey = 0., ez = 0.;
   double bx = 0., by = 0., bz = 0.;
   m_sensor->MagneticField(x, y, z, bx, by, bz, status);
@@ -524,17 +509,15 @@ bool DriftLineRKF::GetVelocity(const double x, const double y, const double z,
     return m_medium->HoleVelocity(ex, ey, ez, bx, by, bz, vx, vy, vz);
   }
   std::cerr << m_className << "::GetVelocity:\n"
-            << "    Cannot retrieve drift velocity at (" 
-            << x << ", " << y << ", " << z << ").\n";
+            << "    Cannot retrieve drift velocity at (" << x << ", " << y
+            << ", " << z << ").\n";
   return false;
-
 }
 
 bool DriftLineRKF::GetVelocity(const double ex, const double ey,
                                const double ez, const double bx,
                                const double by, const double bz, double& vx,
                                double& vy, double& vz) const {
-
   if (m_particleType == ParticleTypeElectron) {
     return m_medium->ElectronVelocity(ex, ey, ez, bx, by, bz, vx, vy, vz);
   } else if (m_particleType == ParticleTypeIon) {
@@ -549,7 +532,6 @@ bool DriftLineRKF::GetDiffusion(const double ex, const double ey,
                                 const double ez, const double bx,
                                 const double by, const double bz, double& dl,
                                 double& dt) const {
-
   if (m_particleType == ParticleTypeElectron) {
     return m_medium->ElectronDiffusion(ex, ey, ez, bx, by, bz, dl, dt);
   } else if (m_particleType == ParticleTypeIon) {
@@ -564,7 +546,6 @@ bool DriftLineRKF::GetTownsend(const double ex, const double ey,
                                const double ez, const double bx,
                                const double by, const double bz,
                                double& alpha) const {
-
   if (m_particleType == ParticleTypeElectron) {
     return m_medium->ElectronTownsend(ex, ey, ez, bx, by, bz, alpha);
   } else if (m_particleType == ParticleTypeHole) {
@@ -574,7 +555,6 @@ bool DriftLineRKF::GetTownsend(const double ex, const double ey,
 }
 
 bool DriftLineRKF::EndDriftLine() {
-
   // Start at the last valid point of the drift line.
   double x0 = m_path[m_nPoints - 1].x;
   double y0 = m_path[m_nPoints - 1].y;
@@ -646,7 +626,7 @@ bool DriftLineRKF::EndDriftLine() {
     const double dy = y1 - y0;
     const double dz = z1 - z0;
     const double d = dx * dx + dy * dy + dz * dz;
-    if (d < tol) break; 
+    if (d < tol) break;
   }
   // Calculate the time step.
   const double dx = x0 - m_path[m_nPoints - 1].x;
@@ -663,9 +643,8 @@ bool DriftLineRKF::EndDriftLine() {
   return true;
 }
 
-bool DriftLineRKF::DriftToWire(const double xw, const double yw, 
+bool DriftLineRKF::DriftToWire(const double xw, const double yw,
                                const double rw) {
-
   // Get the starting point.
   double x0 = m_path[m_nPoints - 1].x;
   double y0 = m_path[m_nPoints - 1].y;
@@ -695,8 +674,7 @@ bool DriftLineRKF::DriftToWire(const double xw, const double yw,
   // assuming a straight-line trajectory and constant velocity.
   double dx0 = xw - x0;
   double dy0 = yw - y0;
-  double dt = (sqrt(dx0 * dx0 + dy0 * dy0) - rw) / 
-               sqrt(vx0 * vx0 + vy0 * vy0);
+  double dt = (sqrt(dx0 * dx0 + dy0 * dy0) - rw) / sqrt(vx0 * vx0 + vy0 * vy0);
   // If the time needed to reach the wire is very small, stop here.
   if (dt < 1.e-6 * t0) {
     m_status = StatusLeftDriftMedium;
@@ -725,8 +703,8 @@ bool DriftLineRKF::DriftToWire(const double xw, const double yw,
     double z1 = z0 + dt * vz0;
     if (m_debug) {
       std::cout << m_className << "::DriftToWire:\n";
-      std::cout << "    Step " << i << " from (" << x0 << ", " << y0 
-                << ") to (" << x1 << ", " << y1 << ").\n";
+      std::cout << "    Step " << i << " from (" << x0 << ", " << y0 << ") to ("
+                << x1 << ", " << y1 << ").\n";
     }
     // Make sure we are not moving away from the wire.
     const double dxw0 = xw - x0;
@@ -747,15 +725,15 @@ bool DriftLineRKF::DriftToWire(const double xw, const double yw,
       if (d2 <= r2) {
         onwire = true;
         if (m_debug) std::cout << m_className << "::DriftToWire: Inside.\n";
-      } 
+      }
     } else {
       if (m_debug) std::cout << m_className << "::DriftToWire: Wire crossed.\n";
       onwire = true;
     }
     if (onwire) {
       const double dw0 = sqrt(dxw0 * dxw0 + dyw0 * dyw0);
-      x1 = xw - (rw + BoundaryDistance) * dxw0 / dw0; 
-      y1 = yw - (rw + BoundaryDistance) * dyw0 / dw0;  
+      x1 = xw - (rw + BoundaryDistance) * dxw0 / dw0;
+      y1 = yw - (rw + BoundaryDistance) * dyw0 / dw0;
       const double dx10 = x1 - x0;
       const double dy10 = y1 - y0;
       dt = sqrt((dx10 * dx10 + dy10 * dy10) / (vx0 * vx0 + vy0 * vy0));
@@ -800,7 +778,8 @@ bool DriftLineRKF::DriftToWire(const double xw, const double yw,
     const double dx01 = x0 - x1;
     const double dy01 = y0 - y1;
     const double d10 = sqrt(dx01 * dx01 + dy01 * dy01);
-    if (d10 * c1 * fabs(1. / v0 - 2. / vm + 1. / v1) > 1.e-4 * (1. + fabs(t0)) && 
+    if (d10 * c1 * fabs(1. / v0 - 2. / vm + 1. / v1) >
+            1.e-4 * (1. + fabs(t0)) &&
         i < nMaxSteps - 1) {
       // Accuracy was not good enough so halve the step time.
       if (m_debug) {
@@ -818,7 +797,7 @@ bool DriftLineRKF::DriftToWire(const double xw, const double yw,
     m_path[m_nPoints - 1].t = m_path[0].t + t1;
     if (onwire) break;
     // JAMES MOTT HACK (5th Oct 2015)
-    if(smallTimeStep) break;
+    if (smallTimeStep) break;
     // Proceed to the next step.
     x0 = x1;
     y0 = y1;
@@ -834,7 +813,6 @@ bool DriftLineRKF::DriftToWire(const double xw, const double yw,
 
 void DriftLineRKF::GetEndPoint(double& x, double& y, double& z, double& t,
                                int& stat) const {
-
   if (m_nPoints == 0) {
     x = y = z = t = 0.;
     stat = m_status;
@@ -848,8 +826,7 @@ void DriftLineRKF::GetEndPoint(double& x, double& y, double& z, double& t,
 }
 
 void DriftLineRKF::GetDriftLinePoint(const unsigned int i, double& x, double& y,
-                                    double& z, double& t) const {
-
+                                     double& z, double& t) const {
   if (i >= m_nPoints) {
     std::cerr << m_className << "::GetDriftLinePoint:\n";
     std::cerr << "    Index is outside the range.\n";
@@ -866,7 +843,6 @@ void DriftLineRKF::GetDriftLinePoint(const unsigned int i, double& x, double& y,
 double DriftLineRKF::IntegrateDiffusion(const double x, const double y,
                                         const double z, const double xe,
                                         const double ye, const double ze) {
-
   if (m_debug) {
     std::cout << m_className << "::IntegrateDiffusion:\n    Integrating from "
               << x << ", " << y << ", " << z << " to " << xe << ", " << ye
@@ -1025,11 +1001,9 @@ double DriftLineRKF::IntegrateDiffusion(const double x, const double y,
 }
 
 double DriftLineRKF::IntegrateTownsend(const double xi, const double yi,
-                                       const double zi, 
-                                       const double xe, const double ye, 
-                                       const double ze,
+                                       const double zi, const double xe,
+                                       const double ye, const double ze,
                                        const double tol) {
-
   // Make sure the initial position is valid.
   double ex = 0., ey = 0., ez = 0.;
   double bx = 0., by = 0., bz = 0.;
@@ -1037,7 +1011,7 @@ double DriftLineRKF::IntegrateTownsend(const double xi, const double yi,
   m_sensor->MagneticField(xi, yi, zi, bx, by, bz, status);
   m_sensor->ElectricField(xi, yi, zi, ex, ey, ez, m_medium, status);
   if (status != 0) {
-    std::cerr << m_className << "::IntegrateTownsend:\n    Initial position (" 
+    std::cerr << m_className << "::IntegrateTownsend:\n    Initial position ("
               << xi << ", " << yi << ", " << zi << ") not valid.\n";
     return 0.;
   }
@@ -1052,8 +1026,8 @@ double DriftLineRKF::IntegrateTownsend(const double xi, const double yi,
   m_sensor->MagneticField(xe, ye, ze, bx, by, bz, status);
   m_sensor->ElectricField(xe, ye, ze, ex, ey, ez, m_medium, status);
   if (status != 0) {
-    std::cerr << m_className << "::IntegrateTownsend:\n    End position ("
-              << xi << ", " << yi << ", " << zi << ") not valid.\n";
+    std::cerr << m_className << "::IntegrateTownsend:\n    End position (" << xi
+              << ", " << yi << ", " << zi << ") not valid.\n";
     return 0.;
   }
   // Determine Townsend coefficient at end point.
@@ -1165,7 +1139,6 @@ double DriftLineRKF::IntegrateTownsend(const double xi, const double yi,
 }
 
 void DriftLineRKF::ComputeSignal(const double q, const double scale) const {
-
   if (m_nPoints < 2) return;
   double g = 1.;
   for (unsigned int i = 0; i < m_nPoints - 1; ++i) {

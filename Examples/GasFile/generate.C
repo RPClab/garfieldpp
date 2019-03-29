@@ -31,11 +31,8 @@ int main(int argc, char * argv[]) {
   gas->SetFieldGrid(emin, emax, nFields, useLog); 
 
   const int ncoll = 10;
-  // Switch on debugging to print the Magboltz output.
-  gas->EnableDebugging();
   // Run Magboltz to generate the gas table.
   gas->GenerateGasTable(ncoll);
-  gas->DisableDebugging();
   // Save the table. 
   gas->WriteGasFile("ar_93_co2_7.gas");
 

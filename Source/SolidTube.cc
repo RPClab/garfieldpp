@@ -1,22 +1,23 @@
-#include <iostream>
 #include <cmath>
+#include <iostream>
 
-#include "SolidTube.hh"
 #include "FundamentalConstants.hh"
+#include "SolidTube.hh"
 
 namespace Garfield {
 
 SolidTube::SolidTube(const double cx, const double cy, const double cz,
                      const double rmin, const double rmax, const double lz)
     : Solid(cx, cy, cz, "SolidTube"),
-      m_rMin(rmin), m_rMax(rmax), m_r(rmax),
+      m_rMin(rmin),
+      m_rMax(rmax),
+      m_r(rmax),
       m_lZ(lz) {}
 
 SolidTube::SolidTube(const double cx, const double cy, const double cz,
                      const double rmin, const double rmax, const double lz,
                      const double dx, const double dy, const double dz)
     : SolidTube(cx, cy, cz, rmin, rmax, lz) {
-
   SetDirection(dx, dy, dz);
 }
 
@@ -25,19 +26,18 @@ SolidTube::SolidTube(const double cx, const double cy, const double cz,
     : SolidTube(cx, cy, cz, 0., r, lz) {}
 
 SolidTube::SolidTube(const double cx, const double cy, const double cz,
-                     const double r, const double lz,
-                     const double dx, const double dy, const double dz)
+                     const double r, const double lz, const double dx,
+                     const double dy, const double dz)
     : SolidTube(cx, cy, cz, 0., r, lz, dx, dy, dz) {}
 
 bool SolidTube::IsInside(const double x, const double y, const double z) const {
-
   // Transform the point to local coordinates.
   double u = x, v = y, w = z;
   ToLocal(x, y, z, u, v, w);
 
   if (fabs(w) > m_lZ) {
     if (m_debug) {
-      std::cout << "SolidTube::IsInside: (" << x << ", " << y << ", " << z 
+      std::cout << "SolidTube::IsInside: (" << x << ", " << y << ", " << z
                 << ") is outside.\n";
     }
     return false;
@@ -46,14 +46,14 @@ bool SolidTube::IsInside(const double x, const double y, const double z) const {
   const double r = sqrt(u * u + v * v);
   if (r >= m_rMin && r <= m_rMax) {
     if (m_debug) {
-      std::cout << "SolidTube::IsInside: (" << x << ", " << y << ", " << z 
+      std::cout << "SolidTube::IsInside: (" << x << ", " << y << ", " << z
                 << ") is inside.\n";
     }
     return true;
   }
 
   if (m_debug) {
-    std::cout << "SolidTube::IsInside: (" << x << ", " << y << ", " << z 
+    std::cout << "SolidTube::IsInside: (" << x << ", " << y << ", " << z
               << ") is outside.\n";
   }
   return false;
@@ -61,7 +61,6 @@ bool SolidTube::IsInside(const double x, const double y, const double z) const {
 
 bool SolidTube::GetBoundingBox(double& xmin, double& ymin, double& zmin,
                                double& xmax, double& ymax, double& zmax) const {
-
   if (m_cTheta == 1. && m_cPhi == 1.) {
     xmin = m_cX - m_rMax;
     xmax = m_cX + m_rMax;
@@ -83,7 +82,6 @@ bool SolidTube::GetBoundingBox(double& xmin, double& ymin, double& zmin,
 }
 
 bool SolidTube::GetDimensions(double& l1, double& l2, double& l3) const {
-
   l1 = m_rMin;
   l2 = m_rMax;
   l3 = m_lZ;
@@ -91,7 +89,6 @@ bool SolidTube::GetDimensions(double& l1, double& l2, double& l3) const {
 }
 
 void SolidTube::SetInnerRadius(const double rmin) {
-
   if (rmin <= 0.) {
     std::cerr << "SolidTube::SetInnerRadius: Radius must be > 0.\n";
     return;
@@ -105,7 +102,6 @@ void SolidTube::SetInnerRadius(const double rmin) {
 }
 
 void SolidTube::SetOuterRadius(const double rmax) {
-
   if (rmax <= 0.) {
     std::cerr << "SolidTube::SetOuterRadius: Radius must be > 0.\n";
     return;
@@ -119,7 +115,6 @@ void SolidTube::SetOuterRadius(const double rmax) {
 }
 
 void SolidTube::SetRadius(const double r) {
-
   if (r <= 0.) {
     std::cerr << "SolidTube::SetRadius: Radius must be > 0.\n";
     return;
@@ -128,7 +123,6 @@ void SolidTube::SetRadius(const double r) {
 }
 
 void SolidTube::SetHalfLength(const double lz) {
-
   if (lz <= 0.) {
     std::cerr << "SolidTube::SetHalfLength: Half-length must be > 0.\n";
     return;
@@ -137,7 +131,6 @@ void SolidTube::SetHalfLength(const double lz) {
 }
 
 void SolidTube::SetSectors(const unsigned int n) {
-
   if (n < 1) {
     std::cerr << "SolidTube::SetSectors: Number must be > 0.\n";
     return;
@@ -146,7 +139,6 @@ void SolidTube::SetSectors(const unsigned int n) {
 }
 
 bool SolidTube::SolidPanels(std::vector<Panel>& panels) {
-
   // AROT Rotation angle: m_rot
   // N    Number of sectors: m_n
   // R    Radius of cylinder: m_r
@@ -167,7 +159,7 @@ bool SolidTube::SolidPanels(std::vector<Panel>& panels) {
               << "    Zero norm direction vector; no panels generated.\n";
     return false;
   }
-  
+
   // Set the mean or the outer radius.
   double r = m_r;
   if (m_average) {
@@ -267,8 +259,8 @@ bool SolidTube::SolidPanels(std::vector<Panel>& panels) {
     yv1 = yv2;
     zv1 = zv2;
   }
-  std::cout << "SolidTube::SolidPanels: "
-            << panels.size() - nPanels << " panels.\n";
+  std::cout << "SolidTube::SolidPanels: " << panels.size() - nPanels
+            << " panels.\n";
   return true;
 }
 }

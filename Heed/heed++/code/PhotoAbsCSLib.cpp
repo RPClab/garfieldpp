@@ -6,6 +6,8 @@
 #include "wcpplib/matter/GasLib.cpp"
 #endif
 
+#include <iostream>
+
 // 2004, I. Smirnov
 
 /*

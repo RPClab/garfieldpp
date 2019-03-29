@@ -11,7 +11,6 @@ namespace Garfield {
 /// Energy loss calculation using the Photoabsorption-Ionisation Model.
 
 class TrackPAI : public Track {
-
  public:
   // Constructor
   TrackPAI();
@@ -22,7 +21,7 @@ class TrackPAI : public Track {
                         const double t0, const double dx0, const double dy0,
                         const double dz0);
 
-  virtual bool GetCluster(double& xcls, double& ycls, double& zcls, 
+  virtual bool GetCluster(double& xcls, double& ycls, double& zcls,
                           double& tcls, int& ncls, double& ecls, double& extra);
 
   virtual double GetClusterDensity();

@@ -1,16 +1,15 @@
-#include <iostream>
 #include <cmath>
+#include <iostream>
 
-#include "Sensor.hh"
-#include "TrackElectron.hh"
 #include "FundamentalConstants.hh"
 #include "GarfieldConstants.hh"
 #include "Random.hh"
+#include "Sensor.hh"
+#include "TrackElectron.hh"
 
 namespace Garfield {
 
 TrackElectron::TrackElectron() : Track() {
-
   m_className = "TrackElectron";
 
   // Setup the particle properties.
@@ -20,11 +19,9 @@ TrackElectron::TrackElectron() : Track() {
   m_isElectron = true;
   SetBetaGamma(3.);
   m_particleName = "electron";
-
 }
 
 void TrackElectron::SetParticle(const std::string& particle) {
-
   if (particle != "electron" && particle != "e" && particle != "e-") {
     std::cerr << m_className << "::SetParticle: Only electrons are allowed.\n";
   }
@@ -33,7 +30,6 @@ void TrackElectron::SetParticle(const std::string& particle) {
 bool TrackElectron::NewTrack(const double x0, const double y0, const double z0,
                              const double t0, const double dx0,
                              const double dy0, const double dz0) {
-
   m_ready = false;
 
   // Make sure the sensor has been set.
@@ -43,7 +39,7 @@ bool TrackElectron::NewTrack(const double x0, const double y0, const double z0,
   }
 
   // Get the medium at this location and check if it is "ionisable".
-  Medium* medium = nullptr; 
+  Medium* medium = nullptr;
   if (!m_sensor->GetMedium(x0, y0, z0, medium)) {
     std::cerr << m_className << "::NewTrack:\n";
     std::cerr << "    No medium at initial position.\n";
@@ -103,7 +99,6 @@ bool TrackElectron::NewTrack(const double x0, const double y0, const double z0,
 bool TrackElectron::GetCluster(double& xcls, double& ycls, double& zcls,
                                double& tcls, int& ncls, double& edep,
                                double& extra) {
-
   edep = extra = 0.;
   ncls = 0;
 
@@ -156,9 +151,10 @@ bool TrackElectron::GetCluster(double& xcls, double& ycls, double& zcls,
   // Sample secondary electron energy according to
   // Opal-Beaty-Peterson splitting function.
   const double e0 = ElectronMass * (sqrt(1. / (1. - m_beta2)) - 1.);
-  double esec = m_components[iComponent].wSplit *
-                tan(RndmUniform() * atan((e0 - m_components[iComponent].ethr) /
-                                         (2. * m_components[iComponent].wSplit)));
+  double esec =
+      m_components[iComponent].wSplit *
+      tan(RndmUniform() * atan((e0 - m_components[iComponent].ethr) /
+                               (2. * m_components[iComponent].wSplit)));
   esec = m_components[iComponent].wSplit *
          pow(esec / m_components[iComponent].wSplit, 0.9524);
   m_electrons.resize(1);
@@ -174,7 +170,6 @@ bool TrackElectron::GetCluster(double& xcls, double& ycls, double& zcls,
 }
 
 double TrackElectron::GetClusterDensity() {
-
   if (!m_ready) {
     std::cerr << m_className << "::GetClusterDensity:\n";
     std::cerr << "    Track has not been initialized.\n";
@@ -191,15 +186,14 @@ double TrackElectron::GetClusterDensity() {
 }
 
 double TrackElectron::GetStoppingPower() {
-
   if (!m_ready) {
     std::cerr << m_className << "::GetStoppingPower:\n";
     std::cerr << "    Track has not been initialised.\n";
     return 0.;
   }
 
-  constexpr double prefactor = 4 * Pi * HbarC * HbarC / 
-    (ElectronMass * ElectronMass);
+  constexpr double prefactor =
+      4 * Pi * HbarC * HbarC / (ElectronMass * ElectronMass);
   const double lnBg2 = log(m_beta2 / (1. - m_beta2));
 
   double dedx = 0.;
@@ -211,7 +205,8 @@ double TrackElectron::GetStoppingPower() {
     const double cmean =
         m_mediumDensity * m_components[i].fraction * (prefactor / m_beta2) *
         (m_components[i].m2Ion * (lnBg2 - m_beta2) + m_components[i].cIon);
-    const double ew = (e0 - m_components[i].ethr) / (2 * m_components[i].wSplit);
+    const double ew =
+        (e0 - m_components[i].ethr) / (2 * m_components[i].wSplit);
     // Calculate the mean secondary electron energy.
     const double emean =
         (m_components[i].wSplit / (2 * atan(ew))) * log(1. + ew * ew);
@@ -222,7 +217,6 @@ double TrackElectron::GetStoppingPower() {
 }
 
 bool TrackElectron::SetupGas(Medium* gas) {
-
   m_components.clear();
 
   if (!gas) {
@@ -375,9 +369,8 @@ bool TrackElectron::SetupGas(Medium* gas) {
 }
 
 bool TrackElectron::UpdateCrossSection() {
-
-  constexpr double prefactor = 4 * Pi * HbarC * HbarC / 
-    (ElectronMass * ElectronMass);
+  constexpr double prefactor =
+      4 * Pi * HbarC * HbarC / (ElectronMass * ElectronMass);
   const double lnBg2 = log(m_beta2 / (1. - m_beta2));
   // Parameter X in the Sternheimer fit formula
   const double eta = m_mediumDensity / LoschmidtNumber;
@@ -395,7 +388,7 @@ bool TrackElectron::UpdateCrossSection() {
       }
     }
     const double cs = (m_components[i].fraction * prefactor / m_beta2) *
-                      (m_components[i].m2Ion * (lnBg2 - m_beta2 - delta) + 
+                      (m_components[i].m2Ion * (lnBg2 - m_beta2 - delta) +
                        m_components[i].cIon);
     m_components[i].p = cs;
     csSum += cs;

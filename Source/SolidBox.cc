@@ -1,28 +1,24 @@
-#include <iostream>
 #include <cmath>
+#include <iostream>
 
-#include "SolidBox.hh"
 #include "FundamentalConstants.hh"
 #include "GarfieldConstants.hh"
+#include "SolidBox.hh"
 
 namespace Garfield {
 
 SolidBox::SolidBox(const double cx, const double cy, const double cz,
                    const double lx, const double ly, const double lz)
-    : Solid(cx, cy, cz, "SolidBox"),
-      m_lX(lx), m_lY(ly), m_lZ(lz) {}
+    : Solid(cx, cy, cz, "SolidBox"), m_lX(lx), m_lY(ly), m_lZ(lz) {}
 
 SolidBox::SolidBox(const double cx, const double cy, const double cz,
                    const double lx, const double ly, const double lz,
                    const double dx, const double dy, const double dz)
     : SolidBox(cx, cy, cz, lx, ly, lz) {
-
   SetDirection(dx, dy, dz);
 }
 
-bool SolidBox::IsInside(const double x, const double y, 
-                        const double z) const {
-
+bool SolidBox::IsInside(const double x, const double y, const double z) const {
   // Transform the point to local coordinates.
   double u = x, v = y, w = z;
   ToLocal(x, y, z, u, v, w);
@@ -30,14 +26,14 @@ bool SolidBox::IsInside(const double x, const double y,
   // See whether the point is inside.
   if (fabs(u) > m_lX || fabs(v) > m_lY || fabs(w) > m_lZ) {
     if (m_debug) {
-      std::cout << "SolidBox::IsInside: (" << x << ", " << y << ", " << z 
+      std::cout << "SolidBox::IsInside: (" << x << ", " << y << ", " << z
                 << ") is outside.\n";
     }
     return false;
   }
 
   if (m_debug) {
-    std::cout << "SolidBox::IsInside: (" << x << ", " << y << ", " << z 
+    std::cout << "SolidBox::IsInside: (" << x << ", " << y << ", " << z
               << ") is inside.\n";
   }
 
@@ -46,7 +42,6 @@ bool SolidBox::IsInside(const double x, const double y,
 
 bool SolidBox::GetBoundingBox(double& xmin, double& ymin, double& zmin,
                               double& xmax, double& ymax, double& zmax) const {
-
   if (m_cTheta == 1. && m_cPhi == 1.) {
     xmin = m_cX - m_lX;
     xmax = m_cX + m_lX;
@@ -68,7 +63,6 @@ bool SolidBox::GetBoundingBox(double& xmin, double& ymin, double& zmin,
 }
 
 bool SolidBox::GetDimensions(double& l1, double& l2, double& l3) const {
-
   l1 = m_lX;
   l2 = m_lY;
   l3 = m_lZ;
@@ -76,7 +70,6 @@ bool SolidBox::GetDimensions(double& l1, double& l2, double& l3) const {
 }
 
 void SolidBox::SetHalfLengthX(const double lx) {
-
   if (lx > 0.) {
     m_lX = lx;
   } else {
@@ -85,7 +78,6 @@ void SolidBox::SetHalfLengthX(const double lx) {
 }
 
 void SolidBox::SetHalfLengthY(const double ly) {
-
   if (ly > 0.) {
     m_lY = ly;
   } else {
@@ -94,7 +86,6 @@ void SolidBox::SetHalfLengthY(const double ly) {
 }
 
 void SolidBox::SetHalfLengthZ(const double lz) {
-
   if (lz > 0.) {
     m_lZ = lz;
   } else {
@@ -102,9 +93,7 @@ void SolidBox::SetHalfLengthZ(const double lz) {
   }
 }
 
-
 bool SolidBox::SolidPanels(std::vector<Panel>& panels) {
-
   const auto id = GetId();
   const auto nPanels = panels.size();
   double xv0, yv0, zv0;
@@ -143,7 +132,7 @@ bool SolidBox::SolidPanels(std::vector<Panel>& panels) {
     newpanel.yv = {yv0, yv1, yv2, yv3};
     newpanel.zv = {zv0, zv1, zv2, zv3};
     newpanel.colour = 0;
-    newpanel.volume = id; 
+    newpanel.volume = id;
     panels.push_back(std::move(newpanel));
   }
   // The y = ymin face.
@@ -215,8 +204,8 @@ bool SolidBox::SolidPanels(std::vector<Panel>& panels) {
     panels.push_back(std::move(newpanel));
   }
   // Done, check panel count.
-  std::cout << "SolidBox::SolidPanels: " 
-            << panels.size() - nPanels << " panels.\n";
+  std::cout << "SolidBox::SolidPanels: " << panels.size() - nPanels
+            << " panels.\n";
   return true;
 }
 }

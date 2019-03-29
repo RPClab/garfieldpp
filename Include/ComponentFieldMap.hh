@@ -8,10 +8,9 @@
 
 namespace Garfield {
 
-/// Base class for components based on finite-element field maps. 
+/// Base class for components based on finite-element field maps.
 
 class ComponentFieldMap : public ComponentBase {
-
  public:
   /// Constructor
   ComponentFieldMap();
@@ -30,7 +29,8 @@ class ComponentFieldMap : public ComponentBase {
   }
 
   virtual bool GetBoundingBox(double& xmin, double& ymin, double& zmin,
-                              double& xmax, double& ymax, double& zmax) override;
+                              double& xmax, double& ymax,
+                              double& zmax) override;
 
   virtual bool GetVoltageRange(double& vmin, double& vmax) override {
     vmin = m_mapvmin;
@@ -55,7 +55,8 @@ class ComponentFieldMap : public ComponentBase {
   /// Return the Medium associated to a field map material.
   Medium* GetMedium(const unsigned int i) const;
 
-  Medium* GetMedium(const double x, const double y, const double z) override = 0;
+  Medium* GetMedium(const double x, const double y,
+                    const double z) override = 0;
   unsigned int GetNumberOfMedia() const { return m_nMaterials; }
 
   /// Return the number of mesh elements.
@@ -88,7 +89,7 @@ class ComponentFieldMap : public ComponentBase {
   void EnableDeleteBackgroundElements() { m_deleteBackground = true; }
   void DisableDeleteBackgroundElements() { m_deleteBackground = false; }
 
-  /// Enable or disable the usage of the tetrahedral tree 
+  /// Enable or disable the usage of the tetrahedral tree
   /// for searching the element in the mesh.
   void EnableTetrahedralTreeForElementSearch(const bool on = true) {
     m_useTetrahedralTree = on;
@@ -167,7 +168,7 @@ class ComponentFieldMap : public ComponentBase {
   unsigned int m_nWarnings = 0;
 
   // Reset the component
-  void Reset() override {};
+  void Reset() override{};
 
   // Periodicities
   // virtual void UpdatePeriodicity() = 0;
@@ -194,7 +195,8 @@ class ComponentFieldMap : public ComponentBase {
   /// Move (ex, ey, ez) to global coordinates.
   void UnmapFields(double& ex, double& ey, double& ez, double& xpos,
                    double& ypos, double& zpos, bool& xmirrored, bool& ymirrored,
-                   bool& zmirrored, double& rcoordinate, double& rotation) const;
+                   bool& zmirrored, double& rcoordinate,
+                   double& rotation) const;
 
   int ReadInteger(char* token, int def, bool& error);
   double ReadDouble(char* token, double def, bool& error);
@@ -209,9 +211,9 @@ class ComponentFieldMap : public ComponentBase {
               << "    Warnings have been issued for this field map.\n";
     ++m_nWarnings;
   }
- void PrintNotReady(const std::string& header) const {
-   std::cerr << m_className << "::" << header << ":\n"
-             << "    Field map not yet initialised.\n";
+  void PrintNotReady(const std::string& header) const {
+    std::cerr << m_className << "::" << header << ":\n"
+              << "    Field map not yet initialised.\n";
   }
   void PrintElement(const std::string& header, const double x, const double y,
                     const double z, const double t1, const double t2,
@@ -256,8 +258,7 @@ class ComponentFieldMap : public ComponentBase {
   /// Calculate local coordinates for a cube.
   int CoordinatesCube(const double x, const double y, const double z,
                       double& t1, double& t2, double& t3, TMatrixD*& jac,
-                      std::vector<TMatrixD*>& dN,
-                      const Element& element) const;
+                      std::vector<TMatrixD*>& dN, const Element& element) const;
 
   /// Calculate Jacobian for curved quadratic triangles.
   void Jacobian3(const Element& element, const double u, const double v,
@@ -279,7 +280,6 @@ class ComponentFieldMap : public ComponentBase {
 
   /// Initialize the tetrahedral tree.
   bool InitializeTetrahedralTree();
-
 };
 }
 

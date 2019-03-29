@@ -1,15 +1,17 @@
 #ifndef G_MEDIUM_MAGBOLTZ_9
 #define G_MEDIUM_MAGBOLTZ_9
 
+#include <array>
+
+#include "MagboltzInterface.hh"
 #include "MediumGas.hh"
 
 namespace Garfield {
 
-/// Interface to %Magboltz (version 9).
+/// Interface to %Magboltz (version 11).
 ///  - http://magboltz.web.cern.ch/magboltz/
 
 class MediumMagboltz : public MediumGas {
-
  public:
   /// Constructor
   MediumMagboltz();
@@ -17,144 +19,164 @@ class MediumMagboltz : public MediumGas {
   virtual ~MediumMagboltz() {}
 
   /// Set the highest electron energy to be included
-  //// in the scattering rates table.
+  /// in the table of scattering rates.
   bool SetMaxElectronEnergy(const double e);
-  /// Get the highest electron energy in the scattering rates table.
+  /// Get the highest electron energy in the table of scattering rates.
   double GetMaxElectronEnergy() const { return m_eFinal; }
 
-  // Set/get the highest photon energy to be included
-  // in the scattering rates table
+  /// Set the highest photon energy to be included
+  /// in the table of scattering rates.
   bool SetMaxPhotonEnergy(const double e);
+  /// Get the highest photon energy in the table of scattering rates.
   double GetMaxPhotonEnergy() const { return m_eFinalGamma; }
 
-  // Switch on/off automatic adjustment of max. energy when an
-  // energy exceeding the present range is requested
-  void EnableEnergyRangeAdjustment() { m_useAutoAdjust = true; }
-  void DisableEnergyRangeAdjustment() { m_useAutoAdjust = false; }
+  /// Switch on/off the automatic adjustment of the max. energy when an
+  /// energy exceeding the present range is requested
+  void EnableEnergyRangeAdjustment(const bool on) { m_useAutoAdjust = on; }
 
-  // Switch on/off anisotropic scattering (enabled by default)
-  void EnableAnisotropicScattering() {
-    m_useAnisotropic = true;
-    m_isChanged = true;
-  }
-  void DisableAnisotropicScattering() {
-    m_useAnisotropic = false;
+  /// Switch on/off anisotropic scattering (enabled by default)
+  void EnableAnisotropicScattering(const bool on = true) {
+    m_useAnisotropic = on;
     m_isChanged = true;
   }
 
-  // Select secondary electron energy distribution parameterization
+  /// Sample the secondary electron energy according to the Opal-Beaty model.
   void SetSplittingFunctionOpalBeaty();
+  /// Sample the secondary electron energy according to the Green-Sawada model.
   void SetSplittingFunctionGreenSawada();
+  /// Sample the secondary electron energy from a flat distribution.
   void SetSplittingFunctionFlat();
 
-  // Switch on/off de-excitation handling
+  /// Switch on (microscopic) de-excitation handling.
   void EnableDeexcitation();
+  /// Switch off (microscopic) de-excitation handling.
   void DisableDeexcitation() { m_useDeexcitation = false; }
-  // Switch on/off discrete photoabsorption levels
+  /// Switch on discrete photoabsorption levels.
   void EnableRadiationTrapping();
+  /// Switch off discrete photoabsorption levels.
   void DisableRadiationTrapping() { m_useRadTrap = false; }
 
-  // Switch on/off simplified simulation of Penning transfers by means of
-  // transfer probabilities (not compatible with de-excitation handling)
-  void EnablePenningTransfer(const double r, const double lambda);
-  void EnablePenningTransfer(const double r, const double lambda,
-                             std::string gasname);
-  void DisablePenningTransfer();
-  void DisablePenningTransfer(std::string gasname);
+  bool EnablePenningTransfer(const double r, const double lambda) override;
+  bool EnablePenningTransfer(const double r, const double lambda,
+                             std::string gasname) override;
+  void DisablePenningTransfer() override;
+  bool DisablePenningTransfer(std::string gasname) override;
 
-  // When enabled, the gas cross-section table is written to file
-  // when loaded into memory.
-  void EnableCrossSectionOutput() { m_useCsOutput = true; }
-  void DisableCrossSectionOutput() { m_useCsOutput = false; }
+  /// Write the gas cross-section table to a file during the initialisation.
+  void EnableCrossSectionOutput(const bool on = true) { m_useCsOutput = on; }
 
-  // Multiply excitation cross-sections by a uniform scaling factor
-  void SetExcitationScalingFactor(const double r, std::string gasname);
+  /// Multiply all excitation cross-sections by a uniform scaling factor.
+  void SetExcitationScaling(const double r, std::string gasname);
 
+  /// Initialise the table of scattering rates (called internally when a
+  /// collision rate is requested and the gas mixture or other parameters
+  /// have changed).
   bool Initialise(const bool verbose = false);
+
   void PrintGas();
 
-  // Get the overall null-collision rate [ns-1]
+  /// Get the overall null-collision rate [ns-1].
   double GetElectronNullCollisionRate(const int band) override;
-  // Get the (real) collision rate [ns-1] at a given electron energy e [eV]
+  /// Get the (real) collision rate [ns-1] at a given electron energy e [eV].
   double GetElectronCollisionRate(const double e, const int band) override;
-  // Get the collision rate [ns-1] for a specific level
+  /// Get the collision rate [ns-1] for a specific level.
   double GetElectronCollisionRate(const double e, const unsigned int level,
                                   const int band);
-  // Sample the collision type
+  /// Sample the collision type.
   bool GetElectronCollision(const double e, int& type, int& level, double& e1,
-                            double& dx, double& dy, double& dz, 
+                            double& dx, double& dy, double& dz,
                             std::vector<std::pair<int, double> >& secondaries,
                             int& ndxc, int& band) override;
   void ComputeDeexcitation(int iLevel, int& fLevel);
-  unsigned int GetNumberOfDeexcitationProducts() const override { 
+  unsigned int GetNumberOfDeexcitationProducts() const override {
     return m_dxcProducts.size();
   }
-  bool GetDeexcitationProduct(const unsigned int i, double& t, double& s, 
+  bool GetDeexcitationProduct(const unsigned int i, double& t, double& s,
                               int& type, double& energy) const override;
 
   double GetPhotonCollisionRate(const double e) override;
   bool GetPhotonCollision(const double e, int& type, int& level, double& e1,
                           double& ctheta, int& nsec, double& esec) override;
 
-  // Reset the collision counters
+  /// Reset the collision counters.
   void ResetCollisionCounters();
-  // Get total number of electron collisions
+  /// Get the total number of electron collisions.
   unsigned int GetNumberOfElectronCollisions() const;
-  // Get number of collisions broken down by cross-section type
-  unsigned int GetNumberOfElectronCollisions(int& nElastic, int& nIonising,
-                                             int& nAttachment, int& nInelastic,
-                                             int& nExcitation, 
-                                             int& nSuperelastic) const;
-  // Get number of cross-section terms
-  int GetNumberOfLevels();
-  // Get detailed information about a given cross-section term i
+  /// Get the number of collisions broken down by cross-section type.
+  unsigned int GetNumberOfElectronCollisions(unsigned int& nElastic,
+                                             unsigned int& nIonising,
+                                             unsigned int& nAttachment,
+                                             unsigned int& nInelastic,
+                                             unsigned int& nExcitation,
+                                             unsigned int& nSuperelastic) const;
+  /// Get the number of cross-section terms.
+  unsigned int GetNumberOfLevels();
+  /// Get detailed information about a given cross-section term i
   bool GetLevel(const unsigned int i, int& ngas, int& type, std::string& descr,
                 double& e);
-  // Get number of collisions for a specific cross-section term
+  /// Get the number of collisions for a specific cross-section term.
   unsigned int GetNumberOfElectronCollisions(const unsigned int level) const;
 
-  int GetNumberOfPenningTransfers() const { return m_nPenning; }
+  /// Get the number of Penning transfers that occured since the last reset.
+  unsigned int GetNumberOfPenningTransfers() const { return m_nPenning; }
 
-  // Get total number of photon collisions
-  int GetNumberOfPhotonCollisions() const;
-  // Get number of photon collisions by collision type
-  int GetNumberOfPhotonCollisions(int& nElastic, int& nIonising,
-                                  int& nInelastic) const;
+  /// Get the total number of photon collisions.
+  unsigned int GetNumberOfPhotonCollisions() const;
+  /// Get number of photon collisions by collision type.
+  unsigned int GetNumberOfPhotonCollisions(unsigned int& nElastic,
+                                           unsigned int& nIonising,
+                                           unsigned int& nInelastic) const;
 
+  /// Take the thermal motion of the gas at the selected temperature
+  /// into account in the calculations done Magboltz.
+  /// By the default, this feature is off (static gas at 0 K).
+  void EnableThermalMotion(const bool on = true) { m_useGasMotion = on; }
+
+  /** Run Magboltz for a given electric field, magnetic field and angle.
+    * \param[in] e electric field
+    * \param[in] b magnetic field
+    * \param[in] btheta angle between electric and magnetic field
+    * \param[in] ncoll number of collisions (in multiples of 10<sup>7</sup>)
+                   to be simulated
+    * \param[in] verbose verbosity flag
+    * \param[out] vx,vy,vz drift velocity vector
+    * \param[out] dl,dt diffusion cofficients
+    * \param[out] alpha Townsend cofficient
+    * \param[out] eta attachment cofficient
+    * \param[out] lor Lorentz angle
+    * \param[out] vxerr,vyerr,vzerr errors on drift velocity
+    * \param[out] dlerr,dterr errors on diffusion coefficients
+    * \param[out] alphaerr,etaerr errors on Townsend/attachment coefficients
+    * \param[out] lorerr error on Lorentz angle
+    * \param[out] alphatof effective Townsend coefficient (#alpha - #eta) calculated using time-of-flight method
+    * \param[out] difftens components of the diffusion tensor (zz, xx, yy, xz, yz, xy)
+    */
   void RunMagboltz(const double e, const double b, const double btheta,
                    const int ncoll, bool verbose, double& vx, double& vy,
-                   double& vz, double& dl, double& dt, 
-                   double& alpha, double& eta, double& lor,
-                   double& vxerr, double& vyerr, double& vzerr,
-                   double& dlerr, double& dterr, 
+                   double& vz, double& dl, double& dt, double& alpha,
+                   double& eta, double& lor, double& vxerr, double& vyerr,
+                   double& vzerr, double& dlerr, double& dterr,
                    double& alphaerr, double& etaerr, double& lorerr,
-                   double& alphatof);
+                   double& alphatof, std::array<double, 6>& difftens);
 
-  // Generate a new gas table (can later be saved to file)
+  /// Generate a new gas table (can later be saved to file) by running
+  /// Magboltz for all electric fields, magnetic fields, and
+  /// angles in the currently set grid.
   void GenerateGasTable(const int numCollisions = 10,
                         const bool verbose = true);
 
-  double fit3d4p, fitHigh4p;
-  double fit3dQCO2, fit3dEtaCO2;
-  double fit3dQCH4, fit3dEtaCH4;
-  double fit3dQC2H6, fit3dEtaC2H6;
-  double fit4pEtaCH4;
-  double fit4pEtaC2H6;
-  double fit4sEtaC2H6;
-  double fitLineCut;
-
  private:
-  static const int nEnergySteps = 20000;
-  static const int nEnergyStepsLog = 200;
-  static const int nEnergyStepsGamma = 5000;
-  static const int nMaxInelasticTerms = 250;
-  static const int nMaxLevels = 512;
-  static const int nCsTypes = 6;
-  static const int nCsTypesGamma = 4;
+  static constexpr int nEnergyStepsLog = 200;
+  static constexpr int nEnergyStepsGamma = 5000;
+  static constexpr int nCsTypes = 7;
+  static constexpr int nCsTypesGamma = 4;
 
   static const int DxcTypeRad;
   static const int DxcTypeCollIon;
   static const int DxcTypeCollNonIon;
+
+  // Simulate thermal motion of the gas or not (when running Magboltz).
+  bool m_useGasMotion = false;
 
   // Energy spacing of collision rate tables
   double m_eFinal, m_eStep;
@@ -167,27 +189,26 @@ class MediumMagboltz : public MediumGas {
   // Number of different cross-section types in the current gas mixture
   unsigned int m_nTerms = 0;
   // Recoil energy parameter
-  double m_rgas[m_nMaxGases];
+  std::array<double, m_nMaxGases> m_rgas;
   // Opal-Beaty-Peterson splitting parameter [eV]
-  double m_wOpalBeaty[nMaxLevels];
-  // Green-Sawada splitting parameters [eV]
-  double m_gsGreenSawada[m_nMaxGases];
-  double m_gbGreenSawada[m_nMaxGases];
-  double m_tsGreenSawada[m_nMaxGases];
-  double m_taGreenSawada[m_nMaxGases];
-  double m_tbGreenSawada[m_nMaxGases];
-  bool m_hasGreenSawada[m_nMaxGases];
+  std::array<double, Magboltz::nMaxLevels> m_wOpalBeaty;
+  /// Green-Sawada splitting parameters [eV]
+  /// (&Gamma;s, &Gamma;b, Ts, Ta, Tb).
+  std::array<std::array<double, 5>, m_nMaxGases> m_parGreenSawada;
+  std::array<bool, m_nMaxGases> m_hasGreenSawada;
+
   // Energy loss
-  std::vector<double> m_energyLoss;
+  std::array<double, Magboltz::nMaxLevels> m_energyLoss;
   // Cross-section type
-  std::vector<int> m_csType;
+  std::array<int, Magboltz::nMaxLevels> m_csType;
+
   // Parameters for calculation of scattering angles
   bool m_useAnisotropic = true;
-  double m_scatParameter[nEnergySteps][nMaxLevels];
-  double m_scatParameterLog[nEnergyStepsLog][nMaxLevels];
-  std::vector<int> m_scatModel;
-  double m_scatCut[nEnergySteps][nMaxLevels];
-  double m_scatCutLog[nEnergyStepsLog][nMaxLevels];
+  std::vector<std::vector<double> > m_scatPar;
+  std::vector<std::vector<double> > m_scatCut;
+  std::vector<std::vector<double> > m_scatParLog;
+  std::vector<std::vector<double> > m_scatCutLog;
+  std::array<int, Magboltz::nMaxLevels> m_scatModel;
 
   // Level description
   std::vector<std::string> m_description;
@@ -196,7 +217,7 @@ class MediumMagboltz : public MediumGas {
   std::vector<double> m_cfTot;
   std::vector<double> m_cfTotLog;
   // Null-collision frequency
-  double m_cfNull;
+  double m_cfNull = 0.;
   // Collision frequencies
   std::vector<std::vector<double> > m_cf;
   std::vector<std::vector<double> > m_cfLog;
@@ -208,15 +229,15 @@ class MediumMagboltz : public MediumGas {
   // 3: inelastic
   // 4: excitation
   // 5: super-elastic
-  unsigned int m_nCollisions[nCsTypes];
+  std::array<unsigned int, nCsTypes> m_nCollisions;
   // Number of collisions for each cross-section term
   std::vector<unsigned int> m_nCollisionsDetailed;
 
   // Penning transfer
   // Penning transfer probability (by level)
-  std::vector<double> m_rPenning;
+  std::array<double, Magboltz::nMaxLevels> m_rPenning;
   // Mean distance of Penning ionisation (by level)
-  std::vector<double> m_lambdaPenning;
+  std::array<double, Magboltz::nMaxLevels> m_lambdaPenning;
   // Number of Penning ionisations
   unsigned int m_nPenning = 0;
 
@@ -227,7 +248,7 @@ class MediumMagboltz : public MediumGas {
   // (absorption of photons discrete excitation lines)
   bool m_useRadTrap = true;
 
-  struct deexcitation {
+  struct Deexcitation {
     // Gas component
     int gas;
     // Associated cross-section term
@@ -236,8 +257,6 @@ class MediumMagboltz : public MediumGas {
     std::string label;
     // Energy
     double energy;
-    // Number of de-excitation channels
-    int nChannels;
     // Branching ratios
     std::vector<double> p;
     // Final levels
@@ -257,12 +276,11 @@ class MediumMagboltz : public MediumGas {
     // Integrated absorption collision rate
     double cf;
   };
-  std::vector<deexcitation> m_deexcitations;
+  std::vector<Deexcitation> m_deexcitations;
   // Mapping between deexcitations and cross-section terms.
-  int m_iDeexcitation[nMaxLevels];
+  std::array<int, Magboltz::nMaxLevels> m_iDeexcitation;
 
   // List of de-excitation products
-  int nDeexcitationProducts;
   struct dxcProd {
     // Radial spread
     double s;
@@ -276,12 +294,12 @@ class MediumMagboltz : public MediumGas {
   std::vector<dxcProd> m_dxcProducts;
 
   // Ionisation potentials
-  double m_ionPot[m_nMaxGases];
+  std::array<double, m_nMaxGases> m_ionPot;
   // Minimum ionisation potential
-  double m_minIonPot;
+  double m_minIonPot = -1.;
 
   // Scaling factor for excitation cross-sections
-  double m_scaleExc[m_nMaxGases];
+  std::array<double, m_nMaxGases> m_scaleExc;
   // Flag selecting secondary electron energy distribution model
   bool m_useOpalBeaty = true;
   bool m_useGreenSawada = false;
@@ -289,7 +307,7 @@ class MediumMagboltz : public MediumGas {
   // Energy spacing of photon collision rates table
   double m_eFinalGamma, m_eStepGamma;
   // Number of photon collision cross-section terms
-  int m_nPhotonTerms;
+  unsigned int m_nPhotonTerms = 0;
   // Total photon collision frequencies
   std::vector<double> m_cfTotGamma;
   // Photon collision frequencies
@@ -300,13 +318,27 @@ class MediumMagboltz : public MediumGas {
   // 1: ionisation
   // 2: inelastic
   // 3: excitation
-  int m_nPhotonCollisions[nCsTypesGamma];
+  std::array<unsigned int, nCsTypesGamma> m_nPhotonCollisions;
 
-  bool GetGasNumberMagboltz(const std::string& input, int& number) const;
+  int GetGasNumberMagboltz(const std::string& input) const;
   bool Mixer(const bool verbose = false);
   void SetupGreenSawada();
+  void SetScatteringParameters(const int model, const double parIn, double& cut,
+                               double& parOut) const;
   void ComputeAngularCut(const double parIn, double& cut, double& parOut) const;
   void ComputeDeexcitationTable(const bool verbose);
+  void AddPenningDeexcitation(Deexcitation& dxc, const double rate,
+                              const double pPenning) {
+    dxc.p.push_back(rate * pPenning);
+    dxc.p.push_back(rate * (1. - pPenning));
+    dxc.type.push_back(DxcTypeCollIon);
+    dxc.type.push_back(DxcTypeCollNonIon);
+  }
+  double RateConstantWK(const double energy, const double osc,
+                        const double pacs, const int igas1,
+                        const int igas2) const;
+  double RateConstantHardSphere(const double r1, const double r2,
+                                const int igas1, const int igas2) const;
   void ComputeDeexcitationInternal(int iLevel, int& fLevel);
   bool ComputePhotonCollisionTable(const bool verbose);
 };

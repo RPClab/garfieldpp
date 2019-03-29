@@ -9,7 +9,6 @@ namespace Garfield {
 /// Abstract base class for plotting engines.
 
 class PlottingEngine {
-
  public:
   /// Constructor
   PlottingEngine()

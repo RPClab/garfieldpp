@@ -8,7 +8,6 @@ namespace Garfield {
 /// Two-dimensional implementation of the nearly exact Boundary Element Method.
 
 class ComponentNeBem2d : public ComponentBase {
-
  public:
   /// Constructor
   ComponentNeBem2d();
@@ -36,8 +35,8 @@ class ComponentNeBem2d : public ComponentBase {
   void SetNumberOfCollocationPoints(const unsigned int ncoll);
   void SetMinimumElementSize(const double min);
   void EnableAutoResizing(const bool on = true) { m_autoSize = on; }
-  void EnableRandomCollocation(const bool on = true) { 
-    m_randomCollocation = on; 
+  void EnableRandomCollocation(const bool on = true) {
+    m_randomCollocation = on;
   }
   void SetMaxNumberOfIterations(const unsigned int niter);
 
@@ -129,7 +128,6 @@ class ComponentNeBem2d : public ComponentBase {
   // Compute the potential
   bool ComputePotential(const int gt, const double len, const double x,
                         const double y, double& p) const {
-
     switch (gt) {
       case 0:
         p = LinePotential(len, x, y);
@@ -145,9 +143,8 @@ class ComponentNeBem2d : public ComponentBase {
 
   // Compute the field
   bool ComputeFlux(const int gt, const double len, const double rot,
-                   const double x, const double y, 
-                   double& ex, double& ey) const {
-
+                   const double x, const double y, double& ex,
+                   double& ey) const {
     double fx = 0., fy = 0.;
     switch (gt) {
       case 0:

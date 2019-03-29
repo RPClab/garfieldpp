@@ -6,10 +6,9 @@ namespace Garfield {
 /// Abstract base class for random number generators.
 
 class RandomEngine {
-
  public:
   /// Constructor
-  RandomEngine() {}
+  RandomEngine() = default;
   /// Destructor
   virtual ~RandomEngine() {}
 
@@ -17,6 +16,8 @@ class RandomEngine {
   virtual double Draw() = 0;
   /// Initialise the random number generator.
   virtual void Seed(const unsigned int s) = 0;
+  /// Print some information about the random number generator.
+  virtual void Print() = 0;
 };
 }
 

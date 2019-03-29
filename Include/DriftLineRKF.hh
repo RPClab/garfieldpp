@@ -1,21 +1,20 @@
 #ifndef G_DRIFTLINE_RKF_H
 #define G_DRIFTLINE_RKF_H
 
-#include <vector>
 #include <string>
+#include <vector>
 
+#include "GeometryBase.hh"
+#include "Medium.hh"
 #include "Sensor.hh"
 #include "ViewDrift.hh"
-#include "Medium.hh"
-#include "GeometryBase.hh"
 
 namespace Garfield {
 
-/// Calculation of drift lines based on macroscopic transport coefficients 
+/// Calculation of drift lines based on macroscopic transport coefficients
 /// using Runge-Kutta-Fehlberg integration.
 
 class DriftLineRKF {
-
  public:
   DriftLineRKF();
   ~DriftLineRKF() {}
@@ -24,20 +23,26 @@ class DriftLineRKF {
 
   void EnablePlotting(ViewDrift* view);
   void DisablePlotting();
-  
+
   void SetIntegrationAccuracy(const double a);
   void SetMaximumStepSize(const double ms);
 
   void EnableStepSizeLimit() { m_useStepSizeLimit = true; }
-  void DisableStepSizeLimit() { m_useStepSizeLimit = false; } 
+  void DisableStepSizeLimit() { m_useStepSizeLimit = false; }
 
   void SetMaxSteps(const unsigned int m) { m_maxSteps = m; }
   void EnableRejectKinks() { m_rejectKinks = true; }
   void DisableRejectKinks() { m_rejectKinks = false; }
 
-  void SetElectronSignalScalingFactor(const double scale) { m_scaleElectronSignal = scale; }
-  void SetHoleSignalScalingFactor(const double scale) { m_scaleHoleSignal = scale; }
-  void SetIonSignalScalingFactor(const double scale) { m_scaleIonSignal = scale; }
+  void SetElectronSignalScalingFactor(const double scale) {
+    m_scaleElectronSignal = scale;
+  }
+  void SetHoleSignalScalingFactor(const double scale) {
+    m_scaleHoleSignal = scale;
+  }
+  void SetIonSignalScalingFactor(const double scale) {
+    m_scaleIonSignal = scale;
+  }
 
   bool DriftElectron(const double x0, const double y0, const double z0,
                      const double t0);
@@ -48,11 +53,12 @@ class DriftLineRKF {
 
   void GetEndPoint(double& x, double& y, double& z, double& t, int& st) const;
   unsigned int GetNumberOfDriftLinePoints() const { return m_nPoints; }
-  void GetDriftLinePoint(const unsigned int i, double& x, double& y, double& z, double& t) const;
+  void GetDriftLinePoint(const unsigned int i, double& x, double& y, double& z,
+                         double& t) const;
 
   double GetArrivalTimeSpread();
   double GetGain();
-  double GetDriftTime() const { 
+  double GetDriftTime() const {
     return m_nPoints > 0 ? m_path[m_nPoints - 1].t : 0.;
   }
 
@@ -104,11 +110,11 @@ class DriftLineRKF {
   bool m_verbose = false;
 
   // Calculate a drift line starting at a given position.
-  bool DriftLine(const double x0, const double y0, const double z0, 
+  bool DriftLine(const double x0, const double y0, const double z0,
                  const double t0);
   // Calculate transport parameters for the respective particle type.
-  bool GetVelocity(const double x, const double y, const double z,
-                   double& vx, double& vy, double& vz, int& status);
+  bool GetVelocity(const double x, const double y, const double z, double& vx,
+                   double& vy, double& vz, int& status);
   bool GetVelocity(const double ex, const double ey, const double ez,
                    const double bx, const double by, const double bz,
                    double& vx, double& vy, double& vz) const;
@@ -124,8 +130,7 @@ class DriftLineRKF {
   bool DriftToWire(const double xw, const double yw, const double rw);
   // Determine the longitudinal diffusion over the drift line.
   double IntegrateDiffusion(const double x, const double y, const double z,
-                            const double xe, const double ye,
-                            const double ze);
+                            const double xe, const double ye, const double ze);
   // Determine the effective gain over the drift line.
   double IntegrateTownsend(const double x, const double y, const double z,
                            const double xe, const double ye, const double ze,

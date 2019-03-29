@@ -9,7 +9,6 @@ namespace Garfield {
 ///  - http://www.srim.org
 
 class TrackSrim : public Track {
-
  public:
   /// Constructor
   TrackSrim();
@@ -35,7 +34,7 @@ class TrackSrim : public Track {
     z = m_z;
   }
 
-  /// Set/get the fluctuation model 
+  /// Set/get the fluctuation model
   /// (0 = none, 1 = Landau, 2 = Vavilov, 3 = Gaussian, 4 = Combined)
   void SetModel(const int m) { m_model = m; }
   int GetModel() const { return m_model; }
@@ -63,7 +62,7 @@ class TrackSrim : public Track {
   virtual bool NewTrack(const double x0, const double y0, const double z0,
                         const double t0, const double dx0, const double dy0,
                         const double dz0);
-  virtual bool GetCluster(double& xcls, double& ycls, double& zcls, 
+  virtual bool GetCluster(double& xcls, double& ycls, double& zcls,
                           double& tcls, int& n, double& e, double& extra);
 
  protected:
@@ -113,10 +112,10 @@ class TrackSrim : public Track {
   /// Targeted cluster size
   int m_nsize = -1;
   struct cluster {
-    double x, y, z, t; // Cluster location and time
-    double ec;         // Energy spent to make the clusterec
-    double kinetic;    // Ion energy when cluster was created
-    int electrons;     // Number of electrons in this cluster
+    double x, y, z, t;  // Cluster location and time
+    double ec;          // Energy spent to make the clusterec
+    double kinetic;     // Ion energy when cluster was created
+    int electrons;      // Number of electrons in this cluster
   };
   std::vector<cluster> m_clusters;
 
@@ -127,7 +126,7 @@ class TrackSrim : public Track {
   bool EstimateRange(const double ekin, const double step, double& stpmax);
   bool SmallestStep(double ekin, double de, double step, double& stpmin);
 
-  double RndmEnergyLoss(const double ekin, const double de, 
+  double RndmEnergyLoss(const double ekin, const double de,
                         const double step) const;
 };
 }

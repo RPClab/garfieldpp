@@ -166,6 +166,11 @@ $(OBJDIR)/ComponentNeBem3d.o: \
 	$(SRCDIR)/ComponentBase.cc $(INCDIR)/ComponentBase.hh
 	@echo $@
 	@$(CXX) $(CFLAGS) $< -o $@        
+$(OBJDIR)/ComponentNeBem3dMap.o: \
+	$(SRCDIR)/ComponentNeBem3dMap.cc $(INCDIR)/ComponentNeBem3dMap.hh \
+	$(SRCDIR)/ComponentBase.cc $(INCDIR)/ComponentBase.hh
+	@echo $@
+	@$(CXX) $(CFLAGS) $< -o $@        
 $(OBJDIR)/ComponentFieldMap.o: \
 	$(SRCDIR)/ComponentFieldMap.cc $(INCDIR)/ComponentFieldMap.hh \
 	$(SRCDIR)/ComponentBase.cc $(INCDIR)/ComponentBase.hh
@@ -281,7 +286,7 @@ $(OBJDIR)/MediumMagboltz.o: \
 	@echo $@
 	@$(CXX) $(CFLAGS) $< -o $@
 $(OBJDIR)/magboltz.o: \
-	$(SRCDIR)/magboltz-9.01.f
+	$(SRCDIR)/magboltz-11.7.f
 	@echo $@
 	@$(FC) $(FFLAGS) $< -o $@
 $(OBJDIR)/MediumSilicon.o: \

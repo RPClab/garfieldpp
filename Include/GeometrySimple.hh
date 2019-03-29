@@ -10,14 +10,14 @@ namespace Garfield {
 /// "Native" geometry, using simple shapes.
 
 class GeometrySimple : public GeometryBase {
-
  public:
   /// Constructor
   GeometrySimple();
   /// Destructor
   virtual ~GeometrySimple() {}
 
-  Medium* GetMedium(const double x, const double y, const double z) const override;
+  Medium* GetMedium(const double x, const double y,
+                    const double z) const override;
   /// Get the number of media in the geometry.
   unsigned int GetNumberOfMedia() const { return m_media.size(); }
   /// Get a medium from the list.
@@ -26,7 +26,7 @@ class GeometrySimple : public GeometryBase {
   unsigned int GetNumberOfSolids() const override { return m_solids.size(); }
   Solid* GetSolid(const unsigned int i) const override;
   Solid* GetSolid(const unsigned int i, Medium*& medium) const override;
- 
+
   /// Add a solid to the geometry, together with the medium inside.
   void AddSolid(Solid* s, Medium* m);
   /// Get the solid at a given location (x, y, z).

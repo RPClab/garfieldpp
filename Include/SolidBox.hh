@@ -8,21 +8,20 @@ namespace Garfield {
 /// Box.
 
 class SolidBox : public Solid {
-
  public:
   /// Constructor from centre and half-widths.
-  SolidBox(const double cx, const double cy, const double cz, 
-           const double lx, const double ly, const double lz);
+  SolidBox(const double cx, const double cy, const double cz, const double lx,
+           const double ly, const double lz);
   /// Constructor from centre, half-widths, and orientation.
-  SolidBox(const double cx, const double cy, const double cz, 
-           const double lx, const double ly, const double lz, 
-           const double dx, const double dy, const double dz);
+  SolidBox(const double cx, const double cy, const double cz, const double lx,
+           const double ly, const double lz, const double dx, const double dy,
+           const double dz);
   /// Destructor
   ~SolidBox() {}
 
   bool IsInside(const double x, const double y, const double z) const override;
-  bool GetBoundingBox(double& xmin, double& ymin, double& zmin, 
-                      double& xmax, double& ymax, double& zmax) const override;
+  bool GetBoundingBox(double& xmin, double& ymin, double& zmin, double& xmax,
+                      double& ymax, double& zmax) const override;
   bool IsBox() const override { return true; }
 
   bool GetDimensions(double& l1, double& l2, double& l3) const override;
@@ -40,7 +39,6 @@ class SolidBox : public Solid {
  private:
   /// Half lengths.
   double m_lX = 0., m_lY = 0., m_lZ = 0.;
-
 };
 }
 

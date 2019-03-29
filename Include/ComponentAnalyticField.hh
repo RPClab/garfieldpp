@@ -9,11 +9,10 @@
 
 namespace Garfield {
 
-/// Semi-analytic calculation of two-dimensional configurations 
+/// Semi-analytic calculation of two-dimensional configurations
 /// consisting of wires, planes, and tubes.
 
 class ComponentAnalyticField : public ComponentBase {
-
  public:
   /// Constructor
   ComponentAnalyticField();
@@ -21,8 +20,7 @@ class ComponentAnalyticField : public ComponentBase {
   ~ComponentAnalyticField() {}
 
   void ElectricField(const double x, const double y, const double z, double& ex,
-                     double& ey, double& ez, Medium*& m, int& status) override { 
-    
+                     double& ey, double& ez, Medium*& m, int& status) override {
     m = nullptr;
     // Calculate the field.
     double v = 0.;
@@ -36,7 +34,7 @@ class ComponentAnalyticField : public ComponentBase {
         status = -5;
       }
     }
-  } 
+  }
 
   void ElectricField(const double x, const double y, const double z, double& ex,
                      double& ey, double& ez, double& v, Medium*& m,
@@ -77,12 +75,13 @@ class ComponentAnalyticField : public ComponentBase {
   bool GetBoundingBox(double& x0, double& y0, double& z0, double& x1,
                       double& y1, double& z1) override;
 
-  bool IsWireCrossed(const double x0, const double y0, const double z0, 
+  bool IsWireCrossed(const double x0, const double y0, const double z0,
                      const double x1, const double y1, const double z1,
                      double& xc, double& yc, double& zc) override;
 
   bool IsInTrapRadius(const double q0, const double x0, const double y0,
-                      const double z0, double& xw, double& yx, double& rw) override;
+                      const double z0, double& xw, double& yx,
+                      double& rw) override;
 
   /// Add a wire at (x, y) .
   void AddWire(const double x, const double y, const double diameter,
@@ -130,7 +129,7 @@ class ComponentAnalyticField : public ComponentBase {
     * and orientation of planes, the presence of
     * periodicities and the location of the wires
     * as one of the following types:
-    * 
+    *
     * A    non-periodic cells with at most 1 x- and 1 y-plane
     * B1X  x-periodic cells without x-planes and at most 1 y-plane
     * B1Y  y-periodic cells without y-planes and at most 1 x-plane
@@ -148,7 +147,7 @@ class ComponentAnalyticField : public ComponentBase {
     if (!m_cellset) {
       if (CellCheck()) CellType();
     }
-    return GetCellType(m_cellType); 
+    return GetCellType(m_cellType);
   }
 
   /// Setup the weighting field for a given group of wires or planes.
@@ -164,12 +163,13 @@ class ComponentAnalyticField : public ComponentBase {
 
   unsigned int GetNumberOfPlanesX() const;
   unsigned int GetNumberOfPlanesY() const;
-  bool GetPlaneX(const unsigned int i, double& x, double& voltage, 
+  bool GetPlaneX(const unsigned int i, double& x, double& voltage,
                  std::string& label) const;
-  bool GetPlaneY(const unsigned int i, double& y, double& voltage, 
+  bool GetPlaneY(const unsigned int i, double& y, double& voltage,
                  std::string& label) const;
 
-  bool GetTube(double& r, double& voltage, int& nEdges, std::string& label) const;
+  bool GetTube(double& r, double& voltage, int& nEdges,
+               std::string& label) const;
 
   enum Cell {
     A00,
@@ -235,7 +235,7 @@ class ComponentAnalyticField : public ComponentBase {
     double u;          //< Length.
     int ind;           //< Readout group.
     /// Trap radius. Particle is "trapped" if within nTrap * radius of wire.
-    int nTrap;         
+    int nTrap;
   };
   std::vector<Wire> m_w;
 
@@ -279,27 +279,27 @@ class ComponentAnalyticField : public ComponentBase {
   double m_vtplan[4];
 
   struct Strip {
-    std::string type;  //< Label.
-    int ind;           //< Readout group.
-    double smin, smax; //< Coordinates.
-    double gap;        //< Distance to the opposite electrode.
+    std::string type;   //< Label.
+    int ind;            //< Readout group.
+    double smin, smax;  //< Coordinates.
+    double gap;         //< Distance to the opposite electrode.
   };
 
   struct Pixel {
-    std::string type;  //< Label.
-    int ind;           //< Readout group.
-    double smin, smax; //< Coordinates in x/y.
-    double zmin, zmax; //< Coordinates in z.
-    double gap;        //< Distance to the opposite electrode.
+    std::string type;   //< Label.
+    int ind;            //< Readout group.
+    double smin, smax;  //< Coordinates in x/y.
+    double zmin, zmax;  //< Coordinates in z.
+    double gap;         //< Distance to the opposite electrode.
   };
 
   struct Plane {
-    std::string type;           //< Label.
-    int ind;                    //< Readout group.
-    double ewxcor, ewycor;      //< Background weighting fields
-    std::vector<Strip> strips1; //< x/y strips.
-    std::vector<Strip> strips2; //< z strips.
-    std::vector<Pixel> pixels;  //< Pixels.
+    std::string type;            //< Label.
+    int ind;                     //< Readout group.
+    double ewxcor, ewycor;       //< Background weighting fields
+    std::vector<Strip> strips1;  //< x/y strips.
+    std::vector<Strip> strips2;  //< z strips.
+    std::vector<Pixel> pixels;   //< Pixels.
   };
   std::array<Plane, 5> m_planes;
 
@@ -319,8 +319,8 @@ class ComponentAnalyticField : public ComponentBase {
 
   // Point charges
   struct Charge3d {
-    double x, y, z; //< Coordinates.
-    double e;       //< Charge.
+    double x, y, z;  //< Coordinates.
+    double e;        //< Charge.
   };
   std::vector<Charge3d> m_ch3d;
   unsigned int m_nTermBessel = 10;
@@ -411,7 +411,7 @@ class ComponentAnalyticField : public ComponentBase {
                   double& ey, double& ez, double& volt);
   // Evaluation of the weighting field
   bool Wfield(const double xpos, const double ypos, const double zpos,
-              double& ex, double& ey, double& ez, double& volt, 
+              double& ex, double& ey, double& ez, double& volt,
               const std::string& label, const bool opt) const;
   void WfieldWireA00(const double xpos, const double ypos, double& ex,
                      double& ey, double& volt, const int mx, const int my,
@@ -423,19 +423,19 @@ class ComponentAnalyticField : public ComponentBase {
                      double& ey, double& volt, const int mx, const int sw,
                      const bool opt) const;
   void WfieldWireC2X(const double xpos, const double ypos, double& ex,
-                     double& ey, double& volt, const int sw, 
+                     double& ey, double& volt, const int sw,
                      const bool opt) const;
   void WfieldWireC2Y(const double xpos, const double ypos, double& ex,
-                     double& ey, double& volt, const int sw, 
+                     double& ey, double& volt, const int sw,
                      const bool opt) const;
   void WfieldWireC30(const double xpos, const double ypos, double& ex,
-                     double& ey, double& volt, const int sw, 
+                     double& ey, double& volt, const int sw,
                      const bool opt) const;
   void WfieldWireD10(const double xpos, const double ypos, double& ex,
-                     double& ey, double& volt, const int sw, 
+                     double& ey, double& volt, const int sw,
                      const bool opt) const;
   void WfieldWireD30(const double xpos, const double ypos, double& ex,
-                     double& ey, double& volt, const int sw, 
+                     double& ey, double& volt, const int sw,
                      const bool opt) const;
   void WfieldPlaneA00(const double xpos, const double ypos, double& ex,
                       double& ey, double& volt, const int mx, const int my,
@@ -476,20 +476,19 @@ class ComponentAnalyticField : public ComponentBase {
   double Ph2Lim(const double radius) const {
     return -log(abs(m_zmult) * radius * (1. - 3. * m_p1 + 5. * m_p2));
   }
-  void E2Sum(const double xpos, const double ypos, 
-             double& ex, double& ey) const;
+  void E2Sum(const double xpos, const double ypos, double& ex,
+             double& ey) const;
 
   // Mapping function for D30 type cells
   void ConformalMap(const std::complex<double>& z, std::complex<double>& ww,
                     std::complex<double>& wd) const;
 
-  bool InTube(const double x0, const double y0, const double a, 
+  bool InTube(const double x0, const double y0, const double a,
               const int n) const;
 
   // Transformation between cartesian and polar coordinates
   void Cartesian2Polar(const double x0, const double y0, double& r,
                        double& theta) {
-
     if (x0 == 0. && y0 == 0.) {
       r = theta = 0.;
       return;
@@ -498,9 +497,8 @@ class ComponentAnalyticField : public ComponentBase {
     theta = atan2(y0, x0) * RadToDegree;
   }
 
-  void Polar2Cartesian(const double r, const double theta, 
-                       double& x0, double& y0) const {
-
+  void Polar2Cartesian(const double r, const double theta, double& x0,
+                       double& y0) const {
     const double thetap = theta * DegreeToRad;
     x0 = r * cos(thetap);
     y0 = r * sin(thetap);
@@ -510,7 +508,6 @@ class ComponentAnalyticField : public ComponentBase {
   // (r, theta) = (exp(rho), 180 * phi / Pi).
   void RTheta2RhoPhi(const double rho, const double phi, double& r,
                      double& theta) const {
-
     r = exp(rho);
     theta = RadToDegree * phi;
   }

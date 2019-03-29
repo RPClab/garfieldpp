@@ -8,7 +8,6 @@ namespace Garfield {
 /// Gallium-Arsenide.
 
 class MediumGaAs : public Medium {
-
  public:
   /// Constructor
   MediumGaAs();
@@ -70,7 +69,6 @@ class MediumGaAs : public Medium {
 
   // Models
   bool m_hasUserMobility = false;
-
 };
 }
 

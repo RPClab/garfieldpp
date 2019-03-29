@@ -1,12 +1,12 @@
-#include <iostream>
 #include <cmath>
+#include <iostream>
 
-#include <TMarker.h>
 #include <TEllipse.h>
-#include <TLine.h>
-#include <TPolyLine.h>
-#include <TGeoPgon.h>
 #include <TGeoBBox.h>
+#include <TGeoPgon.h>
+#include <TLine.h>
+#include <TMarker.h>
+#include <TPolyLine.h>
 
 #include "ComponentAnalyticField.hh"
 #include "Plotting.hh"
@@ -14,18 +14,13 @@
 
 namespace Garfield {
 
-ViewCell::ViewCell() {
-
-  plottingEngine.SetDefaultStyle();
-}
+ViewCell::ViewCell() { plottingEngine.SetDefaultStyle(); }
 
 ViewCell::~ViewCell() {
-
   if (!m_hasExternalCanvas && m_canvas) delete m_canvas;
 }
 
 void ViewCell::SetComponent(ComponentAnalyticField* comp) {
-
   if (!comp) {
     std::cerr << m_className << "::SetComponent: Null pointer.\n";
     return;
@@ -35,7 +30,6 @@ void ViewCell::SetComponent(ComponentAnalyticField* comp) {
 }
 
 void ViewCell::SetCanvas(TCanvas* c) {
-
   if (!c) return;
   if (!m_hasExternalCanvas && m_canvas) {
     delete m_canvas;
@@ -45,11 +39,9 @@ void ViewCell::SetCanvas(TCanvas* c) {
   m_hasExternalCanvas = true;
 }
 
-void ViewCell::SetArea(const double xmin, const double ymin, 
-                       const double zmin, 
-                       const double xmax, const double ymax, 
+void ViewCell::SetArea(const double xmin, const double ymin, const double zmin,
+                       const double xmax, const double ymax,
                        const double zmax) {
-
   // Check range, assign if non-null
   if (xmin == xmax || ymin == ymax || zmin == zmax) {
     std::cerr << m_className << "::SetArea: Null area range not permitted.\n";
@@ -65,21 +57,18 @@ void ViewCell::SetArea(const double xmin, const double ymin,
 }
 
 void ViewCell::Plot2d() {
-
   if (!Plot(false)) {
     std::cerr << m_className << "::Plot2d: Error creating plot.\n";
   }
 }
 
 void ViewCell::Plot3d() {
-
   if (!Plot(true)) {
     std::cerr << m_className << "::Plot3d: Error creating plot.\n";
   }
 }
 
 bool ViewCell::Plot(const bool use3d) {
-
   if (!m_component) {
     std::cerr << m_className << "::Plot: Component is not defined.\n";
     return false;
@@ -116,9 +105,9 @@ bool ViewCell::Plot(const bool use3d) {
 
   if (!use3d) {
     bool empty = false;
-    if (!gPad || (gPad->GetListOfPrimitives()->GetSize() == 0 &&
-                  gPad->GetX1() == 0 && gPad->GetX2() == 1 &&
-                  gPad->GetY1() == 0 && gPad->GetY2() == 1)) {
+    if (!gPad ||
+        (gPad->GetListOfPrimitives()->GetSize() == 0 && gPad->GetX1() == 0 &&
+         gPad->GetX2() == 1 && gPad->GetY1() == 0 && gPad->GetY2() == 1)) {
       empty = true;
     }
     const double bm = m_canvas->GetBottomMargin();
@@ -147,21 +136,21 @@ bool ViewCell::Plot(const bool use3d) {
   const bool perY = m_component->GetPeriodicityY(sy);
   // Determine the number of periods present in the cell.
   const int nMinX = perX ? int(x0 / sx) - 1 : 0;
-  const int nMaxX = perX ? int(x1 / sx) + 1 : 0; 
+  const int nMaxX = perX ? int(x1 / sx) + 1 : 0;
   const int nMinY = perY ? int(y0 / sy) - 1 : 0;
   const int nMaxY = perY ? int(y1 / sy) + 1 : 0;
 
   if (use3d) {
     if (!m_geo) {
       m_geo.reset(new TGeoManager("ViewCellGeoManager", m_label.c_str()));
-      TGeoMaterial* matVacuum = new TGeoMaterial("Vacuum", 0., 0., 0.); 
+      TGeoMaterial* matVacuum = new TGeoMaterial("Vacuum", 0., 0., 0.);
       TGeoMaterial* matMetal = new TGeoMaterial("Metal", 63.546, 29., 8.92);
       TGeoMedium* medVacuum = new TGeoMedium("Vacuum", 0, matVacuum);
       TGeoMedium* medMetal = new TGeoMedium("Metal", 1, matMetal);
       m_geo->AddMaterial(matVacuum);
       m_geo->AddMaterial(medMetal->GetMaterial());
-      TGeoVolume* world = m_geo->MakeBox("World", medVacuum,
-                                         1.05 * dx, 1.05 * dy, 1.05 * dz);
+      TGeoVolume* world =
+          m_geo->MakeBox("World", medVacuum, 1.05 * dx, 1.05 * dy, 1.05 * dz);
       m_geo->SetTopVolume(world);
     } else {
       TGeoVolume* top = m_geo->GetTopVolume();
@@ -205,9 +194,9 @@ bool ViewCell::Plot(const bool use3d) {
         const double y = yw + ny * sy;
         if (y + 0.5 * dw <= y0 || y - 0.5 * dw >= y1) continue;
         if (use3d) {
-          TGeoVolume* wire = m_geo->MakeTube("Wire", m_geo->GetMedium("Metal"),
-                                             0., 0.5 * dw, 
-                                             std::min(0.5 * lw, dz));
+          TGeoVolume* wire =
+              m_geo->MakeTube("Wire", m_geo->GetMedium("Metal"), 0., 0.5 * dw,
+                              std::min(0.5 * lw, dz));
           switch (type) {
             case 0:
               wire->SetLineColor(kGray + 2);
@@ -218,15 +207,15 @@ bool ViewCell::Plot(const bool use3d) {
             case 2:
               wire->SetLineColor(kPink + 3);
               break;
-            case 3: 
+            case 3:
               wire->SetLineColor(kCyan + 3);
               break;
-            default: 
+            default:
               wire->SetLineColor(kBlue + type);
               break;
           }
-          m_geo->GetTopVolume()->AddNode(wire, 1, 
-                                                new TGeoTranslation(x, y, 0.));
+          m_geo->GetTopVolume()->AddNode(wire, 1,
+                                         new TGeoTranslation(x, y, 0.));
         } else {
           PlotWire(x, y, dw, type);
         }
@@ -245,11 +234,11 @@ bool ViewCell::Plot(const bool use3d) {
       if (x < x0 || x > x1) continue;
       if (use3d) {
         const double width = std::min(0.01 * dx, 0.01 * dy);
-        TGeoVolume* plane = m_geo->MakeBox("PlaneX", m_geo->GetMedium("Metal"),
-                                           width, dy, dz);
+        TGeoVolume* plane =
+            m_geo->MakeBox("PlaneX", m_geo->GetMedium("Metal"), width, dy, dz);
         plane->SetLineColor(kGreen - 5);
         plane->SetTransparency(75);
-        m_geo->GetTopVolume()->AddNode(plane, 1, 
+        m_geo->GetTopVolume()->AddNode(plane, 1,
                                        new TGeoTranslation(x, 0., 0.));
       } else {
         TLine line;
@@ -270,11 +259,11 @@ bool ViewCell::Plot(const bool use3d) {
       if (y < y0 || y > y1) continue;
       if (use3d) {
         const double width = std::min(0.01 * dx, 0.01 * dy);
-        TGeoVolume* plane = m_geo->MakeBox("PlaneY", m_geo->GetMedium("Metal"),
-                                           dx, width, dz);
+        TGeoVolume* plane =
+            m_geo->MakeBox("PlaneY", m_geo->GetMedium("Metal"), dx, width, dz);
         plane->SetLineColor(kGreen - 5);
         plane->SetTransparency(75);
-        m_geo->GetTopVolume()->AddNode(plane, 1, 
+        m_geo->GetTopVolume()->AddNode(plane, 1,
                                        new TGeoTranslation(0., y, 0.));
       } else {
         TLine line;
@@ -294,16 +283,16 @@ bool ViewCell::Plot(const bool use3d) {
         TGeoVolume* tube = m_geo->MakeTube("Tube", m_geo->GetMedium("Metal"),
                                            0.98 * rt, 1.02 * rt, dz);
         tube->SetLineColor(kGreen + 2);
-        m_geo->GetTopVolume()->AddNode(tube, 1, 
+        m_geo->GetTopVolume()->AddNode(tube, 1,
                                        new TGeoTranslation(0., 0., 0.));
       } else {
-        TGeoVolume* tube = m_geo->MakePgon("Tube", m_geo->GetMedium("Metal"),
-                                                  0., 360., nt, 2);
+        TGeoVolume* tube =
+            m_geo->MakePgon("Tube", m_geo->GetMedium("Metal"), 0., 360., nt, 2);
         TGeoPgon* pgon = dynamic_cast<TGeoPgon*>(tube->GetShape());
         pgon->DefineSection(0, -dz, 0.98 * rt, 1.02 * rt);
         pgon->DefineSection(1, +dz, 0.98 * rt, 1.02 * rt);
         tube->SetLineColor(kGreen + 2);
-        m_geo->GetTopVolume()->AddNode(tube, 1,  
+        m_geo->GetTopVolume()->AddNode(tube, 1,
                                        new TGeoTranslation(0., 0., 0.));
       }
     } else {
@@ -323,7 +312,6 @@ bool ViewCell::Plot(const bool use3d) {
 
 void ViewCell::PlotWire(const double x, const double y, const double d,
                         const int type) {
-
   if (m_useWireMarker) {
     int markerStyle = 1;
     if (type == 0) {
@@ -346,17 +334,16 @@ void ViewCell::PlotWire(const double x, const double y, const double d,
 
   TEllipse circle;
   circle.SetDrawOption("same");
-  circle.DrawEllipse(x, y, 0.5 * d, 0.5 * d, 0, 0, 360); 
+  circle.DrawEllipse(x, y, 0.5 * d, 0.5 * d, 0, 0, 360);
 }
 
 void ViewCell::PlotTube(const double x0, const double y0, const double r,
                         const int n) {
-
   if (n <= 0) {
     TEllipse circle;
     circle.SetDrawOption("same");
     circle.SetFillStyle(0);
-    circle.DrawEllipse(x0, y0, r, r, 0, 0, 360); 
+    circle.DrawEllipse(x0, y0, r, r, 0, 0, 360);
     return;
   }
 
@@ -373,5 +360,4 @@ void ViewCell::PlotTube(const double x0, const double y0, const double r,
   delete[] x;
   delete[] y;
 }
-
 }

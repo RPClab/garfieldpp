@@ -5,14 +5,13 @@
 
 namespace Garfield {
 
-/// Generate tracks using differential cross-sections 
+/// Generate tracks using differential cross-sections
 /// for silicon computed by Hans Bichsel.
 /// References:
 ///   - H. Bichsel, Rev. Mod. Phys. 60 (1988), 663-699
 ///   - https://faculty.washington.edu/hbichsel/
 
 class TrackBichsel : public Track {
-
  public:
   /// Constructor
   TrackBichsel();
@@ -22,8 +21,8 @@ class TrackBichsel : public Track {
   virtual bool NewTrack(const double x0, const double y0, const double z0,
                         const double t0, const double dx0, const double dy0,
                         const double dz0);
-  virtual bool GetCluster(double& xcls, double& ycls, double& zcls, double& tcls,
-                          int& n, double& e, double& extra);
+  virtual bool GetCluster(double& xcls, double& ycls, double& zcls,
+                          double& tcls, int& n, double& e, double& extra);
 
   virtual double GetClusterDensity();
   virtual double GetStoppingPower();

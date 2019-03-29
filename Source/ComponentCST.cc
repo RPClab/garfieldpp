@@ -1,22 +1,21 @@
 // Copied and modified ComponentAnsys123.cc
-#include <iostream>
-#include <fstream>
-#include <stdlib.h>
 #include <math.h>
-#include <algorithm>
-#include <functional>
-#include <vector>
-#include <iomanip>
+#include <stdlib.h>
 #include <sys/stat.h>
+#include <algorithm>
+#include <fstream>
+#include <functional>
+#include <iomanip>
+#include <iostream>
 #include <sstream>
+#include <vector>
 
-#include "TMath.h"
 #include "ComponentCST.hh"
+#include "TMath.h"
 
 namespace Garfield {
 
 ComponentCST::ComponentCST() : ComponentFieldMap() {
-
   m_className = "ComponentCST";
   // Default bounding box
   m_minBoundingBox[2] = -50.;
@@ -388,8 +387,7 @@ bool ComponentCST::Initialise(std::string elist, std::string nlist,
       // Read element material - the number of the material is stored (1, 2,
       // ...) but we need the index (0, 1, ...)
       m_elementMaterial.at(ielem) = (imat - 1);
-    }
-    catch (...) {
+    } catch (...) {
       std::cerr << m_className << "::Initialise:" << std::endl;
       std::cerr << "    Error reading file " << elist << " (line " << il << ")."
                 << std::endl;
@@ -458,8 +456,7 @@ bool ComponentCST::Initialise(std::string elist, std::string nlist,
     try {
       m_potential.at(inode - 1) = volt;
       nread++;
-    }
-    catch (...) {
+    } catch (...) {
       std::cerr << m_className << "::Initialise:" << std::endl;
       std::cerr << "    Error reading file " << prnsol << " (line " << il
                 << ")." << std::endl;
@@ -544,7 +541,8 @@ bool ComponentCST::Initialise(std::string dataFile, std::string unit) {
     fclose(f);
     std::cerr << m_className << "::Initilise:" << std::endl;
     std::cerr << "     Error. The file is extremely short and does not seem to "
-                 "contain a header or data." << std::endl;
+                 "contain a header or data."
+              << std::endl;
     ok = false;
   }
 
@@ -564,16 +562,15 @@ bool ComponentCST::Initialise(std::string dataFile, std::string unit) {
 
   int filled = 0;
   filled = std::sscanf(
-      header, (std::string("mesh_nx=%d mesh_ny=%d mesh_nz=%d\n") +
-               std::string("mesh_xlines=%d mesh_ylines=%d mesh_zlines=%d\n") +
-               std::string(
-                   "nodes_scalar=%d nodes_vector_x=%d nodes_vector_y=%d "
+      header,
+      (std::string("mesh_nx=%d mesh_ny=%d mesh_nz=%d\n") +
+       std::string("mesh_xlines=%d mesh_ylines=%d mesh_zlines=%d\n") +
+       std::string("nodes_scalar=%d nodes_vector_x=%d nodes_vector_y=%d "
                    "nodes_vector_z=%d\n") +
-               std::string(
-                   "elements_scalar=%d elements_vector_x=%d "
+       std::string("elements_scalar=%d elements_vector_x=%d "
                    "elements_vector_y=%d elements_vector_z=%d\n") +
-               std::string("elements_material=%d\n") +
-               std::string("n_materials=%d\n")).c_str(),
+       std::string("elements_material=%d\n") + std::string("n_materials=%d\n"))
+          .c_str(),
       &nx, &ny, &nz, &m_x, &m_y, &m_z, &n_s, &n_x, &n_y, &n_z, &e_s, &e_x, &e_y,
       &e_z, &e_m, &m_nMaterials);
   if (filled != 16) {
@@ -702,11 +699,13 @@ bool ComponentCST::Initialise(std::string dataFile, std::string unit) {
     }
     //		float mue, rho;
     //		result = fread(&(mue), sizeof(float), 1, f);
-    //		if (result != 1) {fputs ("Reading error while reading mue.",stderr);
-    //exit (3);}
+    //		if (result != 1) {fputs ("Reading error while reading
+    //mue.",stderr);
+    // exit (3);}
     //		result = fread(&(rho), sizeof(float), 1, f);
-    //		if (result != 1) {fputs ("Reading error while reading rho.",stderr);
-    //exit (3);}
+    //		if (result != 1) {fputs ("Reading error while reading
+    //rho.",stderr);
+    // exit (3);}
     st << "; eps is: " << materials.at(id).eps <<
         //				"\t mue is: " << mue <<
         //				"\t rho is: " << rho <<
@@ -717,7 +716,8 @@ bool ComponentCST::Initialise(std::string dataFile, std::string unit) {
   }
   if (m_debug) {
     std::cout << st.str();
-    for (auto it = materials.begin(), it_end = materials.end(); it != it_end; it++) {
+    for (auto it = materials.begin(), it_end = materials.end(); it != it_end;
+         it++) {
       std::cout << "Material id: " << std::distance(materials.begin(), it)
                 << " \t driftable: " << (*it).driftmedium << std::endl;
     }
@@ -794,7 +794,8 @@ bool ComponentCST::SetWeightingField(std::string prnsol, std::string label,
                     find(wfields.begin(), wfields.end(), label))) {
     std::cerr << m_className << "::SetWeightingField:" << std::endl;
     std::cerr << "    Indexes of the weighting fields and the weighting field "
-                 "counter are not equal!" << std::endl;
+                 "counter are not equal!"
+              << std::endl;
     return false;
   }
   unsigned int iField = std::distance(m_weightingFields.begin(), it);
@@ -820,7 +821,8 @@ bool ComponentCST::SetWeightingField(std::string prnsol, std::string label,
       fclose(f);
       std::cerr << m_className << "::SetWeightingField:" << std::endl;
       std::cerr << "     Error. The file is extremely short and does not seem "
-                   "to contain a header or data." << std::endl;
+                   "to contain a header or data."
+                << std::endl;
       ok = false;
     }
 
@@ -840,16 +842,16 @@ bool ComponentCST::SetWeightingField(std::string prnsol, std::string label,
 
     int filled = 0;
     filled = std::sscanf(
-        header, (std::string("mesh_nx=%d mesh_ny=%d mesh_nz=%d\n") +
-                 std::string("mesh_xlines=%d mesh_ylines=%d mesh_zlines=%d\n") +
-                 std::string(
-                     "nodes_scalar=%d nodes_vector_x=%d nodes_vector_y=%d "
+        header,
+        (std::string("mesh_nx=%d mesh_ny=%d mesh_nz=%d\n") +
+         std::string("mesh_xlines=%d mesh_ylines=%d mesh_zlines=%d\n") +
+         std::string("nodes_scalar=%d nodes_vector_x=%d nodes_vector_y=%d "
                      "nodes_vector_z=%d\n") +
-                 std::string(
-                     "elements_scalar=%d elements_vector_x=%d "
+         std::string("elements_scalar=%d elements_vector_x=%d "
                      "elements_vector_y=%d elements_vector_z=%d\n") +
-                 std::string("elements_material=%d\n") +
-                 std::string("n_materials=%d\n")).c_str(),
+         std::string("elements_material=%d\n") +
+         std::string("n_materials=%d\n"))
+            .c_str(),
         &nx, &ny, &nz, &m_x, &m_y, &m_z, &nread, &n_x, &n_y, &n_z, &e_s, &e_x,
         &e_y, &e_z, &e_m, &m_nMaterials);
     if (filled != 16) {
@@ -928,8 +930,7 @@ bool ComponentCST::SetWeightingField(std::string prnsol, std::string label,
       try {
         potentials.at(inode - 1) = volt;
         nread++;
-      }
-      catch (...) {
+      } catch (...) {
         std::cerr << m_className << "::SetWeightingField:" << std::endl;
         std::cerr << "    Node number " << inode << " out of range."
                   << std::endl;
@@ -1005,7 +1006,6 @@ void ComponentCST::ElectricField(const double xin, const double yin,
 void ComponentCST::WeightingField(const double xin, const double yin,
                                   const double zin, double& wx, double& wy,
                                   double& wz, const std::string& label) {
-
   // Initial values
   wx = wy = wz = 0;
 
@@ -1068,7 +1068,6 @@ void ComponentCST::WeightingField(const double xin, const double yin,
 double ComponentCST::WeightingPotential(const double xin, const double yin,
                                         const double zin,
                                         const std::string& label) {
-
   // Do not proceed if not properly initialised.
   if (!m_ready) return 0.;
 
@@ -1205,7 +1204,6 @@ void ComponentCST::SetRange() {
 }
 
 void ComponentCST::SetRangeZ(const double zmin, const double zmax) {
-
   if (fabs(zmax - zmin) <= 0.) {
     std::cerr << m_className << "::SetRangeZ:" << std::endl;
     std::cerr << "    Zero range is not permitted." << std::endl;
@@ -1227,7 +1225,6 @@ bool ComponentCST::Coordinate2Index(const double x, const double y,
 
 int ComponentCST::Index2Element(const unsigned int i, const unsigned int j,
                                 const unsigned int k) {
-
   if (i > m_nx - 2 || j > m_ny - 2 || k > m_nz - 2) {
     throw "FieldMap::ElementByIndex: Error. Element indexes out of bounds.";
   }
@@ -1246,9 +1243,12 @@ bool ComponentCST::Coordinate2Index(const double xin, const double yin,
   MapCoordinates(position_mapped[0], position_mapped[1], position_mapped[2],
                  mirrored[0], mirrored[1], mirrored[2], rcoordinate, rotation);
 
-  auto it_x = std::lower_bound(m_xlines.begin(), m_xlines.end(), position_mapped[0]);
-  auto it_y = std::lower_bound(m_ylines.begin(), m_ylines.end(), position_mapped[1]);
-  auto it_z = std::lower_bound(m_zlines.begin(), m_zlines.end(), position_mapped[2]);
+  auto it_x =
+      std::lower_bound(m_xlines.begin(), m_xlines.end(), position_mapped[0]);
+  auto it_y =
+      std::lower_bound(m_ylines.begin(), m_ylines.end(), position_mapped[1]);
+  auto it_z =
+      std::lower_bound(m_zlines.begin(), m_zlines.end(), position_mapped[2]);
   if (it_x == m_xlines.end() || it_y == m_ylines.end() ||
       it_z == m_zlines.end() || position_mapped[0] < m_xlines.at(0) ||
       position_mapped[1] < m_ylines.at(0) ||
@@ -1287,14 +1287,12 @@ bool ComponentCST::Coordinate2Index(const double xin, const double yin,
 }
 
 void ComponentCST::UpdatePeriodicity() {
-
   UpdatePeriodicity2d();
   UpdatePeriodicityCommon();
 }
 
 void ComponentCST::GetAspectRatio(const unsigned int element, double& dmin,
                                   double& dmax) {
-
   if ((int)element >= nElements) {
     dmin = dmax = 0.;
     return;
@@ -1311,7 +1309,6 @@ void ComponentCST::GetAspectRatio(const unsigned int element, double& dmin,
 }
 
 double ComponentCST::GetElementVolume(const unsigned int element) {
-
   if ((int)element >= nElements) return 0.;
   unsigned int i, j, k;
   Element2Index(element, i, j, k);
@@ -1487,18 +1484,20 @@ void ComponentCST::ShapeField(float& ex, float& ey, float& ez, const double rx,
       if (m1 == m2) {
         float ex_next =
             GetFieldComponent(i + 1, j, k, 0.5, ry, rz, 'x', potentials);
-        ex = ex + (rx - 0.5) * (ex_next - ex) *
-                      (m_xlines.at(i + 1) - m_xlines.at(i)) /
-                      (m_xlines.at(i + 2) - m_xlines.at(i + 1));
+        ex = ex +
+             (rx - 0.5) * (ex_next - ex) *
+                 (m_xlines.at(i + 1) - m_xlines.at(i)) /
+                 (m_xlines.at(i + 2) - m_xlines.at(i + 1));
       }
     } else {
       m2 = m_elementMaterial.at(Index2Element(i - 1, j, k));
       if (m1 == m2) {
         float ex_before =
             GetFieldComponent(i - 1, j, k, 0.5, ry, rz, 'x', potentials);
-        ex = ex_before + (rx + 0.5) * (ex - ex_before) *
-                             (m_xlines.at(i) - m_xlines.at(i - 1)) /
-                             (m_xlines.at(i + 1) - m_xlines.at(i));
+        ex = ex_before +
+             (rx + 0.5) * (ex - ex_before) *
+                 (m_xlines.at(i) - m_xlines.at(i - 1)) /
+                 (m_xlines.at(i + 1) - m_xlines.at(i));
       }
     }
   }
@@ -1511,18 +1510,20 @@ void ComponentCST::ShapeField(float& ex, float& ey, float& ez, const double rx,
       if (m1 == m2) {
         float ey_next =
             GetFieldComponent(i, j + 1, k, rx, 0.5, rz, 'y', potentials);
-        ey = ey + (ry - 0.5) * (ey_next - ey) *
-                      (m_ylines.at(j + 1) - m_ylines.at(j)) /
-                      (m_ylines.at(j + 2) - m_ylines.at(j + 1));
+        ey = ey +
+             (ry - 0.5) * (ey_next - ey) *
+                 (m_ylines.at(j + 1) - m_ylines.at(j)) /
+                 (m_ylines.at(j + 2) - m_ylines.at(j + 1));
       }
     } else {
       m2 = m_elementMaterial.at(Index2Element(i, j - 1, k));
       if (m1 == m2) {
         float ey_next =
             GetFieldComponent(i, j - 1, k, rx, 0.5, rz, 'y', potentials);
-        ey = ey_next + (ry + 0.5) * (ey - ey_next) *
-                           (m_ylines.at(j) - m_ylines.at(j - 1)) /
-                           (m_ylines.at(j + 1) - m_ylines.at(j));
+        ey = ey_next +
+             (ry + 0.5) * (ey - ey_next) *
+                 (m_ylines.at(j) - m_ylines.at(j - 1)) /
+                 (m_ylines.at(j + 1) - m_ylines.at(j));
       }
     }
   }
@@ -1535,18 +1536,20 @@ void ComponentCST::ShapeField(float& ex, float& ey, float& ez, const double rx,
       if (m1 == m2) {
         float ez_next =
             GetFieldComponent(i, j, k + 1, rx, ry, 0.5, 'z', potentials);
-        ez = ez + (rz - 0.5) * (ez_next - ez) *
-                      (m_zlines.at(k + 1) - m_zlines.at(k)) /
-                      (m_zlines.at(k + 2) - m_zlines.at(k + 1));
+        ez = ez +
+             (rz - 0.5) * (ez_next - ez) *
+                 (m_zlines.at(k + 1) - m_zlines.at(k)) /
+                 (m_zlines.at(k + 2) - m_zlines.at(k + 1));
       }
     } else {
       m2 = m_elementMaterial.at(Index2Element(i, j, k - 1));
       if (m1 == m2) {
         float ez_next =
             GetFieldComponent(i, j, k - 1, rx, ry, 0.5, 'z', potentials);
-        ez = ez_next + (rz + 0.5) * (ez - ez_next) *
-                           (m_zlines.at(k) - m_zlines.at(k - 1)) /
-                           (m_zlines.at(k + 1) - m_zlines.at(k));
+        ez = ez_next +
+             (rz + 0.5) * (ez - ez_next) *
+                 (m_zlines.at(k) - m_zlines.at(k - 1)) /
+                 (m_zlines.at(k + 1) - m_zlines.at(k));
       }
     }
   }
@@ -1564,7 +1567,6 @@ void ComponentCST::Element2Index(int element, unsigned int& i, unsigned int& j,
 
 int ComponentCST::Index2Node(const unsigned int i, const unsigned int j,
                              const unsigned int k) {
-
   if (i > m_nx - 1 || j > m_ny - 1 || k > m_nz - 1) {
     throw "FieldMap::NodeByIndex: Error. Node indexes out of bounds.";
   }

@@ -7,7 +7,6 @@ namespace Garfield {
 /// Component for importing and interpolating Comsol field maps.
 
 class ComponentComsol : public ComponentFieldMap {
-
  public:
   /// Default constructor
   ComponentComsol();
@@ -40,8 +39,8 @@ class ComponentComsol : public ComponentFieldMap {
   void UpdatePeriodicity() override { UpdatePeriodicityCommon(); }
 
   double GetElementVolume(const unsigned int i) override;
-  void GetAspectRatio(const unsigned int i, 
-                      double& dmin, double& dmax) override;
+  void GetAspectRatio(const unsigned int i, double& dmin,
+                      double& dmax) override;
 
   struct nodeCmp {
     bool operator()(const ComponentFieldMap::Node& lhs,

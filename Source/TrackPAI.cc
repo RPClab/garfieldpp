@@ -1,25 +1,21 @@
-#include <iostream>
-#include <fstream>
-#include <cmath>
 #include <algorithm>
+#include <cmath>
+#include <fstream>
+#include <iostream>
 
-#include "Sensor.hh"
-#include "TrackPAI.hh"
 #include "FundamentalConstants.hh"
 #include "GarfieldConstants.hh"
 #include "Random.hh"
+#include "Sensor.hh"
+#include "TrackPAI.hh"
 
 namespace Garfield {
 
-TrackPAI::TrackPAI() : Track() {
-
-  m_className = "TrackPAI";
-}
+TrackPAI::TrackPAI() : Track() { m_className = "TrackPAI"; }
 
 bool TrackPAI::NewTrack(const double x0, const double y0, const double z0,
                         const double t0, const double dx0, const double dy0,
                         const double dz0) {
-
   m_ready = false;
 
   // Make sure the sensor has been set.
@@ -88,7 +84,6 @@ bool TrackPAI::NewTrack(const double x0, const double y0, const double z0,
 bool TrackPAI::GetCluster(double& xcls, double& ycls, double& zcls,
                           double& tcls, int& ncls, double& edep,
                           double& extra) {
-
   ncls = 0;
   edep = extra = 0.;
 
@@ -159,8 +154,7 @@ bool TrackPAI::GetCluster(double& xcls, double& ycls, double& zcls,
 }
 
 double TrackPAI::SampleEnergyDeposit(const double u, double& f) const {
-
-  if (u > m_cdf.back()) { 
+  if (u > m_cdf.back()) {
     // Use the free-electron differential cross-section.
     f = 1.;
     return SampleAsymptoticCs(u);
@@ -173,14 +167,14 @@ double TrackPAI::SampleEnergyDeposit(const double u, double& f) const {
   // from the cumulative distribution table.
   const auto begin = m_cdf.cbegin();
   const auto it1 = std::upper_bound(begin, m_cdf.cend(), u);
-  if (it1 == m_cdf.cbegin()) return m_energies[0]; 
+  if (it1 == m_cdf.cbegin()) return m_energies[0];
   const auto it0 = std::prev(it1);
   const double c0 = *it0;
   const double c1 = *it1;
   const double e0 = m_energies[it0 - begin];
   const double e1 = m_energies[it1 - begin];
   const double r0 = m_rutherford[it0 - begin];
-  const double r1 = m_rutherford[it1 - begin]; 
+  const double r1 = m_rutherford[it1 - begin];
   if (e0 < 100.) {
     const double edep = e0 + (u - c0) * (e1 - e0) / (c1 - c0);
     f = r0 + (edep - e0) * (r1 - r0) / (e1 - e0);
@@ -197,7 +191,6 @@ double TrackPAI::SampleEnergyDeposit(const double u, double& f) const {
 }
 
 bool TrackPAI::SetupMedium(Medium* medium) {
-
   // Make sure that the medium is defined.
   if (!medium) {
     std::cerr << m_className << "::SetupMedium: Null pointer.\n";
@@ -208,8 +201,8 @@ bool TrackPAI::SetupMedium(Medium* medium) {
   m_electronDensity = medium->GetNumberDensity() * medium->GetAtomicNumber();
   if (m_electronDensity <= 0.) {
     std::cerr << m_className << "::SetupMedium:\n"
-              << "    Unphysical electron density ("
-              << m_electronDensity << ")\n";
+              << "    Unphysical electron density (" << m_electronDensity
+              << ")\n";
     return false;
   }
 
@@ -247,7 +240,7 @@ bool TrackPAI::SetupMedium(Medium* medium) {
   // Compute the integral of loss function times energy.
   m_opticalDataTable[0].integral = 0.;
   double integral = 0.;
-  double f1 = m_energies[0] * LossFunction(m_opticalDataTable[0].eps1, 
+  double f1 = m_energies[0] * LossFunction(m_opticalDataTable[0].eps1,
                                            m_opticalDataTable[0].eps2);
   double f2 = f1;
   for (int i = 1; i < m_nSteps; ++i) {
@@ -275,7 +268,6 @@ bool TrackPAI::SetupMedium(Medium* medium) {
 }
 
 double TrackPAI::GetClusterDensity() {
-
   if (!m_ready) {
     std::cerr << m_className << "::GetClusterDensity:\n";
     std::cerr << "    Track has not been initialized.\n";
@@ -296,7 +288,6 @@ double TrackPAI::GetClusterDensity() {
 }
 
 double TrackPAI::GetStoppingPower() {
-
   if (!m_ready) {
     std::cerr << m_className << "::GetStoppingPower:\n";
     std::cerr << "    Track has not been initialised.\n";
@@ -317,7 +308,6 @@ double TrackPAI::GetStoppingPower() {
 }
 
 bool TrackPAI::SetupCrossSectionTable() {
-
   if (!m_ready) {
     std::cerr << m_className << "::SetupCrossSectionTable:\n"
               << "    Medium not set up.\n";
@@ -349,7 +339,7 @@ bool TrackPAI::SetupCrossSectionTable() {
     double dcsLog = 0., dcsDensity = 0., dcsCher = 0.;
     if (eps2 > 0.) {
       // Normal case (loss function > 0).
-      const double lf = LossFunction(eps1, eps2); 
+      const double lf = LossFunction(eps1, eps2);
       // Non-relativistic logarithmic term.
       dcsLog = lf * log(2 * ElectronMass * m_beta2 / egamma);
       // Relativistic logarithmic term (density effect)
@@ -357,8 +347,8 @@ bool TrackPAI::SetupCrossSectionTable() {
       const double v = m_beta2 * eps2;
       dcsDensity = -0.5 * lf * log(u * u + v * v);
       // "Cerenkov" term
-      dcsCher =
-          (m_beta2 - eps1 / (eps1 * eps1 + eps2 * eps2)) * (HalfPi - atan(u / v));
+      dcsCher = (m_beta2 - eps1 / (eps1 * eps1 + eps2 * eps2)) *
+                (HalfPi - atan(u / v));
     } else if (eps1 > 1. / m_beta2) {
       // Imaginary part is zero, only the Cerenkov term contributes.
       dcsCher = Pi * (m_beta2 - 1. / eps1);
@@ -375,9 +365,9 @@ bool TrackPAI::SetupCrossSectionTable() {
     dcs.push_back(dcsLog + dcsDensity + dcsCher + dcsRuth);
     // If requested, write the cross-section terms to file.
     if (m_debug) {
-      outfile << egamma << "  " << eps1 << "  " << eps2 << "  " << dcsLog* c2
-              << "  " << dcsDensity* c2 << "  " << dcsCher* c2 << "  "
-              << dcsRuth* c2 << "\n";
+      outfile << egamma << "  " << eps1 << "  " << eps2 << "  " << dcsLog * c2
+              << "  " << dcsDensity * c2 << "  " << dcsCher * c2 << "  "
+              << dcsRuth * c2 << "\n";
     }
   }
   if (m_debug) outfile.close();
@@ -429,7 +419,6 @@ bool TrackPAI::SetupCrossSectionTable() {
 }
 
 double TrackPAI::ComputeMaxTransfer() const {
-
   if (m_isElectron) {
     // Max. transfer for electrons is half the kinetic energy.
     return 0.5 * (m_energy - m_mass);
@@ -444,7 +433,6 @@ double TrackPAI::ComputeMaxTransfer() const {
 }
 
 double TrackPAI::ComputeCsTail(const double emin, const double emax) {
-
   if (m_isElectron) {
     // Electrons
     const double ek = m_energy - m_mass;
@@ -488,7 +476,6 @@ double TrackPAI::ComputeCsTail(const double emin, const double emax) {
 }
 
 double TrackPAI::ComputeDeDxTail(const double emin, const double emax) {
-
   if (m_isElectron) {
     const double ek = m_energy - m_mass;
     return -log(emin * (ek - emin) / (ek * ek)) +
@@ -519,8 +506,10 @@ double TrackPAI::ComputeDeDxTail(const double emin, const double emax) {
       double e2 = m_energy * m_energy;
       double ec = m_mass * m_mass / ElectronMass;
       return log(emax / emin) + (pow(emax, 3) - pow(emin, 3)) / (9. * e2 * ec) +
-             (emax * emax - emin * emin) / (6. * e2) + (emax - emin) * 
-             (2. - (1. + emin / emax + 6 * ec / emax) * m_beta2) / (6. * ec);
+             (emax * emax - emin * emin) / (6. * e2) +
+             (emax - emin) *
+                 (2. - (1. + emin / emax + 6 * ec / emax) * m_beta2) /
+                 (6. * ec);
       break;
     }
     default:
@@ -532,7 +521,6 @@ double TrackPAI::ComputeDeDxTail(const double emin, const double emax) {
 }
 
 double TrackPAI::SampleAsymptoticCs(double u) const {
-
   const double emin = m_energies.back();
   // Rescale the random number
   u = (u - m_cdf.back()) / (1. - m_cdf.back());
@@ -564,7 +552,6 @@ double TrackPAI::SampleAsymptoticCs(double u) const {
 }
 
 double TrackPAI::SampleAsymptoticCsSpinZero(const double emin, double u) const {
-
   const double a = emin / m_emax;
   const double b = m_beta2 * a;
   u *= (1. - a + b * log(a));
@@ -582,7 +569,6 @@ double TrackPAI::SampleAsymptoticCsSpinZero(const double emin, double u) const {
 }
 
 double TrackPAI::SampleAsymptoticCsSpinHalf(const double emin, double u) const {
-
   const double a = emin / m_emax;
   const double b = m_beta2 * a;
   const double c = emin / (2. * m_energy * m_energy);
@@ -601,7 +587,6 @@ double TrackPAI::SampleAsymptoticCsSpinHalf(const double emin, double u) const {
 }
 
 double TrackPAI::SampleAsymptoticCsSpinOne(const double emin, double u) const {
-
   const double e2 = 2 * m_energy * m_energy;
   const double ec = m_mass * m_mass / ElectronMass;
   const double a = 2 * ec / e2 - m_beta2 / m_emax;
@@ -624,7 +609,6 @@ double TrackPAI::SampleAsymptoticCsSpinOne(const double emin, double u) const {
 }
 
 double TrackPAI::SampleAsymptoticCsElectron(const double emin, double u) const {
-
   const double ek = m_energy - m_mass;
   const double ek2 = ek * ek;
   const double a = ek / (emin * (ek - emin));
@@ -644,7 +628,6 @@ double TrackPAI::SampleAsymptoticCsElectron(const double emin, double u) const {
 }
 
 double TrackPAI::SampleAsymptoticCsPositron(const double emin, double u) const {
-
   const double ek = m_energy - m_mass;
   const double ek2 = ek * ek;
   const double ek3 = ek2 * ek;
@@ -672,5 +655,4 @@ double TrackPAI::SampleAsymptoticCsPositron(const double emin, double u) const {
 
   return 0.5 * (eLow + eUp);
 }
-
 }

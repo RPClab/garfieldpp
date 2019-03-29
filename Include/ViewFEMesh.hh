@@ -6,25 +6,24 @@
 #include <map>
 #endif
 
-#include <TCanvas.h>
-#include <TMatrixD.h>
 #include <TArrayD.h>
+#include <TCanvas.h>
 #include <TGaxis.h>
+#include <TH2D.h>
+#include <TMatrixD.h>
 #include <TPolyLine.h>
 #include <TPolyLine3D.h>
 #include <TString.h>
-#include <TH2D.h>
 
-#include "ViewDrift.hh"
-#include "ComponentFieldMap.hh"
 #include "ComponentCST.hh"
+#include "ComponentFieldMap.hh"
+#include "ViewDrift.hh"
 
 namespace Garfield {
 
 /// Draw the mesh of a field-map component.
 
 class ViewFEMesh {
-
  public:
   /// Constructor
   ViewFEMesh();
@@ -110,7 +109,7 @@ class ViewFEMesh {
   // Box dimensions
   bool m_hasUserArea = false;
   double m_xMin = -1., m_yMin = -1., m_zMin = -1.;
-  double m_xMax =  1., m_yMax =  1., m_zMax =  1.;
+  double m_xMax = 1., m_yMax = 1., m_zMax = 1.;
 
   // The field map object
   ComponentFieldMap* m_component = nullptr;

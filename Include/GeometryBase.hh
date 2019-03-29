@@ -11,7 +11,6 @@ namespace Garfield {
 /// Abstract base class for geometry classes.
 
 class GeometryBase {
-
  public:
   /// Constructor
   GeometryBase() = default;
@@ -19,7 +18,7 @@ class GeometryBase {
   virtual ~GeometryBase() {}
 
   /// Retrieve the medium at a given point.
-  virtual Medium* GetMedium(const double x, const double y, 
+  virtual Medium* GetMedium(const double x, const double y,
                             const double z) const = 0;
 
   /// Return the number of solids in the geometry.
@@ -29,10 +28,10 @@ class GeometryBase {
   /// Get a solid from the list, together with the associated medium.
   virtual Solid* GetSolid(const unsigned int /*i*/, Medium*& medium) const {
     medium = nullptr;
-    return nullptr; 
+    return nullptr;
   }
   /// Check if a point is inside the geometry.
-  virtual bool IsInside(const double x, const double y, 
+  virtual bool IsInside(const double x, const double y,
                         const double z) const = 0;
 
   /// Get the bounding box (envelope of the geometry).

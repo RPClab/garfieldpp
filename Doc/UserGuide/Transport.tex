@@ -68,6 +68,14 @@ with a mean equal to the specified multiple of the ``collision time''
 \end{equation*}
 The third method is activated by default.
 
+Instead of making simple straight-line steps (using the drift velocity 
+vector at the starting point of a step), the end point of a step 
+can be calculated using a (second-order) Runge-Kutta-Fehlberg method. 
+This feature can be activated using
+\begin{lstlisting}
+void EnableRKFSteps(const bool on = true); 
+\end{lstlisting}
+
 Drift line calculations are started using 
 \begin{lstlisting}
 bool DriftElectron(const double x0, const double y0, const double z0,
@@ -152,7 +160,20 @@ The time window can be removed using
 \begin{lstlisting}
 void UnsetTimeWindow();
 \end{lstlisting}
- 
+
+By default, the Townsend and attachment coefficients are integrated over 
+path segments projected on the local drift velocity vector. 
+This feature, which can be activated or deactivated by calling the function
+\begin{lstlisting}
+void EnableProjectedPathIntegration(const bool on = true);
+\end{lstlisting} 
+ensures that the path length integral does not depend on the step size.
+Using 
+\begin{lstlisting}
+void EnableAvalancheSizeLimit(const int size);
+\end{lstlisting}
+an upper limit to the number of electrons in an avalanche can be imposed.
+
 \section{Microscopic Tracking}\label{Sec:MicroscopicTracking}
 Microscopic tracking is (at present) only possible for electrons. 
 It is implemented in the class \texttt{AvalancheMicroscopic}. 
@@ -275,6 +296,12 @@ so-called ``user handles'' are available.
                                   double dx, double dy, double dz,
                                   bool hole));
 void UnsetUserHandleStep();
+void SetUserHandleCollision(void (*f)(double x, double y, double z, double     t,
+                                      int type, int level, Medium* m,
+                                      double e0, double e1,
+                                      double dx0, double dy0, double dz0,
+                                      double dx1, double dy1, double dz1));
+void UnsetUserHandleCollision();
 void SetUserHandleAttachment(void (*f)(double x, double y, double z,
                                        double t,
                                        int type, int level, Medium* m));
@@ -301,6 +328,8 @@ The parameters passed to this function are
   \item[hole]
   flag indicating whether the particle is an electron or a hole.
 \end{description}  
+The ``user handle'' function set via \texttt{SetUserHandleCollision} 
+is called every time a real collision (as opposed to a null collision) occurs.
 The ``user handle'' functions for attachment, ionisation, and inelastic collisions 
 are called each time a collision of the respective type occurs.  
 In this context, inelastic collisions also include excitations. 
@@ -315,6 +344,10 @@ The parameters passed to these functions are
   \item[m]
    a pointer to the current \texttt{Medium}. 
 \end{description}
+In the function set using \texttt{SetUserHandleCollision}, the energy 
+and the direction vector before and after the collision are available 
+in addition. 
+
 In the following example we want 
 all excitations which occur to undergo a special treatment. 
 \begin{lstlisting}
